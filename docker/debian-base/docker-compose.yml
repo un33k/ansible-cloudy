@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  debian-base:
+    build: .
+    image: ansible-cloudy/debian-base:latest
+    container_name: debian-base-server
+    hostname: debian-base
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    ports:
+      - "2222:22"
+    networks:
+      - cloudy-network
+    restart: unless-stopped
+
+networks:
+  cloudy-network:
+    driver: bridge

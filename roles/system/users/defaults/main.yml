@@ -1,0 +1,10 @@
+---
+system_users: []
+# Example:
+# system_users:
+#   - name: deploy
+#     groups: [sudo, docker]
+#     sudo: true
+#     sudo_nopasswd: true
+#     ssh_keys:
+#       - "ssh-rsa AAAAB3NzaC1yc2E..."

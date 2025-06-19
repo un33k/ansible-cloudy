@@ -1,0 +1,23 @@
+---
+- name: Web Server Setup
+  hosts: webservers
+  become: true
+  gather_facts: true
+  
+  pre_tasks:
+    - name: Include baseline configuration
+      ansible.builtin.include: server-baseline.yml
+  
+  roles:
+    - role: services/nginx
+    - role: services/docker
+      vars:
+        docker_users: "{{ web_docker_users | default(['www-data']) }}"
+    - role: security/firewall
+      vars:
+        firewall_rules:
+          - { port: 80, protocol: tcp, rule: allow }
+          - { port: 443, protocol: tcp, rule: allow }
+          - { port: "{{ ssh_port | default(22) }}", protocol: tcp, rule: allow }
+  
+  tags: [webserver, nginx, docker]

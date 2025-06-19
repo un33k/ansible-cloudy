@@ -1,0 +1,17 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ apt_cache_valid_time | default(3600) }}"
+  become: true
+  tags: [system, apt]
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: "{{ apt_upgrade_level | default('safe') }}"
+    autoremove: true
+    autoclean: true
+  become: true
+  when: apt_upgrade | default(false)
+  notify: reboot if required
+  tags: [system, apt, upgrade]

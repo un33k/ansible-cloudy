@@ -1,0 +1,7 @@
+---
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ system_timezone | default('UTC') }}"
+  become: true
+  notify: restart rsyslog
+  tags: [system, timezone]

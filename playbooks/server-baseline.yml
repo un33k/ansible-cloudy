@@ -1,0 +1,19 @@
+---
+- name: Server Baseline Configuration
+  hosts: all
+  become: true
+  gather_facts: true
+  
+  roles:
+    - role: system/apt-update
+      vars:
+        apt_upgrade: true
+    - role: system/timezone
+    - role: system/users
+    - role: security/ssh-hardening
+  
+  post_tasks:
+    - name: Ensure server is responsive
+      ansible.builtin.ping:
+      
+  tags: [baseline, system]
