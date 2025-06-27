@@ -15,13 +15,16 @@ cd cloudy/
 
 ### Basic Usage
 ```bash
-# Using Ali CLI (recommended)
+# Step 1: Security setup (creates admin user, SSH keys, firewall)
 ./ali security
+
+# Step 2: Base configuration (hostname, git, timezone, swap)
 ./ali base
 
-# Traditional Ansible commands
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/security.yml
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/base.yml
+# Step 3: Deploy services as needed
+./ali django
+./ali redis
+./ali nginx
 ```
 
 ## Features
@@ -141,28 +144,26 @@ This Ansible implementation provides:
 
 ### Complete Web Stack
 ```bash
-# Using Ali CLI (recommended)
+# 1. Secure server foundation
 ./ali security
-./ali base
-./ali psql
-./ali django
-./ali nginx
 
-# Traditional Ansible commands
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/security.yml
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/base.yml
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/db/psql.yml
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/www/django.yml
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/lb/nginx.yml
+# 2. Base configuration
+./ali base
+
+# 3. Database layer
+./ali psql
+
+# 4. Web application layer
+./ali django
+
+# 5. Load balancer (optional)
+./ali nginx
 ```
 
 ### VPN Server
 ```bash
-# Using Ali CLI
+# Single command VPN deployment
 ./ali openvpn
-
-# Traditional Ansible
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/vpn/openvpn.yml
 ```
 
 ## Documentation
