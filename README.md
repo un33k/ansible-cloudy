@@ -15,11 +15,13 @@ cd cloudy/
 
 ### Basic Usage
 ```bash
-# Run a complete server setup
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/generic-server.yml
+# Using Ali CLI (recommended)
+./ali security
+./ali base
 
-# Test authentication flow
-ansible-playbook -i inventory/test-recipes.yml test-simple-auth.yml
+# Traditional Ansible commands
+ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/security.yml
+ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/base.yml
 ```
 
 ## Features
@@ -41,16 +43,16 @@ ansible-playbook -i inventory/test-recipes.yml test-simple-auth.yml
 ### 📊 Clean Output Control
 ```bash
 # Default: Show only changes and failures
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/generic-server.yml
+./ali security
 
 # Compact output
-ANSIBLE_STDOUT_CALLBACK=minimal ansible-playbook ...
+ANSIBLE_STDOUT_CALLBACK=minimal ./ali security
 
 # One line per task
-ANSIBLE_STDOUT_CALLBACK=oneline ansible-playbook ...
+ANSIBLE_STDOUT_CALLBACK=oneline ./ali security
 
 # Verbose debugging
-ansible-playbook ... -v
+./ali security -- -v
 ```
 
 ## Architecture
@@ -70,17 +72,18 @@ cloudy/
 ```
 
 ### Recipe Categories
-- **`playbooks/recipes/generic-server.yml`**: Foundation server setup
-- **`playbooks/recipes/vpn-server.yml`**: VPN with OpenVPN Docker
-- **`playbooks/recipes/web-server.yml`**: Web stack deployment
-- **`playbooks/recipes/database-server.yml`**: PostgreSQL with spatial extensions
-- **`playbooks/recipes/cache-server.yml`**: Redis cache server
-- **`playbooks/recipes/load-balancer.yml`**: Nginx load balancer with SSL
+- **`cloudy/playbooks/recipes/core/security.yml`**: Initial server security setup
+- **`cloudy/playbooks/recipes/core/base.yml`**: Foundation server configuration
+- **`cloudy/playbooks/recipes/vpn/openvpn.yml`**: VPN with OpenVPN Docker
+- **`cloudy/playbooks/recipes/www/django.yml`**: Django web server deployment
+- **`cloudy/playbooks/recipes/db/psql.yml`**: PostgreSQL database server
+- **`cloudy/playbooks/recipes/cache/redis.yml`**: Redis cache server
+- **`cloudy/playbooks/recipes/lb/nginx.yml`**: Nginx load balancer with SSL
 
 ## Configuration
 
 ### Inventory Setup
-Configure servers in `inventory/test-recipes.yml`:
+Configure servers in `cloudy/inventory/test.yml`:
 ```yaml
 all:
   vars:
@@ -89,15 +92,15 @@ all:
     ansible_port: 22022
     
   children:
-    generic_servers:
+    test_servers:
       hosts:
-        production-web:
+        test-server:
           ansible_host: 10.10.10.100
-          hostname: web.example.com
+          hostname: test.example.com
 ```
 
 ### Output Customization
-The `ansible.cfg` provides clean output by default:
+The `cloudy/ansible.cfg` provides clean output by default:
 ```ini
 [defaults]
 display_skipped_hosts = no    # Hide unchanged tasks
@@ -130,7 +133,7 @@ This Ansible implementation provides:
 - **🎯 Clean output**: Focus on changes and failures
 - **🏗️ Modern tooling**: Industry-standard configuration management
 - **📈 Scalability**: Easy multi-server deployments
-- **🧪 Comprehensive testing**: 15 automated tests ensure reliability
+- **🧪 Validation tools**: Ali CLI provides syntax and structure checking
 - **📚 Extensive documentation**: Complete guides and examples
 - **🔧 Developer-friendly**: Granular tasks and composable recipes
 
@@ -138,60 +141,66 @@ This Ansible implementation provides:
 
 ### Complete Web Stack
 ```bash
-# 1. Secure server foundation
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/generic-server.yml
+# Using Ali CLI (recommended)
+./ali security
+./ali base
+./ali psql
+./ali django
+./ali nginx
 
-# 2. Database layer
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/database-server.yml
-
-# 3. Web application layer  
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/web-server.yml
-
-# 4. Load balancer (if needed)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/load-balancer.yml
+# Traditional Ansible commands
+ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/security.yml
+ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/base.yml
+ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/db/psql.yml
+ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/www/django.yml
+ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/lb/nginx.yml
 ```
 
 ### VPN Server
 ```bash
-# Single command VPN deployment
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/vpn-server.yml
+# Using Ali CLI
+./ali openvpn
+
+# Traditional Ansible
+ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/vpn/openvpn.yml
 ```
 
 ## Documentation
 
 - **📚 [USAGE.md](USAGE.md)**: Complete step-by-step tutorials and troubleshooting
 - **🔧 [CLAUDE.md](CLAUDE.md)**: Developer reference and command documentation  
-- **⚙️ [cloudy/DEVELOPMENT.md](cloudy/DEVELOPMENT.md)**: Technical implementation details and granular task philosophy
+- **🤝 [CONTRIBUTING.md](CONTRIBUTING.md)**: Development guidelines and contribution workflow
 - **🐛 Issues**: Report bugs and feature requests via GitHub Issues
 
 ## Quick Links
 
-- 🚀 [First-Time Setup](USAGE.md#first-time-setup) - Get started with your first server
-- 🏗️ [Complete Web Stack](USAGE.md#scenario-1-complete-web-application-stack) - Deploy full application environment  
-- 🐛 [Troubleshooting](USAGE.md#troubleshooting) - Common issues and solutions
-- 🎛️ [Output Control](USAGE.md#output-control) - Customize command output
-- ⚙️ [Granular Tasks](cloudy/DEVELOPMENT.md#granular-tasks-one-off-operations) - Individual task usage
-- 🧪 [Demo Script](cloudy/demo.sh) - Interactive demonstration
-- 🤝 [Contributing](CONTRIBUTING.md) - Development guidelines
+- 🚀 [Getting Started](USAGE.md) - Complete setup and usage guide
+- 🔧 [Ali CLI Commands](CLAUDE.md) - Simplified Ansible wrapper commands
+- 🏗️ [Development Setup](CONTRIBUTING.md) - Contributing to the project
+- 🧪 [Validation Tools](dev/) - Syntax checking and validation scripts
 
 ## 🧪 Testing & Validation
 
-Ansible Cloudy includes comprehensive testing:
+Ansible Cloudy includes development validation tools:
 
 ```bash
-cd cloudy/
-./test-runner.sh    # Run full test suite (15 tests)
-./demo.sh          # Interactive demonstration
+# Ali CLI validation commands  
+./ali dev syntax      # Quick syntax check
+./ali dev validate     # Comprehensive validation
+./ali dev lint         # Ansible linting
+./ali dev test         # Authentication flow test
+
+# Traditional validation
+./dev/syntax-check.sh  # Direct syntax validation
+./dev/validate.py      # Python validation script
 ```
 
-**Test Coverage:**
+**Validation Coverage:**
 - ✅ Syntax validation for all playbooks and tasks
-- ✅ Dependency verification for all recipes  
-- ✅ YAML structure validation (132 files)
-- ✅ Inventory configuration validation
-- ✅ Template integrity checks
+- ✅ YAML structure validation
 - ✅ Ansible configuration validation
+- ✅ Authentication flow testing
 
 ## 🤝 Contributing
 
-**Quick Contribution Workflow**: Fork the repo, install Ansible (`pip install ansible`), make your changes to tasks or recipes, run `./cloudy/precommit.sh` to validate (15 tests), commit with descriptive messages, and submit a PR. The pre-commit script ensures all syntax, dependencies, and quality checks pass before submission. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+**Quick Contribution Workflow**: Fork the repo, install Ansible (`pip install ansible`), make your changes to tasks or recipes, run `./ali dev validate` to check syntax and structure, commit with descriptive messages, and submit a PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
