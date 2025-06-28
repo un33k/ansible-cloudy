@@ -17,9 +17,9 @@
       debug:
         msg: |
           🔐 Starting Security Configuration Verification
-          Target: {{ inventory_hostname }} ({{ ansible_host }}:{{ ansible_port | default(ssh_port) }})
+          Target: {{ inventory_hostname }} ({{ ansible_host }}:{{ ansible_port }})
           Admin User: {{ admin_user }}
-          Expected SSH Port: {{ ssh_port }}
+          Expected SSH Port: {{ ansible_port }}
           
   tasks:
     # Basic Admin User Validation
@@ -58,11 +58,11 @@
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^Port'
-        line: 'Port {{ ssh_port }}'
+        line: 'Port {{ ansible_port }}'
         state: present
       check_mode: true
       register: ssh_port_check
-      when: ssh_port is defined and ssh_port != 22
+      when: ansible_port is defined and ansible_port != 22
       tags: [validation, ssh, port]
       
     # Firewall Validation
@@ -73,11 +73,11 @@
       tags: [validation, firewall]
       
     - name: Verify SSH port is allowed in firewall
-      shell: ufw status | grep "{{ ssh_port }}/tcp"
+      shell: ufw status | grep "{{ ansible_port }}/tcp"
       register: ssh_port_allowed
       failed_when: false
       changed_when: false
-      when: ssh_port is defined
+      when: ansible_port is defined
       tags: [validation, firewall, ssh]
       
     # User and Group Validation
@@ -112,7 +112,7 @@
              ├── SSH Keys: {{ 'WORKING' if ssh_key_test is succeeded else 'FAILED' }}
              ├── Root Login: {{ 'DISABLED' if root_login_check is not changed else 'NEEDS FIXING' }}
              ├── Password Auth: {{ 'DISABLED' if password_auth_check is not changed else 'NEEDS FIXING' }}
-             ├── SSH Port: {{ ssh_port if ssh_port_check is not changed else 'NOT CONFIGURED' }}
+             ├── SSH Port: {{ ansible_port if ssh_port_check is not changed else 'NOT CONFIGURED' }}
              ├── Firewall: {{ 'ACTIVE' if 'Status: active' in ufw_status.stdout else 'INACTIVE' }}
              ├── SSH Port Allowed: {{ 'YES' if ssh_port_allowed.rc == 0 else 'NO' }}
              └── Sudo Access: {{ 'CONFIGURED' if sudo_check.rc == 0 else 'MISSING' }}

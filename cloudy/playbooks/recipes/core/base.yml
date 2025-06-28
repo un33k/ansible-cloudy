@@ -86,7 +86,7 @@
              ├── Hostname: {{ hostname }}
              ├── Timezone: {{ timezone }}
              ├── Admin User: {{ admin_user }}
-             ├── SSH Port: {{ ssh_port }}
+             ├── SSH Port: {{ ansible_port }}
              ├── Firewall: UFW enabled
              └── Git: Configured
           

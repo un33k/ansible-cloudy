@@ -22,7 +22,7 @@
           Security Model:
           ├── Root User: SSH keys ONLY (automation access)
           ├── Admin User: {{ emergency_user }} (password + SSH keys)
-          ├── SSH Port: 22 → {{ ssh_port | default(22022) }}
+          ├── SSH Port: {{ ansible_port }}
           └── Firewall: UFW enabled with strict rules
           
   tasks:
@@ -81,7 +81,7 @@
     - name: Allow new SSH port in UFW firewall
       ufw:
         rule: allow
-        port: "{{ ssh_port | default(22022) }}"
+        port: "{{ ansible_port }}"
         proto: tcp
       tags: [firewall, ssh, security]
       
@@ -143,7 +143,7 @@
           📋 Security Configuration:
              ├── Root Access: SSH keys ONLY (automation)
              ├── Admin Access: {{ emergency_user }} (password + SSH keys)
-             ├── SSH Port: {{ ssh_port | default(22022) }}
+             ├── SSH Port: {{ ansible_port }}
              ├── Firewall: UFW enabled with strict rules
              ├── Monitoring: fail2ban active
              └── Connection: Use root for all automation
@@ -152,5 +152,5 @@
           
           🚀 Next Steps:
              • All automation continues as root (no connection switching)
-             • Admin access: ssh {{ emergency_user }}@{{ ansible_host }}:{{ ssh_port | default(22022) }}
+             • Admin access: ssh {{ emergency_user }}@{{ ansible_host }}:{{ ansible_port }}
              • Deploy services: ./ali base, ./ali psql, etc.

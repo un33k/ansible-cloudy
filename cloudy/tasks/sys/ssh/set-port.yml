@@ -1,18 +1,18 @@
 # Granular Task: Set SSH Port
 # Equivalent to: cloudy-old/sys/ssh.py::sys_ssh_set_port()
-# Usage: ansible-playbook tasks/sys/ssh/set-port.yml -e "ssh_port=2222"
+# Usage: ansible-playbook tasks/sys/ssh/set-port.yml -e "ansible_port=2222"
 
 ---
 - name: Validate SSH port range
   fail:
-    msg: "SSH port must be between 1-65535, got: {{ ssh_port }}"
-  when: ssh_port | int < 1 or ssh_port | int > 65535
+    msg: "SSH port must be between 1-65535, got: {{ ansible_port }}"
+  when: ansible_port | int < 1 or ansible_port | int > 65535
   
 - name: Configure SSH port in sshd_config
   lineinfile:
     path: /etc/ssh/sshd_config
     regexp: '^#?Port\s+'
-    line: "Port {{ ssh_port }}"
+    line: "Port {{ ansible_port }}"
     backup: true
   register: ssh_port_config
   
@@ -30,6 +30,6 @@
 - name: Display SSH port status
   debug:
     msg: |
-      ✅ SSH port configured: {{ ssh_port }}
+      ✅ SSH port configured: {{ ansible_port }}
       Status: {{ 'Changed and restarted' if ssh_port_config.changed else 'Already configured' }}
       ⚠️  Remember to update firewall rules and reconnect on new port!

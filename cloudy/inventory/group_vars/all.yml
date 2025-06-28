@@ -15,8 +15,7 @@ admin_user: "admin"
 admin_password: "{{ vault_admin_password | default('changeme') }}"
 admin_groups: "admin,www-data,docker"
 
-# SSH Configuration
-ssh_port: 22022
+# SSH Configuration  
 ssh_disable_root: true
 ssh_enable_password_auth: false
 
