@@ -404,3 +404,104 @@ This shows only:
 - ✅ **CHANGED** tasks (what modified the server)
 - ❌ **FAILED** tasks (what went wrong)  
 - ⏭️ **UNREACHABLE** hosts (connection issues)
+
+## 🔒 Ansible Vault Management
+
+Claudia provides integrated Ansible Vault support for secure credential management.
+
+### Vault Commands
+
+```bash
+# Create new encrypted vault
+./claudia vault --create
+
+# Edit existing vault (prompts for password)
+./claudia vault --edit
+
+# View vault contents without editing
+./claudia vault --view
+
+# Encrypt existing plaintext file
+./claudia vault --encrypt
+
+# Decrypt vault file (⚠️ security risk)
+./claudia vault --decrypt
+
+# Change vault password
+./claudia vault --rekey
+
+# Work with custom vault files
+./claudia vault --create --file secrets/production.yml
+./claudia vault --edit --file secrets/production.yml
+```
+
+### Default Vault Location
+
+Claudia automatically manages credentials in:
+```
+cloudy/inventory/group_vars/vault.yml
+```
+
+### Vault Integration with Playbooks
+
+```bash
+# Use vault with Claudia commands
+./claudia psql --install --prod --ask-vault-pass
+
+# Set vault password file (for automation)
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass
+./claudia psql --install --prod
+
+# Pass vault password via file
+./claudia redis --install --vault-password-file ~/.vault_pass
+```
+
+### 🔧 Vault vs .env.local Comparison
+
+| Feature             | Ansible Vault      | .env.local             |
+|---------------------|--------------------|------------------------|
+| Encryption          | ✅ AES256           | ❌ Plaintext            |
+| Git Safety          | ✅ Safe to commit   | ⚠️ Must be gitignored  |
+| Ansible Integration | ✅ Native           | ⚠️ Manual loading      |
+| Multi-environment   | ✅ Multiple vaults  | ⚠️ Multiple files      |
+| Security            | ✅ Enterprise-grade | ❌ Filesystem dependent |
+
+**Recommendation**: Use Ansible Vault for production deployments and sensitive credentials.
+
+### Vault Security Features
+
+- 🔒 **AES256 Encryption** - Military-grade encryption at rest
+- 🛡️ **Git-Safe Storage** - Encrypted files can be safely committed
+- 🔑 **Password Protection** - Vault password required for access
+- 📋 **Ansible Integration** - Native support in all playbooks
+- 🔄 **Multi-Environment** - Different vaults for test/prod environments
+- 📝 **Audit Trail** - Encrypted changes tracked in git history
+
+### Example Vault Content
+
+```yaml
+# After running: ./claudia vault --edit
+---
+# Admin User Credentials  
+vault_admin_password: "secure_random_password_123"
+vault_admin_ssh_password: "another_secure_password_456"
+
+# Database Credentials
+vault_postgres_password: "database_password_789" 
+vault_mysql_root_password: "mysql_root_password_abc"
+
+# Cache Credentials
+vault_redis_password: "redis_password_def"
+
+# VPN Credentials  
+vault_vpn_passphrase: "vpn_passphrase_ghi"
+```
+
+### Security Best Practices
+
+1. **Never commit plaintext credentials** - Always use vault references
+2. **Use strong vault passwords** - Consider password managers
+3. **Rotate credentials regularly** - Update vault and server passwords
+4. **Environment separation** - Different vaults for test/prod
+5. **Access control** - Limit who has vault passwords
+6. **Backup vault passwords** - Store securely outside the repository

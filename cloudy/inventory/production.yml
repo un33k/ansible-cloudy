@@ -7,7 +7,7 @@ all:
   vars:
     # Connection Settings (adjust after initial setup)
     ansible_user: admin
-    ansible_ssh_pass: secure_admin_password
+    ansible_ssh_pass: "{{ vault_admin_ssh_password }}"
     ansible_port: 22022
     ansible_host_key_checking: false
     
@@ -22,7 +22,7 @@ all:
     generic_servers:
       vars:
         admin_user: admin
-        admin_password: secure_admin_password
+        admin_password: "{{ vault_admin_password }}"
         admin_groups: "admin,www-data"
         ssh_disable_root: true
         ssh_enable_password_auth: false
@@ -41,7 +41,7 @@ all:
     web_servers:
       vars:
         admin_user: admin
-        admin_password: secure_admin_password
+        admin_password: "{{ vault_admin_password }}"
         admin_groups: "admin,www-data"
         webserver: gunicorn
         webserver_port: 8181
@@ -63,7 +63,7 @@ all:
     database_servers:
       vars:
         admin_user: admin
-        admin_password: secure_admin_password
+        admin_password: "{{ vault_admin_password }}"
         admin_groups: "admin,www-data"
         postgresql_version: "15"
         postgis_version: "3.3"
@@ -75,7 +75,7 @@ all:
           ansible_host: 10.0.3.10
           hostname: db-master.example.com
           database_port: 5432
-          postgres_password: secure_db_password
+          postgres_password: "{{ vault_postgres_password }}"
           
         db-replica:
           ansible_host: 10.0.3.11
@@ -86,7 +86,7 @@ all:
     cache_servers:
       vars:
         admin_user: admin
-        admin_password: secure_admin_password
+        admin_password: "{{ vault_admin_password }}"
         admin_groups: "admin,www-data"
         redis_memory: 512  # MB
         redis_interface: "0.0.0.0"
@@ -96,13 +96,13 @@ all:
           ansible_host: 10.0.4.10
           hostname: cache-prod.example.com
           port: 6379
-          password: "redis_secret_password"
+          password: "{{ vault_redis_password }}"
 
     # VPN Servers
     vpn_servers:
       vars:
         admin_user: admin
-        admin_password: secure_admin_password
+        admin_password: "{{ vault_admin_password }}"
         admin_groups: "admin,www-data,docker"
         
       hosts:
@@ -110,7 +110,7 @@ all:
           ansible_host: 10.0.5.10
           hostname: vpn.example.com
           domain: vpn.example.com
-          vpn_passphrase: "secure_vpn_passphrase"
+          vpn_passphrase: "{{ vault_vpn_passphrase }}"
           # Primary VPN (UDP, faster)
           primary_port: 1194
           primary_proto: udp
@@ -122,7 +122,7 @@ all:
     load_balancers:
       vars:
         admin_user: admin
-        admin_password: secure_admin_password
+        admin_password: "{{ vault_admin_password }}"
         admin_groups: "admin,www-data"
         
       hosts:

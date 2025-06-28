@@ -24,7 +24,7 @@ all:
     # All operations and services shall be run under this user
     # Cronjobs will also be run under this user
     admin_user: admin
-    admin_password: secure123
+    admin_password: "{{ vault_admin_password }}"
     admin_groups: "admin,www-data"
     admin_ssh_private_key_file: ~/.ssh/id_rsa
 

@@ -12,7 +12,7 @@ hostname: "{{ inventory_hostname }}"
 
 # User Management
 admin_user: "admin"
-admin_password: "{{ vault_admin_password | default('changeme') }}"
+admin_password: "{{ vault_admin_password }}"
 admin_groups: "admin,www-data,docker"
 
 # SSH Configuration  
