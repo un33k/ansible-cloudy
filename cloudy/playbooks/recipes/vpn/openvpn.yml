@@ -8,6 +8,7 @@
   become: true
   
   vars:
+    task_paths: "../../../tasks"
     # OpenVPN Configuration
     vpn_domain: "{{ domain | default(inventory_hostname) }}"
     vpn_port: "{{ port | default('1194') }}"
@@ -32,23 +33,24 @@
   tasks:
     # Docker Installation
     - name: Install Docker
-      include_tasks: ../../../tasks/sys/docker/install-docker.yml
+      include_tasks: "{{ task_paths }}/sys/docker/install-docker.yml"
       when: setup_docker | bool
       tags: [docker, install]
       
+      
     - name: Configure Docker
-      include_tasks: ../../../tasks/sys/docker/configure.yml
+      include_tasks: "{{ task_paths }}/sys/docker/configure.yml"
       when: setup_docker | bool
       tags: [docker, configure]
       
     # Firewall Setup
     - name: Install UFW firewall
-      include_tasks: ../../../tasks/sys/firewall/install.yml
+      include_tasks: "{{ task_paths }}/sys/firewall/install.yml"
       when: setup_firewall | bool
       tags: [firewall, security]
       
     - name: Allow VPN port through firewall
-      include_tasks: ../../../tasks/sys/firewall/allow-port.yml
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-port.yml"
       vars:
         port: "{{ vpn_port }}"
         proto: "{{ vpn_proto }}"
@@ -57,7 +59,7 @@
       
     # OpenVPN Installation
     - name: Install OpenVPN Docker container
-      include_tasks: ../../../tasks/services/vpn/docker-install.yml
+      include_tasks: "{{ task_paths }}/services/vpn/docker-install.yml"
       vars:
         domain: "{{ vpn_domain }}"
         port: "{{ vpn_port }}"
@@ -68,7 +70,7 @@
       tags: [openvpn, install]
       
     - name: Configure OpenVPN systemd service
-      include_tasks: ../../../tasks/services/vpn/docker-configure.yml
+      include_tasks: "{{ task_paths }}/services/vpn/docker-configure.yml"
       vars:
         domain: "{{ vpn_domain }}"
         port: "{{ vpn_port }}"

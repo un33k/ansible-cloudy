@@ -268,7 +268,15 @@ class DevTools:
         return subprocess.run([str(syntax_script)]).returncode
     
     def lint(self) -> int:
-        """Run ansible-lint"""
+        """Run both YAML syntax validation and ansible-lint"""
+        info("Running comprehensive linting (YAML + Ansible)...")
+        
+        # First run YAML validation
+        info("Step 1/2: Running yamllint...")
+        yaml_exit_code = self.yaml()
+        
+        # Then run ansible-lint
+        info("Step 2/2: Running ansible-lint...")
         lint_config = self.config.dev_dir / ".ansible-lint.yml"
         if not lint_config.exists():
             warn("Ansible-lint config not found, using defaults")
@@ -276,14 +284,46 @@ class DevTools:
         else:
             config_args = ["-c", str(lint_config)]
         
-        info(f"Running ansible-lint...")
         os.chdir(self.config.project_root)
         
         try:
             cmd = ["ansible-lint"] + config_args + [str(self.config.recipes_dir)]
-            return subprocess.run(cmd).returncode
+            ansible_exit_code = subprocess.run(cmd).returncode
         except FileNotFoundError:
             error("ansible-lint not found. Install with: pip install ansible-lint")
+        
+        # Return failure if either linter failed
+        if yaml_exit_code != 0 or ansible_exit_code != 0:
+            warn(f"Linting completed with issues (YAML: {yaml_exit_code}, Ansible: {ansible_exit_code})")
+            return 1
+        else:
+            log("All linting checks passed!")
+            return 0
+    
+    def yaml(self) -> int:
+        """Run YAML syntax validation with yamllint"""
+        yaml_config = self.config.dev_dir / ".yamlint.yml"
+        if not yaml_config.exists():
+            warn("yamllint config not found, using defaults")
+            config_args = []
+        else:
+            config_args = ["-c", str(yaml_config)]
+        
+        info(f"Running yamllint on YAML files...")
+        os.chdir(self.config.project_root)
+        
+        try:
+            # Check all YAML files in key directories
+            yaml_paths = [
+                str(self.config.recipes_dir),
+                str(self.config.cloudy_dir / "inventory"),
+                str(self.config.cloudy_dir / "tasks"),
+                str(self.config.dev_dir / "test-auth.yml"),
+            ]
+            cmd = ["yamllint"] + config_args + yaml_paths
+            return subprocess.run(cmd).returncode
+        except FileNotFoundError:
+            error("yamllint not found. Install with: pip install yamllint")
     
     def test(self, extra_args: List[str] = None) -> int:
         """Run authentication tests"""
@@ -334,7 +374,8 @@ def list_dev_commands() -> None:
     commands = [
         ("validate", "Comprehensive validation of all components"),
         ("syntax", "Quick syntax checking for all recipes"),
-        ("lint", "Ansible-lint validation"),
+        ("yaml", "YAML syntax validation with yamllint"),
+        ("lint", "Complete linting (YAML + Ansible)"),
         ("test", "Authentication flow testing"),
         ("spell", "Spell check all documentation and configs"),
     ]
@@ -345,7 +386,8 @@ def list_dev_commands() -> None:
     print(f"\n{Colors.YELLOW}Usage examples:{Colors.NC}")
     print("  ali dev validate       # Full validation suite")
     print("  ali dev syntax         # Quick syntax check")
-    print("  ali dev lint           # Ansible linting")
+    print("  ali dev yaml           # YAML syntax validation")
+    print("  ali dev lint           # Complete linting (YAML + Ansible)")
     print("  ali dev test           # Test authentication")
 
 def list_recipes(config: AliConfig) -> None:
@@ -385,8 +427,9 @@ Examples:
   ali --list                      Show all available recipes
   
   ali dev validate                Run comprehensive validation
-  ali dev syntax                 Quick syntax checking
-  ali dev lint                   Ansible linting
+  ali dev syntax                 Quick syntax checking  
+  ali dev yaml                   YAML syntax validation
+  ali dev lint                   Complete linting (YAML + Ansible)
   ali dev test                   Authentication testing
         """
     )
@@ -447,6 +490,8 @@ def main() -> None:
             exit_code = dev_tools.validate()
         elif args.subcommand == "syntax":
             exit_code = dev_tools.syntax()
+        elif args.subcommand == "yaml":
+            exit_code = dev_tools.yaml()
         elif args.subcommand == "lint":
             exit_code = dev_tools.lint()
         elif args.subcommand == "test":

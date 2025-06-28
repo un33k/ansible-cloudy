@@ -8,6 +8,7 @@
   become: true
   
   vars:
+    task_paths: "../../../tasks"
     # Load Balancer Configuration
     domain_name: "{{ domain | default(inventory_hostname) }}"
     protocol: "{{ proto | default('https') }}"  # http or https
@@ -34,33 +35,33 @@
   tasks:
     # Generic Server Setup - Include core foundation tasks
     - name: Initialize system
-      include_tasks: ../../../tasks/sys/core/init.yml
+      include_tasks: "{{ task_paths }}/sys/core/init.yml"
       when: run_generic_setup | bool
       tags: [generic, foundation, init]
       
     - name: Update system packages
-      include_tasks: ../../../tasks/sys/core/update.yml
+      include_tasks: "{{ task_paths }}/sys/core/update.yml"
       when: run_generic_setup | bool
       tags: [generic, foundation, update]
       
     - name: Install common utilities
-      include_tasks: ../../../tasks/sys/core/install-common.yml
+      include_tasks: "{{ task_paths }}/sys/core/install-common.yml"
       when: run_generic_setup | bool
       tags: [generic, foundation, packages]
       
     - name: Install UFW firewall
-      include_tasks: ../../../tasks/sys/firewall/install.yml
+      include_tasks: "{{ task_paths }}/sys/firewall/install.yml"
       when: run_generic_setup | bool
       tags: [generic, foundation, firewall]
       
     # Nginx Installation
     - name: Install Nginx web server
-      include_tasks: ../../../tasks/web/nginx/install.yml
+      include_tasks: "{{ task_paths }}/web/nginx/install.yml"
       tags: [nginx, install]
       
     # SSL Configuration (if HTTPS)
     - name: Copy SSL certificates
-      include_tasks: ../../../tasks/web/nginx/copy-ssl.yml
+      include_tasks: "{{ task_paths }}/web/nginx/copy-ssl.yml"
       vars:
         domain: "{{ domain_name }}"
         ssl_cert_dir: "{{ ssl_cert_dir }}"
@@ -69,7 +70,7 @@
       
     # Domain Configuration
     - name: Setup Nginx domain configuration
-      include_tasks: ../../../tasks/web/nginx/setup-domain.yml
+      include_tasks: "{{ task_paths }}/web/nginx/setup-domain.yml"
       vars:
         domain: "{{ domain_name }}"
         proto: "{{ protocol }}"
@@ -97,12 +98,12 @@
       
     # Firewall Configuration
     - name: Allow HTTP through firewall
-      include_tasks: ../../../tasks/sys/firewall/allow-http.yml
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-http.yml"
       when: setup_firewall | bool
       tags: [firewall, http]
       
     - name: Allow HTTPS through firewall
-      include_tasks: ../../../tasks/sys/firewall/allow-https.yml
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-https.yml"
       when: setup_firewall | bool and setup_ssl
       tags: [firewall, https]
       

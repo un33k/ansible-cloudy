@@ -221,7 +221,10 @@ install_deps() {
         "ansible>=6.0.0" \
         "ansible-lint>=6.0.0" \
         "yamllint>=1.28.0" \
-        "pyyaml>=6.0"
+        "pyyaml>=6.0" \
+        "passlib>=1.7.0" \
+        "ruamel.yaml>=0.17.0" \
+        "jsonschema>=4.0.0"
     
     log "Ansible dependencies installed successfully"
 }
@@ -258,7 +261,8 @@ main() {
     echo -e "${GREEN}To activate the environment:${NC} source $VENV_DIR/bin/activate"
     echo -e "${GREEN}To test the setup:${NC}"
     echo "  ./ali dev syntax    # Quick syntax check"
-    echo "  ./ali dev lint      # Ansible linting"
+    echo "  ./ali dev yaml      # YAML syntax validation"
+    echo "  ./ali dev lint      # Complete linting (YAML + Ansible)"
     echo "  ./ali dev validate  # Full validation"
     echo
     echo -e "${GREEN}To run recipes:${NC}"
