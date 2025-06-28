@@ -28,36 +28,36 @@
   tasks:
     # Foundation Setup - Include core generic server tasks
     - name: Initialize system
-      include_tasks: ../../tasks/sys/core/init.yml
+      include_tasks: ../../../tasks/sys/core/init.yml
       tags: [foundation, init]
       
     - name: Update system packages
-      include_tasks: ../../tasks/sys/core/update.yml
+      include_tasks: ../../../tasks/sys/core/update.yml
       tags: [foundation, update]
       
     - name: Install common utilities
-      include_tasks: ../../tasks/sys/core/install-common.yml
+      include_tasks: ../../../tasks/sys/core/install-common.yml
       tags: [foundation, packages]
       
     - name: Install UFW firewall
-      include_tasks: ../../tasks/sys/firewall/install.yml
+      include_tasks: ../../../tasks/sys/firewall/install.yml
       tags: [foundation, firewall]
       
     # PostgreSQL Setup
     - name: Install PostgreSQL repository
-      include_tasks: ../../tasks/db/postgresql/install-repo.yml
+      include_tasks: ../../../tasks/db/postgresql/install-repo.yml
       when: setup_postgresql | bool
       tags: [postgresql, repo]
       
     - name: Install PostgreSQL server
-      include_tasks: ../../tasks/db/postgresql/install.yml
+      include_tasks: ../../../tasks/db/postgresql/install.yml
       vars:
         pg_version: "{{ pg_version }}"
       when: setup_postgresql | bool
       tags: [postgresql, install]
       
     - name: Create PostgreSQL databases
-      include_tasks: ../../tasks/db/postgresql/create-database.yml
+      include_tasks: ../../../tasks/db/postgresql/create-database.yml
       vars:
         database: "{{ item.name }}"
         owner: "{{ item.owner }}"
@@ -68,7 +68,7 @@
       tags: [postgresql, databases]
       
     - name: Create PostgreSQL users
-      include_tasks: ../../tasks/db/postgresql/create-user.yml
+      include_tasks: ../../../tasks/db/postgresql/create-user.yml
       vars:
         username: "{{ item.name }}"
         password: "{{ item.password }}"
@@ -77,7 +77,7 @@
       tags: [postgresql, users]
       
     - name: Grant PostgreSQL privileges
-      include_tasks: ../../tasks/db/postgresql/grant-privileges.yml
+      include_tasks: ../../../tasks/db/postgresql/grant-privileges.yml
       vars:
         database: "{{ item.database }}"
         username: "{{ item.name }}"
@@ -88,21 +88,21 @@
       
     # MySQL Setup
     - name: Install MySQL server
-      include_tasks: ../../tasks/db/mysql/install-server.yml
+      include_tasks: ../../../tasks/db/mysql/install-server.yml
       vars:
         mysql_version: "{{ mysql_version }}"
       when: setup_mysql | bool
       tags: [mysql, install]
       
     - name: Set MySQL root password
-      include_tasks: ../../tasks/db/mysql/set-root-password.yml
+      include_tasks: ../../../tasks/db/mysql/set-root-password.yml
       vars:
         root_password: "{{ mysql_root_password }}"
       when: setup_mysql | bool and mysql_root_password is defined
       tags: [mysql, security]
       
     - name: Create MySQL databases
-      include_tasks: ../../tasks/db/mysql/create-database.yml
+      include_tasks: ../../../tasks/db/mysql/create-database.yml
       vars:
         root_password: "{{ mysql_root_password }}"
         database: "{{ item.name }}"
@@ -113,7 +113,7 @@
       tags: [mysql, databases]
       
     - name: Create MySQL users
-      include_tasks: ../../tasks/db/mysql/create-user.yml
+      include_tasks: ../../../tasks/db/mysql/create-user.yml
       vars:
         root_password: "{{ mysql_root_password }}"
         username: "{{ item.name }}"
@@ -124,7 +124,7 @@
       tags: [mysql, users]
       
     - name: Grant MySQL privileges
-      include_tasks: ../../tasks/db/mysql/grant-privileges.yml
+      include_tasks: ../../../tasks/db/mysql/grant-privileges.yml
       vars:
         root_password: "{{ mysql_root_password }}"
         username: "{{ item.name }}"
@@ -137,19 +137,19 @@
       
     # Redis Setup
     - name: Install Redis server
-      include_tasks: ../../tasks/services/redis/install.yml
+      include_tasks: ../../../tasks/services/redis/install.yml
       when: setup_redis | bool
       tags: [redis, install]
       
     - name: Configure Redis memory
-      include_tasks: ../../tasks/services/redis/configure-memory.yml
+      include_tasks: ../../../tasks/services/redis/configure-memory.yml
       vars:
         memory_mb: "{{ redis_maxmemory | default(0) }}"
       when: setup_redis | bool
       tags: [redis, config]
       
     - name: Configure Redis port
-      include_tasks: ../../tasks/services/redis/configure-port.yml
+      include_tasks: ../../../tasks/services/redis/configure-port.yml
       vars:
         redis_port: "{{ redis_port | default(6379) }}"
       when: setup_redis | bool
@@ -157,19 +157,19 @@
       
     # Firewall Configuration
     - name: Allow PostgreSQL through firewall
-      include_tasks: ../../tasks/sys/firewall/allow-postgresql.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-postgresql.yml
       when: setup_postgresql | bool
       tags: [firewall, postgresql]
       
     - name: Allow MySQL through firewall
-      include_tasks: ../../tasks/sys/firewall/allow-port.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-port.yml
       vars:
         port: 3306
       when: setup_mysql | bool
       tags: [firewall, mysql]
       
     - name: Allow Redis through firewall
-      include_tasks: ../../tasks/sys/firewall/allow-port.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-port.yml
       vars:
         port: "{{ redis_port | default(6379) }}"
       when: setup_redis | bool

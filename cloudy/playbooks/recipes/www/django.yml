@@ -33,35 +33,35 @@
   tasks:
     # Generic Server Setup - Include core foundation tasks
     - name: Initialize system
-      include_tasks: ../../tasks/sys/core/init.yml
+      include_tasks: ../../../tasks/sys/core/init.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, init]
       
     - name: Update system packages
-      include_tasks: ../../tasks/sys/core/update.yml
+      include_tasks: ../../../tasks/sys/core/update.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, update]
       
     - name: Install common utilities
-      include_tasks: ../../tasks/sys/core/install-common.yml
+      include_tasks: ../../../tasks/sys/core/install-common.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, packages]
       
     - name: Install UFW firewall
-      include_tasks: ../../tasks/sys/firewall/install.yml
+      include_tasks: ../../../tasks/sys/firewall/install.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, firewall]
       
     # Hostname Configuration
     - name: Configure hostname
-      include_tasks: ../../tasks/sys/core/hostname.yml
+      include_tasks: ../../../tasks/sys/core/hostname.yml
       vars:
         target_hostname: "{{ hostname }}"
       when: hostname is defined
       tags: [system, hostname]
       
     - name: Add hostname to hosts file
-      include_tasks: ../../tasks/sys/core/add-hosts.yml
+      include_tasks: ../../../tasks/sys/core/add-hosts.yml
       vars:
         hostname: "{{ hostname }}"
         ip_address: "127.0.0.1"
@@ -70,30 +70,30 @@
       
     # Python Environment
     - name: Install Python common packages
-      include_tasks: ../../tasks/sys/python/install-common.yml
+      include_tasks: ../../../tasks/sys/python/install-common.yml
       vars:
         python_version: "{{ python_version | default('3') }}"
       when: setup_python | bool
       tags: [python, packages]
       
     - name: Install Python image libraries
-      include_tasks: ../../tasks/sys/python/install-image-libs.yml
+      include_tasks: ../../../tasks/sys/python/install-image-libs.yml
       when: setup_python | bool
       tags: [python, packages]
       
     - name: Install Python PostgreSQL adapter
-      include_tasks: ../../tasks/sys/python/install-psycopg2.yml
+      include_tasks: ../../../tasks/sys/python/install-psycopg2.yml
       when: setup_python | bool and setup_database | bool
       tags: [python, database]
       
     # Web Server Installation
     - name: Install Apache web server
-      include_tasks: ../../tasks/web/apache/install.yml
+      include_tasks: ../../../tasks/web/apache/install.yml
       when: webserver_type == 'apache'
       tags: [webserver, apache]
       
     - name: Setup Apache domain configuration
-      include_tasks: ../../tasks/web/apache/setup-domain.yml
+      include_tasks: ../../../tasks/web/apache/setup-domain.yml
       vars:
         domain: "{{ domain_name }}"
         port: "{{ webserver_port }}"
@@ -101,12 +101,12 @@
       tags: [webserver, apache, domain]
       
     - name: Install Supervisor (for Gunicorn)
-      include_tasks: ../../tasks/web/supervisor/install.yml
+      include_tasks: ../../../tasks/web/supervisor/install.yml
       when: webserver_type == 'gunicorn'
       tags: [webserver, supervisor]
       
     - name: Setup Supervisor domain configuration
-      include_tasks: ../../tasks/web/supervisor/setup-domain.yml
+      include_tasks: ../../../tasks/web/supervisor/setup-domain.yml
       vars:
         domain: "{{ domain_name }}"
         port: "{{ webserver_port }}"
@@ -117,14 +117,14 @@
       
     # Database Setup
     - name: Install PostgreSQL
-      include_tasks: ../../tasks/db/postgresql/install.yml
+      include_tasks: ../../../tasks/db/postgresql/install.yml
       vars:
         pg_version: "{{ pg_version | default('15') }}"
       when: setup_database | bool
       tags: [database, postgresql]
       
     - name: Install PostGIS
-      include_tasks: ../../tasks/db/postgis/install.yml
+      include_tasks: ../../../tasks/db/postgis/install.yml
       vars:
         psql_version: "{{ pg_version | default('15') }}"
         pgis_version: "{{ pgis_version | default('') }}"
@@ -132,7 +132,7 @@
       tags: [database, postgis]
       
     - name: Configure PostGIS
-      include_tasks: ../../tasks/db/postgis/configure.yml
+      include_tasks: ../../../tasks/db/postgis/configure.yml
       vars:
         pg_version: "{{ pg_version | default('15') }}"
         pgis_version: "{{ pgis_version | default('') }}"
@@ -141,17 +141,17 @@
       
     # Firewall Configuration
     - name: Allow HTTP through firewall
-      include_tasks: ../../tasks/sys/firewall/allow-http.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-http.yml
       when: setup_firewall | bool
       tags: [firewall, http]
       
     - name: Allow HTTPS through firewall
-      include_tasks: ../../tasks/sys/firewall/allow-https.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-https.yml
       when: setup_firewall | bool
       tags: [firewall, https]
       
     - name: Allow custom web server port
-      include_tasks: ../../tasks/sys/firewall/allow-port.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-port.yml
       vars:
         port: "{{ webserver_port }}"
         proto: tcp

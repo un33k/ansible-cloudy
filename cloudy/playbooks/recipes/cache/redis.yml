@@ -32,46 +32,46 @@
   tasks:
     # Generic Server Setup - Include core tasks
     - name: Initialize system
-      include_tasks: ../../tasks/sys/core/init.yml
+      include_tasks: ../../../tasks/sys/core/init.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, init]
       
     - name: Update system packages
-      include_tasks: ../../tasks/sys/core/update.yml
+      include_tasks: ../../../tasks/sys/core/update.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, update]
       
     - name: Install common utilities
-      include_tasks: ../../tasks/sys/core/install-common.yml
+      include_tasks: ../../../tasks/sys/core/install-common.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, packages]
       
     # Redis Installation and Configuration
     - name: Install Redis server
-      include_tasks: ../../tasks/sys/redis/install.yml
+      include_tasks: ../../../tasks/sys/redis/install.yml
       tags: [redis, install]
       
     - name: Configure Redis memory
-      include_tasks: ../../tasks/sys/redis/configure-memory.yml
+      include_tasks: ../../../tasks/sys/redis/configure-memory.yml
       vars:
         memory: "{{ redis_memory }}"
         divider: "{{ redis_memory_divider }}"
       tags: [redis, memory]
       
     - name: Configure Redis port
-      include_tasks: ../../tasks/sys/redis/configure-port.yml
+      include_tasks: ../../../tasks/sys/redis/configure-port.yml
       vars:
         port: "{{ redis_port }}"
       tags: [redis, port]
       
     - name: Configure Redis interface
-      include_tasks: ../../tasks/sys/redis/configure-interface.yml
+      include_tasks: ../../../tasks/sys/redis/configure-interface.yml
       vars:
         interface: "{{ redis_interface }}"
       tags: [redis, interface]
       
     - name: Configure Redis password
-      include_tasks: ../../tasks/sys/redis/configure-password.yml
+      include_tasks: ../../../tasks/sys/redis/configure-password.yml
       vars:
         password: "{{ redis_password }}"
       when: redis_password != ""
@@ -79,7 +79,7 @@
       
     # Firewall Configuration
     - name: Allow Redis port through firewall
-      include_tasks: ../../tasks/sys/firewall/allow-port.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-port.yml
       vars:
         port: "{{ redis_port }}"
         proto: tcp

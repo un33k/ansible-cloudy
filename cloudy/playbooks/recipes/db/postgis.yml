@@ -33,42 +33,42 @@
   tasks:
     # Generic Server Setup - Include core foundation tasks
     - name: Initialize system
-      include_tasks: ../../tasks/sys/core/init.yml
+      include_tasks: ../../../tasks/sys/core/init.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, init]
       
     - name: Update system packages
-      include_tasks: ../../tasks/sys/core/update.yml
+      include_tasks: ../../../tasks/sys/core/update.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, update]
       
     - name: Install common utilities
-      include_tasks: ../../tasks/sys/core/install-common.yml
+      include_tasks: ../../../tasks/sys/core/install-common.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, packages]
       
     - name: Install UFW firewall
-      include_tasks: ../../tasks/sys/firewall/install.yml
+      include_tasks: ../../../tasks/sys/firewall/install.yml
       when: run_generic_setup | bool
       tags: [generic, foundation, firewall]
       
     # PostgreSQL Installation
     - name: Install PostgreSQL server
-      include_tasks: ../../tasks/db/postgresql/install.yml
+      include_tasks: ../../../tasks/db/postgresql/install.yml
       vars:
         pg_version: "{{ pg_version }}"
       tags: [database, postgresql, install]
       
     # PostGIS Installation and Configuration
     - name: Install PostGIS
-      include_tasks: ../../tasks/db/postgis/install.yml
+      include_tasks: ../../../tasks/db/postgis/install.yml
       vars:
         psql_version: "{{ pg_version }}"
         pgis_version: "{{ pgis_version }}"
       tags: [database, postgis, install]
       
     - name: Configure PostGIS template
-      include_tasks: ../../tasks/db/postgis/configure.yml
+      include_tasks: ../../../tasks/db/postgis/configure.yml
       vars:
         pg_version: "{{ pg_version }}"
         pgis_version: "{{ pgis_version }}"
@@ -77,12 +77,12 @@
       
     # PgBouncer Connection Pooling (Optional)
     - name: Install PgBouncer
-      include_tasks: ../../tasks/db/pgbouncer/install.yml
+      include_tasks: ../../../tasks/db/pgbouncer/install.yml
       when: setup_pgbouncer | bool
       tags: [database, pgbouncer, install]
       
     - name: Configure PgBouncer
-      include_tasks: ../../tasks/db/pgbouncer/configure.yml
+      include_tasks: ../../../tasks/db/pgbouncer/configure.yml
       vars:
         dbhost: "localhost"
         dbport: "{{ db_port }}"
@@ -91,12 +91,12 @@
       
     # Firewall Configuration
     - name: Allow PostgreSQL through firewall
-      include_tasks: ../../tasks/sys/firewall/allow-postgresql.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-postgresql.yml
       when: setup_firewall | bool and not setup_pgbouncer
       tags: [firewall, postgresql]
       
     - name: Allow PgBouncer through firewall
-      include_tasks: ../../tasks/sys/firewall/allow-port.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-port.yml
       vars:
         port: "5432"
         proto: tcp
@@ -104,7 +104,7 @@
       tags: [firewall, pgbouncer]
       
     - name: Allow PostgreSQL backend through firewall (with PgBouncer)
-      include_tasks: ../../tasks/sys/firewall/allow-port.yml
+      include_tasks: ../../../tasks/sys/firewall/allow-port.yml
       vars:
         port: "{{ db_port }}"
         proto: tcp
