@@ -57,7 +57,7 @@
 - [x] **Simplify security.yml** (`cloudy/playbooks/recipes/core/security.yml`)
   - [x] Remove complex connection switching logic
   - [x] Implement root SSH-key-only model
-  - [x] Add admino user creation with dual access
+  - [x] Add admin user creation with dual access
   - [x] Early port change + immediate UFW activation
   - [x] Complete rewrite with enterprise-grade security model
 
@@ -67,14 +67,14 @@
     - [ ] Validate key format and permissions
   - [ ] `cloudy/tasks/sys/ssh/configure-ssh-security.yml`
     - [ ] Root: `PermitRootLogin prohibit-password`
-    - [ ] Admino: Allow password + key authentication
+    - [ ] Admin: Allow password + key authentication
     - [ ] Global: Strong SSH hardening settings
   - [ ] `cloudy/tasks/sys/ssh/change-ssh-port-secure.yml`
     - [ ] Change port 22→22022
     - [ ] Update UFW rules atomically
     - [ ] Restart SSH service safely
   - [ ] `cloudy/tasks/sys/user/create-emergency-user.yml`
-    - [ ] Create admino user
+    - [ ] Create admin user
     - [ ] Set strong password
     - [ ] Install SSH key
     - [ ] Add to sudoers with NOPASSWD
@@ -138,7 +138,7 @@
 - **Single Method**: Root SSH key throughout entire workflow
 - **No Switching**: Eliminate connection discontinuity
 - **Error Recovery**: Always can reconnect as root
-- **Emergency Access**: Admino available for manual intervention
+- **Emergency Access**: Admin user available for manual intervention
 
 ### Universal Parameter Architecture
 - **BaseServiceOperations**: Abstract base class providing common functionality for all services
@@ -177,7 +177,7 @@
 ### ✅ Critical Issues Resolved
 1. **UFW Reinstallation Bug**: Fixed firewall being disabled during service installs
 2. **Firewall Task Syntax**: Fixed PostgreSQL, MySQL, Redis firewall integration  
-3. **Security Model**: Implemented enterprise-grade root+admino dual access
+3. **Security Model**: Implemented enterprise-grade root+admin dual access
 4. **Connection Continuity**: Eliminated connection switching complexity
 
 ### ✅ New Security Features
