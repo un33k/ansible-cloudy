@@ -133,6 +133,11 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Show Claudia version information",
     )
+    parser.add_argument(
+        "--no-smart-connection",
+        action="store_true",
+        help="Disable smart connection detection (use static inventory)",
+    )
 
     return parser
 
@@ -148,6 +153,30 @@ def main() -> None:
     else:
         claudia_args = sys.argv[1:]
         ansible_args = []
+
+    # Check for service-specific help before parsing
+    if len(claudia_args) >= 2 and claudia_args[1] in ["--help", "-h"] and claudia_args[0] not in ["dev"]:
+        service_name = claudia_args[0]
+        try:
+            config = AliConfig()
+            
+            # Handle PostgreSQL help specially
+            if service_name == "psql":
+                psql_ops = PostgreSQLOperations(config)
+                psql_ops._show_psql_help()
+                return
+            
+            # Handle other services with recipe help
+            finder = RecipeFinder(config)
+            recipe_path = finder.find_recipe(service_name)
+            if recipe_path:
+                help_parser = RecipeHelpParser(config)
+                help_parser.display_recipe_help(service_name, recipe_path)
+                return
+            else:
+                error(f"Service '{service_name}' not found. Use 'claudia --list-services' to see available services.")
+        except Exception as e:
+            error(f"Configuration error: {e}")
 
     # Parse claudia arguments
     parser = create_parser()
@@ -230,7 +259,10 @@ def main() -> None:
     if args.verbose:
         ansible_args.insert(0, "-v")
 
-    inventory_path = inventory_manager.get_inventory_path(args.prod)
+    inventory_path = inventory_manager.get_inventory_path(
+        args.prod, 
+        smart_connection=not args.no_smart_connection
+    )
     exit_code = runner.run_recipe(
         recipe_path=recipe_path,
         inventory_path=inventory_path,

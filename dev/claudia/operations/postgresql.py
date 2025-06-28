@@ -106,6 +106,79 @@ class PostgreSQLOperations:
                     i += 2
                 else:
                     error("--owner requires a username")
+            
+            # Additional PostgreSQL operations
+            elif arg == "--delete-db":
+                psql_args['operation'] = 'delete-db'
+                if i + 1 < len(ansible_args):
+                    psql_args['database'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--delete-db requires a database name")
+            elif arg == "--dump-database":
+                psql_args['operation'] = 'dump-database'
+                if i + 1 < len(ansible_args):
+                    psql_args['database'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--dump-database requires a database name")
+            elif arg == "--change-password":
+                psql_args['operation'] = 'change-password'
+                if i + 1 < len(ansible_args):
+                    psql_args['username'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--change-password requires a username")
+            elif arg == "--grant-privileges":
+                psql_args['operation'] = 'grant-privileges'
+                if i + 1 < len(ansible_args):
+                    psql_args['username'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--grant-privileges requires a username")
+            elif arg == "--privileges":
+                if i + 1 < len(ansible_args):
+                    psql_args['privileges'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--privileges requires a value")
+            elif arg == "--install-postgis":
+                psql_args['operation'] = 'install-postgis'
+                i += 1
+            elif arg == "--get-version":
+                psql_args['operation'] = 'get-installed-version'
+                i += 1
+            elif arg == "--get-latest-version":
+                psql_args['operation'] = 'get-latest-version'
+                i += 1
+            elif arg == "--install-client":
+                psql_args['operation'] = 'install-client'
+                i += 1
+            elif arg == "--configure-port":
+                psql_args['operation'] = 'configure-port'
+                if i + 1 < len(ansible_args):
+                    psql_args['port'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    psql_args['port'] = '5432'  # Default port
+                    i += 1
+            elif arg == "--create-cluster":
+                psql_args['operation'] = 'create-cluster'
+                if i + 1 < len(ansible_args):
+                    psql_args['cluster_name'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--create-cluster requires a cluster name")
+            elif arg == "--remove-cluster":
+                psql_args['operation'] = 'remove-cluster'
+                if i + 1 < len(ansible_args):
+                    psql_args['cluster_name'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--remove-cluster requires a cluster name")
+            elif arg == "--install-repo":
+                psql_args['operation'] = 'install-repo'
+                i += 1
             else:
                 i += 1
         
@@ -113,10 +186,18 @@ class PostgreSQLOperations:
 
     def _detect_operation(self, ansible_args: List[str]) -> str:
         """Detect which granular operation is requested"""
-        operations = ['--adduser', '--delete-user', '--list-users', '--list-databases', '--adddb']
+        operations = [
+            '--adduser', '--delete-user', '--list-users', '--list-databases', '--adddb',
+            '--delete-db', '--dump-database', '--change-password', '--grant-privileges',
+            '--install-postgis', '--get-version', '--get-latest-version', '--install-client',
+            '--configure-port', '--create-cluster', '--remove-cluster', '--install-repo'
+        ]
         
         for arg in ansible_args:
             if arg in operations:
+                # Handle special mapping for get-version
+                if arg == '--get-version':
+                    return 'get-installed-version'
                 return arg[2:]  # Remove -- prefix
         
         return None
@@ -143,7 +224,10 @@ class PostgreSQLOperations:
             extra_vars.insert(0, "-v")
         
         # Execute recipe
-        inventory_path = self.inventory_manager.get_inventory_path(args.prod)
+        inventory_path = self.inventory_manager.get_inventory_path(
+            args.prod, 
+            smart_connection=not getattr(args, 'no_smart_connection', False)
+        )
         return self.runner.run_recipe(
             recipe_path=recipe_path,
             inventory_path=inventory_path,
@@ -161,6 +245,18 @@ class PostgreSQLOperations:
             'list-users': 'list-users.yml',
             'list-databases': 'list-databases.yml',
             'adddb': 'create-database.yml',
+            'delete-db': 'delete-database.yml',
+            'dump-database': 'dump-database.yml',
+            'change-password': 'change-user-password.yml',
+            'grant-privileges': 'grant-privileges.yml',
+            'install-postgis': 'install-postgis.yml',
+            'get-installed-version': 'get-installed-version.yml',
+            'get-latest-version': 'get-latest-version.yml',
+            'install-client': 'install-client.yml',
+            'configure-port': 'configure-port.yml',
+            'create-cluster': 'create-cluster.yml',
+            'remove-cluster': 'remove-cluster.yml',
+            'install-repo': 'install-repo.yml',
         }
         
         task_file = operation_map.get(operation)
@@ -195,13 +291,64 @@ class PostgreSQLOperations:
             extra_vars.extend(["-e", f"database={psql_args['database']}"])
             if 'owner' in psql_args:
                 extra_vars.extend(["-e", f"owner={psql_args['owner']}"])
+                
+        elif operation == 'delete-db':
+            if 'database' not in psql_args:
+                error("--delete-db requires a database name")
+            extra_vars.extend(["-e", f"database={psql_args['database']}"])
+            
+        elif operation == 'dump-database':
+            if 'database' not in psql_args:
+                error("--dump-database requires a database name")
+            extra_vars.extend(["-e", f"database={psql_args['database']}"])
+            
+        elif operation == 'change-password':
+            if 'username' not in psql_args or 'password' not in psql_args:
+                error("--change-password requires both username and --password")
+            extra_vars.extend(["-e", f"username={psql_args['username']}"])
+            extra_vars.extend(["-e", f"password={psql_args['password']}"])
+            
+        elif operation == 'grant-privileges':
+            if 'username' not in psql_args:
+                error("--grant-privileges requires a username")
+            extra_vars.extend(["-e", f"username={psql_args['username']}"])
+            if 'database' in psql_args:
+                extra_vars.extend(["-e", f"database={psql_args['database']}"])
+            if 'privileges' in psql_args:
+                extra_vars.extend(["-e", f"privileges={psql_args['privileges']}"])
+            else:
+                extra_vars.extend(["-e", "privileges=ALL"])  # Default privileges
+                
+        elif operation == 'configure-port':
+            if 'port' in psql_args:
+                extra_vars.extend(["-e", f"pg_port={psql_args['port']}"])
+            else:
+                extra_vars.extend(["-e", "pg_port=5432"])  # Default port
+                
+        elif operation == 'create-cluster':
+            if 'cluster_name' not in psql_args:
+                error("--create-cluster requires a cluster name")
+            extra_vars.extend(["-e", f"cluster_name={psql_args['cluster_name']}"])
+            
+        elif operation == 'remove-cluster':
+            if 'cluster_name' not in psql_args:
+                error("--remove-cluster requires a cluster name")
+            extra_vars.extend(["-e", f"cluster_name={psql_args['cluster_name']}"])
+            
+        # Operations that don't require additional parameters
+        elif operation in ['list-users', 'list-databases', 'install-postgis', 'get-installed-version', 
+                          'get-latest-version', 'install-client', 'install-repo']:
+            pass  # No additional parameters needed
         
         # Add verbose flag if requested
         if hasattr(args, 'verbose') and args.verbose:
             extra_vars.insert(0, "-v")
         
         # Execute task
-        inventory_path = self.inventory_manager.get_inventory_path(args.prod)
+        inventory_path = self.inventory_manager.get_inventory_path(
+            args.prod, 
+            smart_connection=not getattr(args, 'no_smart_connection', False)
+        )
         return self.runner.run_task(
             task_path=str(task_path),
             inventory_path=inventory_path,
@@ -236,7 +383,19 @@ class PostgreSQLOperations:
         print(f"{Colors.BLUE}Database Management:{Colors.NC}")
         print(f"  {Colors.GREEN}claudia psql --adddb myapp{Colors.NC}                        Create database")
         print(f"  {Colors.GREEN}claudia psql --adddb myapp --owner myuser{Colors.NC}         Create database with owner")
+        print(f"  {Colors.GREEN}claudia psql --delete-db oldapp{Colors.NC}                   Delete database")
         print(f"  {Colors.GREEN}claudia psql --list-databases{Colors.NC}                     List all databases")
+        print(f"  {Colors.GREEN}claudia psql --dump-database myapp{Colors.NC}               Dump database to file")
+        print()
+        
+        print(f"{Colors.BLUE}Advanced Operations:{Colors.NC}")
+        print(f"  {Colors.GREEN}claudia psql --change-password foo --password newpass{Colors.NC}  Change user password")
+        print(f"  {Colors.GREEN}claudia psql --grant-privileges foo --database myapp{Colors.NC}   Grant user privileges")
+        print(f"  {Colors.GREEN}claudia psql --install-postgis{Colors.NC}                    Install PostGIS extension")
+        print(f"  {Colors.GREEN}claudia psql --configure-port 5433{Colors.NC}               Configure PostgreSQL port")
+        print(f"  {Colors.GREEN}claudia psql --get-version{Colors.NC}                        Get installed PostgreSQL version")
+        print(f"  {Colors.GREEN}claudia psql --create-cluster mycluster{Colors.NC}          Create PostgreSQL cluster")
+        print(f"  {Colors.GREEN}claudia psql --install-client{Colors.NC}                    Install PostgreSQL client tools")
         print()
         
         print(f"{Colors.BLUE}Options:{Colors.NC}")
