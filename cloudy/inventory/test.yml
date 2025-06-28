@@ -11,9 +11,9 @@ all:
     git_user_email: "test@example.com"
     timezone: "America/New_York"
     
-    # Security Configuration - Superuser Section
+    # Security Configuration - Super User Section
     # Root user is only used with password initially to configure the system
-    # Once the ssk key is installed, password access for superuser is disabled
+    # Once the SSH key is installed, password access for super user is disabled
     # The initial port will be 22, but it will be changed to other ports
     # Configuration should automatically connect between 22 and secured port
     ansible_user: root
