@@ -222,6 +222,106 @@ class AnsibleRunner:
         except FileNotFoundError:
             error("ansible-playbook not found. Please install Ansible or activate your virtual environment.")
 
+class SmartSecurityRunner:
+    """Handle smart security detection and execution"""
+    
+    def __init__(self, config: AliConfig, inventory_manager: InventoryManager, ansible_runner: AnsibleRunner):
+        self.config = config
+        self.inventory_manager = inventory_manager
+        self.ansible_runner = ansible_runner
+    
+    def run_smart_security(self, production: bool = False, extra_args: List[str] = None, dry_run: bool = False) -> int:
+        """Run security with smart detection (try root first, fallback to admin verification)"""
+        if extra_args is None:
+            extra_args = []
+            
+        info("🔍 Detecting server security status...")
+        
+        # Try connecting as root first (fresh server scenario)
+        if self._test_root_connection(production):
+            info("✅ Found unsecured server (root@22) - running initial hardening")
+            return self._run_initial_hardening(production, extra_args, dry_run)
+        
+        # Try connecting as admin user (already secured scenario)  
+        if self._test_admin_connection(production):
+            info("✅ Found secured server - running security verification")
+            return self._run_security_verification(production, extra_args, dry_run)
+        
+        # Both connections failed
+        error("❌ Cannot connect as root@22 or admin@ssh_port.\n"
+              "Ensure server is accessible and check your SSH keys/credentials.")
+    
+    def _test_root_connection(self, production: bool) -> bool:
+        """Test if we can connect as root on port 22"""
+        inventory_path = self.inventory_manager.get_inventory_path(production)
+        
+        # Use ansible ad-hoc command to test root connection on port 22
+        cmd = [
+            "ansible", "all",
+            "-i", inventory_path,
+            "-m", "setup",
+            "-u", "root",
+            "-e", "ansible_port=22",
+            "--timeout=10",
+            "-f", "1"
+        ]
+        
+        try:
+            os.chdir(self.config.cloudy_dir)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+            return result.returncode == 0
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            return False
+    
+    def _test_admin_connection(self, production: bool) -> bool:
+        """Test if we can connect as admin user on the configured SSH port"""
+        inventory_path = self.inventory_manager.get_inventory_path(production)
+        
+        # Use ansible ad-hoc command to test admin connection
+        cmd = [
+            "ansible", "all", 
+            "-i", inventory_path,
+            "-m", "setup",
+            "--timeout=10",
+            "-f", "1"
+        ]
+        
+        try:
+            os.chdir(self.config.cloudy_dir)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+            return result.returncode == 0
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            return False
+    
+    def _run_initial_hardening(self, production: bool, extra_args: List[str], dry_run: bool) -> int:
+        """Run the initial security hardening recipe"""
+        inventory_path = self.inventory_manager.get_inventory_path(production)
+        
+        # Temporarily override connection settings for root access
+        temp_args = [
+            "-u", "root",
+            "-e", "ansible_port=22",
+            "-e", "ansible_user=root"
+        ] + extra_args
+        
+        return self.ansible_runner.run_recipe(
+            recipe_path="core/security.yml",
+            inventory_path=inventory_path,
+            extra_args=temp_args,
+            dry_run=dry_run
+        )
+    
+    def _run_security_verification(self, production: bool, extra_args: List[str], dry_run: bool) -> int:
+        """Run the security verification recipe"""
+        inventory_path = self.inventory_manager.get_inventory_path(production)
+        
+        return self.ansible_runner.run_recipe(
+            recipe_path="core/security-verify.yml", 
+            inventory_path=inventory_path,
+            extra_args=extra_args,
+            dry_run=dry_run
+        )
+
 class DevTools:
     """Development tools and commands"""
     
@@ -663,6 +763,12 @@ def main() -> None:
                 help_parser = RecipeHelpParser(config)
                 help_parser.display_recipe_help(recipe_name, recipe_path)
                 return
+            else:
+                # Recipe not found, show error then general help
+                print(f"{Colors.RED}(✗){Colors.NC} {Colors.YELLOW}{recipe_name}{Colors.NC} {Colors.RED}not found{Colors.NC}:\n")
+                parser = create_parser()
+                parser.print_help()
+                return
         except:
             pass  # Fall back to normal help
     
@@ -722,31 +828,46 @@ def main() -> None:
     finder = RecipeFinder(config)
     recipe_path = finder.find_recipe(args.command)
     
+    # Check if help is requested for this recipe
+    if '--help' in ansible_args or '-h' in ansible_args:
+        if recipe_path:
+            help_parser = RecipeHelpParser(config)
+            help_parser.display_recipe_help(args.command, recipe_path)
+            return
+        else:
+            # Show "not found" error then general help
+            print(f"{Colors.RED}✗{Colors.NC} {args.command} not found:")
+            parser.print_help()
+            return
+    
     if not recipe_path:
         error(f"Recipe '{args.command}' not found. Use 'ali --list' to see available recipes.")
     
-    # Check if help is requested for this recipe
-    if '--help' in ansible_args or '-h' in ansible_args:
-        help_parser = RecipeHelpParser(config)
-        help_parser.display_recipe_help(args.command, recipe_path)
-        return
-    
-    # Get inventory
+    # Get inventory and runner
     inventory_manager = InventoryManager(config)
-    inventory_path = inventory_manager.get_inventory_path(args.prod)
+    runner = AnsibleRunner(config)
     
     # Add verbose flag if requested
     if args.verbose:
         ansible_args.insert(0, "-v")
     
-    # Run the recipe
-    runner = AnsibleRunner(config)
-    exit_code = runner.run_recipe(
-        recipe_path=recipe_path,
-        inventory_path=inventory_path,
-        extra_args=ansible_args,
-        dry_run=args.check
-    )
+    # Handle smart security execution
+    if args.command == "security":
+        smart_security = SmartSecurityRunner(config, inventory_manager, runner)
+        exit_code = smart_security.run_smart_security(
+            production=args.prod,
+            extra_args=ansible_args,
+            dry_run=args.check
+        )
+    else:
+        # Run regular recipe
+        inventory_path = inventory_manager.get_inventory_path(args.prod)
+        exit_code = runner.run_recipe(
+            recipe_path=recipe_path,
+            inventory_path=inventory_path,
+            extra_args=ansible_args,
+            dry_run=args.check
+        )
     
     sys.exit(exit_code)
 

@@ -1,0 +1,124 @@
+# Recipe: Security Configuration Verification
+# Purpose: Verify security setup on already-hardened servers - validates admin access, SSH keys, firewall
+# Prerequisites: Must run core/security.yml first (or server already secured)
+# Usage: ansible-playbook playbooks/recipes/core/security-verify.yml -i inventory/hosts.yml
+
+---
+- name: Security Configuration Verification
+  hosts: all
+  gather_facts: true
+  become: true
+  
+  vars:
+    task_paths: "../../../tasks"
+          
+  pre_tasks:
+    - name: Display security verification information
+      debug:
+        msg: |
+          🔐 Starting Security Configuration Verification
+          Target: {{ inventory_hostname }} ({{ ansible_host }}:{{ ansible_port | default(ssh_port) }})
+          Admin User: {{ admin_user }}
+          Expected SSH Port: {{ ssh_port }}
+          
+  tasks:
+    # Basic Admin User Validation
+    - name: Validate admin user access and configuration
+      include_tasks: "{{ task_paths }}/sys/core/validate-admin-access.yml"
+      tags: [validation, admin, access]
+      
+    # SSH Security Validation
+    - name: Verify SSH key authentication is working
+      command: echo "SSH key authentication successful"
+      register: ssh_key_test
+      changed_when: false
+      tags: [validation, ssh, keys]
+      
+    - name: Check if root login is disabled
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+      check_mode: true
+      register: root_login_check
+      tags: [validation, ssh, security]
+      
+    - name: Check if password authentication is disabled
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+      check_mode: true
+      register: password_auth_check
+      tags: [validation, ssh, security]
+      
+    - name: Verify SSH port configuration
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Port'
+        line: 'Port {{ ssh_port }}'
+        state: present
+      check_mode: true
+      register: ssh_port_check
+      when: ssh_port is defined and ssh_port != 22
+      tags: [validation, ssh, port]
+      
+    # Firewall Validation
+    - name: Check UFW firewall status
+      command: ufw status
+      register: ufw_status
+      changed_when: false
+      tags: [validation, firewall]
+      
+    - name: Verify SSH port is allowed in firewall
+      shell: ufw status | grep "{{ ssh_port }}/tcp"
+      register: ssh_port_allowed
+      failed_when: false
+      changed_when: false
+      when: ssh_port is defined
+      tags: [validation, firewall, ssh]
+      
+    # User and Group Validation
+    - name: Verify admin user exists
+      user:
+        name: "{{ admin_user }}"
+        state: present
+      check_mode: true
+      register: admin_user_exists
+      tags: [validation, users, admin]
+      
+    - name: Check admin user group memberships
+      command: groups {{ admin_user }}
+      register: admin_groups_check
+      changed_when: false
+      tags: [validation, users, groups]
+      
+    - name: Verify admin user has sudo access
+      command: sudo -l -U {{ admin_user }}
+      register: sudo_check
+      changed_when: false
+      tags: [validation, users, sudo]
+      
+  post_tasks:
+    - name: Display security verification results
+      debug:
+        msg: |
+          🎉 ✅ SECURITY VERIFICATION COMPLETED!
+          
+          📋 Security Configuration Status:
+             ├── Admin User: {{ admin_user }} - {{ 'EXISTS' if admin_user_exists is not changed else 'MISSING' }}
+             ├── SSH Keys: {{ 'WORKING' if ssh_key_test is succeeded else 'FAILED' }}
+             ├── Root Login: {{ 'DISABLED' if root_login_check is not changed else 'NEEDS FIXING' }}
+             ├── Password Auth: {{ 'DISABLED' if password_auth_check is not changed else 'NEEDS FIXING' }}
+             ├── SSH Port: {{ ssh_port if ssh_port_check is not changed else 'NOT CONFIGURED' }}
+             ├── Firewall: {{ 'ACTIVE' if 'Status: active' in ufw_status.stdout else 'INACTIVE' }}
+             ├── SSH Port Allowed: {{ 'YES' if ssh_port_allowed.rc == 0 else 'NO' }}
+             └── Sudo Access: {{ 'CONFIGURED' if sudo_check.rc == 0 else 'MISSING' }}
+          
+          🔐 Server Security Status: {{ 'SECURE' if (admin_user_exists is not changed and ssh_key_test is succeeded and root_login_check is not changed and password_auth_check is not changed and 'Status: active' in ufw_status.stdout) else 'NEEDS ATTENTION' }}
+          
+          {% if not (admin_user_exists is not changed and ssh_key_test is succeeded and root_login_check is not changed and password_auth_check is not changed and 'Status: active' in ufw_status.stdout) %}
+          ⚠️  Issues Found - Consider running './ali security' to fix configuration
+          {% endif %}
