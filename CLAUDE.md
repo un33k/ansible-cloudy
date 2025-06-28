@@ -49,15 +49,19 @@ cd ansible-cloudy/
 - **Help First**: `./claudia security`, `./claudia base`, `./claudia psql` (shows help, configuration, and usage)
 - **Step 1 - Security**: `./claudia security --install` (root SSH keys + admin user, firewall, port change)
 - **Step 2 - Core**: `./claudia base --install` (hostname, git, timezone, swap, etc.)
-- **Step 3 - Services**: `./claudia django --install`, `./claudia redis --install`, `./claudia nginx --install` (deploy specific services)
+- **Step 3 - Services**: `./claudia django --install`, `./claudia redis --install --port 6380 --memory 512`, `./claudia nginx --install --domain example.com --ssl` (deploy specific services with parameters)
 
 #### Production Setup
 - **Claudia CLI**: `./claudia security --install --prod`, `./claudia django --install --prod`, `./claudia redis --install --prod`
 
-#### Granular Operations
-- **PostgreSQL**: `./claudia psql --adduser foo --password 1234`, `./claudia psql --list-users`, `./claudia psql --adddb myapp`
+#### Universal Parameter Support & Granular Operations
+- **PostgreSQL**: `./claudia psql --install --port 5544 --pgis`, `./claudia psql --adduser foo --password 1234`, `./claudia psql --list-users`
+- **Redis**: `./claudia redis --install --port 6380 --memory 512 --password secret`, `./claudia redis --configure-port 6380`, `./claudia redis --restart`
+- **Nginx**: `./claudia nginx --install --domain example.com --ssl --backends "192.168.1.10:8080,192.168.1.11:8080"`, `./claudia nginx --setup-ssl example.com`
+- **MySQL**: `./claudia mysql --install --port 3307 --root-password secret`
 - **Auto-discovery**: All operations automatically discovered from task files
 - **Smart parameters**: Intuitive parameter names mapped to Ansible variables
+- **Backward compatibility**: Traditional `-- -e "var=value"` syntax still supported
 
 #### Development Tools
 - **Bootstrap**: `./bootstrap.sh` - Sets up .venv with all development tools
@@ -182,48 +186,57 @@ generic_servers:
 ### Ali Recipe Examples
 
 ```bash
-# Ali CLI - Simplified Commands (Recommended)
+# Claudia CLI - Universal Parameter Support
 # Help and Discovery (default action)
-./ali security                  # Show security help and configuration options
-./ali base                      # Show base setup help and variables
-./ali psql                      # Show PostgreSQL help and configuration
+./claudia security                  # Show security help and configuration options
+./claudia base                      # Show base setup help and variables
+./claudia psql                      # Show PostgreSQL help and configuration
+./claudia redis                     # Show Redis help and all parameters
+./claudia nginx                     # Show Nginx help and configuration
 
 # Step 1: Security setup
-./ali security --install
+./claudia security --install
 
 # Step 2: Core setup  
-./ali base --install
+./claudia base --install
 
-# Step 3: Service deployment
-./ali psql --install
-./ali django --install
-./ali redis --install
-./ali nginx --install
-./ali openvpn --install
+# Step 3: Service deployment with parameters
+./claudia psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
+./claudia django --install                             # Django web application
+./claudia redis --install --port 6380 --memory 512    # Redis with custom port and memory
+./claudia nginx --install --domain example.com --ssl  # Nginx with SSL domain
+./claudia mysql --install --port 3307 --root-password secret  # MySQL on custom port
 
 # Production deployment
-./ali security --install --prod
-./ali django --install --prod
+./claudia security --install --prod
+./claudia django --install --prod
+./claudia redis --install --prod --memory 1024
+
+# Granular operations (no recipe installation)
+./claudia psql --adduser myuser --password secret123  # Add PostgreSQL user
+./claudia psql --adddb myapp --owner myuser           # Add database with owner
+./claudia redis --configure-port 6380                 # Change Redis port
+./claudia redis --set-password newpass               # Change Redis password
+./claudia nginx --setup-ssl example.com              # Setup SSL for domain
+./claudia nginx --add-domain api.example.com         # Add new domain
 
 # Dry runs and testing
-./ali redis --install --check
-./ali nginx --install -- --tags ssl
+./claudia redis --install --check --port 6380
+./claudia nginx --install --check --domain example.com --ssl
 
-# Individual components and tags
-./ali base --install -- --tags ssh
-./ali base --install -- --tags firewall  
-./ali django --install -- --tags nginx
+# Backward compatibility (still supported)
+./claudia redis --install -- -e "redis_port=6380" -e "redis_memory_mb=512"
+./claudia nginx --install -- --tags ssl
 
 # Development and validation
-./ali dev validate                  # Comprehensive validation (with fallback)
-./ali dev syntax                    # Quick syntax check
-./ali dev test                      # Authentication flow test
-./ali dev lint                      # Ansible linting
-./ali dev spell                     # Spell checking
+./claudia dev validate                  # Comprehensive validation (with fallback)
+./claudia dev syntax                    # Quick syntax check
+./claudia dev test                      # Authentication flow test
+./claudia dev lint                      # Ansible linting
+./claudia dev spell                     # Spell checking
 
-# Advanced dev commands (if needed)
-./dev/validate.py                   # Direct validation script
-./dev/syntax-check.sh              # Direct syntax check script
+# Service discovery
+./claudia --list-services               # Show all available services and operations
 ```
 
 #### Recipe Categories
@@ -313,31 +326,41 @@ pip install ansible
 cd ansible-cloudy/
 ```
 
-### Core Ali Commands
-- **Show recipe help**: `./ali [recipe-name]` (security, base, psql, django, etc.)
-- **Execute recipes**: `./ali [recipe-name] --install` (requires explicit flag for safety)
-- **Test authentication flow**: `./ali dev test`
+### Core Claudia Commands
+- **Show service help**: `./claudia [service-name]` (security, base, psql, redis, nginx, etc.)
+- **Execute recipes with parameters**: `./claudia [service-name] --install [options]` (requires explicit flag for safety)
+- **Granular operations**: `./claudia psql --adduser foo --password 1234` (no recipe installation)
+- **Test authentication flow**: `./claudia dev test`
+- **Service discovery**: `./claudia --list-services` (show all available services and operations)
 - **Clean output (changes only)**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Alternative output formats**:
-  - `ANSIBLE_STDOUT_CALLBACK=minimal ./ali ... --install` (compact format)
-  - `ANSIBLE_STDOUT_CALLBACK=oneline ./ali ... --install` (one line per task)
-  - Standard verbose: `./ali ... --install -v` (detailed debugging)
+  - `ANSIBLE_STDOUT_CALLBACK=minimal ./claudia ... --install` (compact format)
+  - `ANSIBLE_STDOUT_CALLBACK=oneline ./claudia ... --install` (one line per task)
+  - Standard verbose: `./claudia ... --install -v` (detailed debugging)
 
-### Ali Recipe Examples
+### Claudia Service Examples
 ```bash
 # Help and configuration (default action)
-./ali security                  # Show security help and options
-./ali base                      # Show base configuration help
-./ali psql                      # Show PostgreSQL help and variables
+./claudia security              # Show security help and options
+./claudia base                  # Show base configuration help
+./claudia psql                  # Show PostgreSQL help and parameters
+./claudia redis                 # Show Redis help and all available parameters
+./claudia nginx                 # Show Nginx help and configuration options
 
-# Recipe execution (requires --install flag)
-./ali security --install        # Security setup (root SSH keys + admin user, firewall, port change)
-./ali openvpn --install         # VPN server setup (OpenVPN with Docker)
-./ali django --install          # Web server setup (Django with Nginx/Apache/Supervisor)
-./ali psql --install            # Database server setup (PostgreSQL, PostGIS, PgBouncer)
-./ali postgis --install         # PostgreSQL with PostGIS extensions
-./ali redis --install           # Cache server setup (Redis)
-./ali nginx --install           # Load balancer setup (Nginx with SSL)
+# Recipe execution with universal parameters
+./claudia security --install                              # Security setup (root SSH keys + admin user, firewall, port change)
+./claudia openvpn --install                              # VPN server setup (OpenVPN with Docker)
+./claudia django --install                               # Web server setup (Django with Nginx/Apache/Supervisor)
+./claudia psql --install --port 5544 --pgis             # PostgreSQL with PostGIS on custom port
+./claudia redis --install --port 6380 --memory 512      # Redis with custom port and memory limit
+./claudia nginx --install --domain example.com --ssl    # Nginx with SSL domain configuration
+./claudia mysql --install --port 3307 --root-password secret  # MySQL on custom port
+
+# Granular operations (service-specific tasks)
+./claudia psql --adduser myuser --password secret123    # Add PostgreSQL user
+./claudia psql --adddb myapp --owner myuser             # Add database with owner
+./claudia redis --configure-port 6380                   # Change Redis port
+./claudia nginx --setup-ssl example.com                 # Setup SSL for specific domain
 ```
 
 ### Ansible Security Features
@@ -366,7 +389,6 @@ all:
           hostname: test-generic.example.com
           admin_user: admin
           admin_password: secure123
-          ssh_port: 22022
 ```
 
 ### Ansible Output Control

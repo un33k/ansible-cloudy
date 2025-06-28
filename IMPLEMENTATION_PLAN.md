@@ -79,27 +79,44 @@
     - [ ] Install SSH key
     - [ ] Add to sudoers with NOPASSWD
 
-### Phase 4: Ali CLI Integration ✅ COMPLETE
-- [x] **Update Ali CLI commands**
+### Phase 4: Claudia CLI Universal Parameter Support ✅ COMPLETE
+- [x] **Update CLI commands**
   - [x] Remove all ansible-playbook references from documentation
-  - [x] Update CLAUDE.md to use `./ali` commands exclusively
+  - [x] Update CLAUDE.md to use `./claudia` commands exclusively
   - [x] Fix task file documentation headers
-  - [x] Ensure consistent Ali CLI messaging throughout
+  - [x] Ensure consistent Claudia CLI messaging throughout
+- [x] **Universal Parameter System Implementation**
+  - [x] Create BaseServiceOperations abstract class for common functionality
+  - [x] Implement Redis operations with full parameter mapping (`--port`, `--memory`, `--password`, etc.)
+  - [x] Implement Nginx operations with domain/SSL parameters (`--domain`, `--ssl`, `--backends`, etc.)
+  - [x] Update main CLI routing to support all service operation classes
+  - [x] Standardize help system across all services with parameter documentation
+- [x] **Variable Standardization**
+  - [x] Remove all hardcoded SSH port references (`ssh_port`)
+  - [x] Standardize on `ansible_port` across all recipes and tasks
+  - [x] Fix inventory file inconsistencies (production.yml cleaned up)
+  - [x] Audit and update remaining recipe files for consistency
 
 ### Phase 5: Testing & Validation
 - [ ] **Fresh Server Test**
   - [ ] Spin up new Linux node
-  - [ ] Run: `./ali security` 
+  - [ ] Run: `./claudia security --install` 
   - [ ] Verify: Root access (SSH key only)
-  - [ ] Verify: Admino access (password + SSH key)
+  - [ ] Verify: Admin access (password + SSH key)
   - [ ] Verify: Port 22022 working
   - [ ] Verify: UFW active with proper rules
+- [ ] **Universal Parameter Test**
+  - [ ] Run: `./claudia redis --install --port 6380 --memory 512`
+  - [ ] Run: `./claudia nginx --install --domain example.com --ssl`
+  - [ ] Run: `./claudia psql --install --port 5544 --pgis`
+  - [ ] Verify: All services configured with correct custom parameters
+  - [ ] Verify: Granular operations work (`./claudia redis --configure-port 6379`)
 - [ ] **Service Integration Test**
-  - [ ] Run: `./ali base`
-  - [ ] Run: `./ali psql`
-  - [ ] Verify: Port 5432 in UFW rules
+  - [ ] Run: `./claudia base --install`
+  - [ ] Verify: Port 5432 in UFW rules (if PostgreSQL installed)
   - [ ] Verify: No connection discontinuity
   - [ ] Verify: No UFW reinstallation
+  - [ ] Test backward compatibility: `./claudia redis --install -- -e "redis_port=6380"`
 
 ---
 
@@ -123,6 +140,14 @@
 - **Error Recovery**: Always can reconnect as root
 - **Emergency Access**: Admino available for manual intervention
 
+### Universal Parameter Architecture
+- **BaseServiceOperations**: Abstract base class providing common functionality for all services
+- **Service Operation Classes**: Redis, Nginx, PostgreSQL operations with parameter mapping
+- **CLI Parameter Mapping**: Direct mapping from `--port` to `redis_port` Ansible variables
+- **Granular Operations**: Service-specific tasks like `--configure-port`, `--setup-ssl`
+- **Auto-discovery**: Services and operations automatically discovered from filesystem structure
+- **Help System**: Consistent parameter documentation across all services
+
 ---
 
 ## 🚀 Success Criteria
@@ -130,9 +155,12 @@
 - [ ] **Zero Connection Issues**: No more 2-day debugging cycles
 - [ ] **Rock-Solid Reliability**: Fresh server → fully configured in one workflow
 - [ ] **Enterprise Security**: Industry-standard authentication model
-- [ ] **Operational Simplicity**: All operations via `./ali` commands
+- [x] **Universal Parameters**: Intuitive CLI with `./claudia redis --install --port 6380 --memory 512`
+- [x] **Operational Simplicity**: All operations via `./claudia` commands with smart parameter mapping
+- [x] **Granular Operations**: Service-specific tasks without full recipe installation
 - [ ] **Complete Firewall**: All services properly secured
-- [ ] **Emergency Access**: Always have admino backup access
+- [ ] **Emergency Access**: Always have admin backup access
+- [x] **Variable Consistency**: No hardcoded values, standardized on `ansible_port`
 
 ---
 
@@ -140,9 +168,9 @@
 
 **Overall Progress**: 5/6 phases complete (83%)
 
-**Current Status**: ✅ Documentation cleaned, Ali CLI consistency enforced
+**Current Status**: ✅ Universal parameter support system implemented, all CLI operations standardized
 
-**Next Action**: Test complete workflow end-to-end on fresh server
+**Next Action**: Test complete workflow end-to-end on fresh server with new parameter system
 
 ## 🎯 Major Accomplishments
 
@@ -158,6 +186,15 @@
 - Early UFW activation (immediate protection)
 - Fail2ban integration (intrusion detection)
 - Enterprise SSH hardening (timeouts, tunneling disabled)
+
+### ✅ Universal Parameter System
+- **Intuitive CLI**: `./claudia redis --install --port 6380 --memory 512 --password secret`
+- **Smart Parameter Mapping**: CLI parameters automatically mapped to Ansible variables
+- **Granular Operations**: Service-specific operations like `./claudia redis --configure-port 6380`
+- **Backward Compatibility**: Traditional `-- -e "var=value"` syntax still works
+- **Auto-discovery**: Services and operations automatically discovered from filesystem
+- **Consistent Help**: Standardized help system across all services with parameter documentation
+- **Variable Standardization**: All SSH port references use `ansible_port` (no hardcoding)
 
 ---
 
