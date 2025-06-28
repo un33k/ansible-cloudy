@@ -62,7 +62,8 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=ColoredHelpFormatter,
         epilog=f"""
 {Colors.YELLOW}Examples:{Colors.NC}
-  {Colors.GREEN}ali security{Colors.NC}                    Run security recipe on test environment
+  {Colors.GREEN}ali security{Colors.NC}                    Run security setup on test environment
+  {Colors.GREEN}ali security --verify{Colors.NC}           Run security verification/check
   {Colors.GREEN}ali django --prod{Colors.NC}              Run django recipe on production
   {Colors.GREEN}ali redis --check{Colors.NC}              Dry run redis recipe
   {Colors.GREEN}ali nginx -- --tags ssl{Colors.NC}        Pass --tags ssl to ansible-playbook
@@ -106,6 +107,11 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        help="Run security verification instead of initial setup (security only)",
     )
 
     return parser
@@ -231,10 +237,21 @@ def main() -> None:
 
     # Handle smart security execution
     if args.command == "security":
-        smart_security = SmartSecurityRunner(config, inventory_manager, runner)
-        exit_code = smart_security.run_smart_security(
-            production=args.prod, extra_args=ansible_args, dry_run=args.check
-        )
+        if args.verify:
+            # Run security verification/check recipe directly
+            inventory_path = inventory_manager.get_inventory_path(args.prod)
+            exit_code = runner.run_recipe(
+                recipe_path="core/security-verify.yml",
+                inventory_path=inventory_path,
+                extra_args=ansible_args,
+                dry_run=args.check,
+            )
+        else:
+            # Run smart security detection
+            smart_security = SmartSecurityRunner(config, inventory_manager, runner)
+            exit_code = smart_security.run_smart_security(
+                production=args.prod, extra_args=ansible_args, dry_run=args.check
+            )
     else:
         # Run regular recipe
         inventory_path = inventory_manager.get_inventory_path(args.prod)

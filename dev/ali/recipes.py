@@ -215,6 +215,10 @@ class RecipeHelpParser:
         print(f"  ali {recipe_name} --prod             # Run on production")
         print(f"  ali {recipe_name} --check            # Dry run (no changes)")
         print(f"  ali {recipe_name} --verbose          # Verbose output")
+        
+        # Add security-specific options
+        if recipe_name == "security":
+            print(f"  ali {recipe_name} --verify           # Run security verification/check")
 
         # Display key variables (combine inventory and recipe variables)
         all_variables = {}
@@ -247,17 +251,23 @@ class RecipeHelpParser:
         # Usage examples with variables and tags
         print(f"\n{Colors.YELLOW}Advanced Examples:{Colors.NC}")
         print(
-            f'  ali {recipe_name} -- -e "admin_user=myuser"        # Override variables'
+            f'  ali {recipe_name} -- -e "admin_user=myuser"         # Override variables'
         )
         print(
-            f"  ali {recipe_name} -- --tags ssh                    # Run only SSH tasks"
+            f"  ali {recipe_name} -- --tags ssh                     # Run only SSH tasks"
         )
         print(
-            f"  ali {recipe_name} -- --skip-tags firewall         # Skip firewall tasks"
+            f"  ali {recipe_name} -- --skip-tags firewall           # Skip firewall tasks"
         )
         print(
-            f"  ali {recipe_name} -- --limit test-server           # Run on specific host"
+            f"  ali {recipe_name} -- --limit test-server            # Run on specific host"
         )
+        
+        # Add security-specific advanced examples
+        if recipe_name == "security":
+            print(
+                f"  ali {recipe_name} --verify --prod                   # Verify production security"
+            )
 
 
 def list_recipes(config: AliConfig) -> None:
