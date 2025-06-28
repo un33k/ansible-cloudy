@@ -10,22 +10,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **NO enthusiastic confirmations**: Avoid phrases like "You're absolutely right!" or "Excellent point!" unless answering a specific question
 - **Be direct and concise**: Get straight to implementation without excessive commentary
 
-### Ali CLI Mandatory Usage
-- **ALWAYS use `./ali` for operations**: Unless debugging internal mechanisms, use Ali CLI for all testing and execution
-- **NO direct ansible-playbook calls**: Use `./ali [recipe] --install` instead of direct Ansible commands
-- **Testing**: Use `./ali [recipe] --install --check` for dry runs
+### Claudia CLI Mandatory Usage
+- **ALWAYS use `./claudia` for operations**: Unless debugging internal mechanisms, use Claudia CLI for all testing and execution
+- **NO direct ansible-playbook calls**: Use `./claudia [service] --install` instead of direct Ansible commands
+- **Testing**: Use `./claudia [service] --install --check` for dry runs
+- **Granular operations**: Use `./claudia psql --adduser foo --password 1234` for specific tasks
 
-### Ali Architecture Standards
-- **Smart intuitive interface**: Make Ali CLI intelligent and user-friendly
-- **Proper organization**: Keep everything under `dev/ali/` directory with clear separation of responsibilities
+### Claudia Architecture Standards
+- **Smart intuitive interface**: Make Claudia CLI intelligent and user-friendly with auto-discovery
+- **Proper organization**: Keep everything under `dev/claudia/` directory with clear separation of responsibilities
 - **File size limits**: Keep ALL files under 200 LOC, target 100 LOC maximum
-- **Modular design**: Each component handles one responsibility (recipes, runners, config, etc.)
+- **Modular design**: Each component handles one responsibility (discovery, operations, execution, etc.)
+- **Auto-discovery**: Services and operations automatically discovered from filesystem structure
 
 ### Development Workflow
-1. **Use Ali CLI**: `./ali [recipe] --install` for all operations
-2. **Test with dry runs**: `./ali [recipe] --install --check` before real execution  
-3. **Maintain modularity**: Keep recipes focused, use `import_playbook` for orchestration
-4. **File organization**: `/ali/` for CLI, `/tasks/` for reusable components, `/recipes/` for orchestration
+1. **Use Claudia CLI**: `./claudia [service] --install` for recipe operations
+2. **Use granular operations**: `./claudia psql --adduser foo --password 1234` for specific tasks
+3. **Test with dry runs**: `./claudia [service] --install --check` before real execution  
+4. **Maintain modularity**: Keep recipes focused, use `import_playbook` for orchestration
+5. **File organization**: `/claudia/` for CLI, `/tasks/` for reusable components, `/recipes/` for orchestration
+6. **Auto-discovery**: Add Claudia metadata headers to tasks for automatic CLI integration
 
 ## Development Commands
 
@@ -41,20 +45,26 @@ cd ansible-cloudy/
 
 ### Core Development Commands
 
-#### Simplified Server Setup (Recommended) - Using Ali CLI
-- **Help First**: `./ali security`, `./ali base`, `./ali psql` (shows help, configuration, and usage)
-- **Step 1 - Security**: `./ali security --install` (root SSH keys + admin user, firewall, port change)
-- **Step 2 - Core**: `./ali base --install` (hostname, git, timezone, swap, etc.)
-- **Step 3 - Services**: `./ali django --install`, `./ali redis --install`, `./ali nginx --install` (deploy specific services)
+#### Simplified Server Setup (Recommended) - Using Claudia CLI
+- **Help First**: `./claudia security`, `./claudia base`, `./claudia psql` (shows help, configuration, and usage)
+- **Step 1 - Security**: `./claudia security --install` (root SSH keys + admin user, firewall, port change)
+- **Step 2 - Core**: `./claudia base --install` (hostname, git, timezone, swap, etc.)
+- **Step 3 - Services**: `./claudia django --install`, `./claudia redis --install`, `./claudia nginx --install` (deploy specific services)
 
 #### Production Setup
-- **Ali CLI**: `./ali security --install --prod`, `./ali django --install --prod`, `./ali redis --install --prod`
+- **Claudia CLI**: `./claudia security --install --prod`, `./claudia django --install --prod`, `./claudia redis --install --prod`
+
+#### Granular Operations
+- **PostgreSQL**: `./claudia psql --adduser foo --password 1234`, `./claudia psql --list-users`, `./claudia psql --adddb myapp`
+- **Auto-discovery**: All operations automatically discovered from task files
+- **Smart parameters**: Intuitive parameter names mapped to Ansible variables
 
 #### Development Tools
 - **Bootstrap**: `./bootstrap.sh` - Sets up .venv with all development tools
-- **Ali CLI**: `./ali security --install` - Simplified Ansible commands (90% shorter)
-- **Ali Dev Commands**: `./ali dev syntax`, `./ali dev validate`, `./ali dev lint`, `./ali dev test`
-- **Authentication test**: `./ali dev test` - Test server authentication flow
+- **Claudia CLI**: `./claudia security --install` - Intelligent infrastructure management
+- **Claudia Dev Commands**: `./claudia dev syntax`, `./claudia dev validate`, `./claudia dev lint`, `./claudia dev test`
+- **Authentication test**: `./claudia dev test` - Test server authentication flow
+- **Service discovery**: `./claudia --list-services` - Show all auto-discovered services
 - **Clean output**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Spell checking**: Configured via `dev/.cspell.json` with 480+ technical terms
 - **Linting**: Configured via `dev/.ansible-lint.yml` and `dev/.yamlint.yml`
