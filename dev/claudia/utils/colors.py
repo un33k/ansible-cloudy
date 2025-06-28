@@ -18,20 +18,20 @@ class Colors:
 
 def log(message: str, color: str = Colors.GREEN) -> None:
     """Print colored log message"""
-    print(f"{color}✓{Colors.NC} {message}")
+    print(f"\n{color}✓{Colors.NC} {message}\n")
 
 
 def warn(message: str) -> None:
     """Print warning message"""
-    print(f"{Colors.YELLOW}⚠{Colors.NC} {message}")
+    print(f"\n{Colors.YELLOW}⚠{Colors.NC} {message}\n")
 
 
 def error(message: str) -> None:
     """Print error message and exit"""
-    print(f"{Colors.RED}✗{Colors.NC} {message}")
+    print(f"\n{Colors.RED}✗{Colors.NC} {message}\n")
     sys.exit(1)
 
 
 def info(message: str) -> None:
     """Print info message"""
-    print(f"{Colors.BLUE}ℹ{Colors.NC} {message}")
+    print(f"\n{Colors.BLUE}ℹ{Colors.NC} {message}\n")

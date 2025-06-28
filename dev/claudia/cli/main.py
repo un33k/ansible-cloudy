@@ -32,6 +32,8 @@ class ColoredHelpFormatter(argparse.RawDescriptionHelpFormatter):
 
     def format_help(self):
         help_text = super().format_help()
+        # Add initial newline for spacing
+        help_text = "\n" + help_text
         # Add colors to section headers
         help_text = help_text.replace(
             "positional arguments:",
