@@ -57,6 +57,13 @@
       when: setup_postgresql | bool
       tags: [postgresql, install]
       
+    - name: Configure PostgreSQL port
+      include_tasks: "{{ task_paths }}/db/postgresql/configure-port.yml"
+      vars:
+        pg_port: "{{ database_port | default(5432) }}"
+      when: setup_postgresql | bool
+      tags: [postgresql, config]
+      
     - name: Create PostgreSQL databases
       include_tasks: "{{ task_paths }}/db/postgresql/create-database.yml"
       vars:
@@ -159,6 +166,8 @@
     # Firewall Configuration
     - name: Allow PostgreSQL through firewall
       include_tasks: "{{ task_paths }}/sys/firewall/allow-postgresql.yml"
+      vars:
+        pg_port: "{{ database_port | default(5432) }}"
       when: setup_postgresql | bool
       tags: [firewall, postgresql]
       

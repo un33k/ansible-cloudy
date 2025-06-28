@@ -6,7 +6,8 @@
 - name: Allow PostgreSQL traffic
   ufw:
     rule: allow
-    name: 'PostgreSQL'
+    port: "{{ pg_port | default(5432) }}"
+    proto: tcp
   register: ufw_allow_postgresql
   
 - name: Get UFW status
@@ -17,7 +18,7 @@
 - name: Display PostgreSQL allow status
   debug:
     msg: |
-      ✅ PostgreSQL traffic allowed (port 5432)
+      ✅ PostgreSQL traffic allowed (port {{ pg_port | default(5432) }})
       Status: {{ 'Rule added' if ufw_allow_postgresql.changed else 'Rule already exists' }}
       
       Current UFW Rules:
