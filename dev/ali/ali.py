@@ -16,8 +16,10 @@ import sys
 import glob
 import argparse
 import subprocess
+import yaml
+import re
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 
 # Colors for terminal output
 class Colors:
@@ -390,6 +392,166 @@ def list_dev_commands() -> None:
     print("  ali dev lint           # Complete linting (YAML + Ansible)")
     print("  ali dev test           # Test authentication")
 
+class RecipeHelpParser:
+    """Parse recipe files to extract help information automatically"""
+    
+    def __init__(self, config: AliConfig):
+        self.config = config
+    
+    def parse_recipe_help(self, recipe_path: Path) -> Dict[str, Any]:
+        """Extract help information from a recipe file"""
+        help_info = {
+            'name': recipe_path.stem,
+            'description': '',
+            'purpose': '',
+            'usage': '',
+            'variables': {},
+            'tags': set(),
+            'prerequisites': ''
+        }
+        
+        try:
+            with open(recipe_path, 'r') as f:
+                content = f.read()
+            
+            # Extract header comments
+            lines = content.split('\n')
+            for line in lines[:20]:  # Check first 20 lines for comments
+                line = line.strip()
+                if line.startswith('# Purpose:'):
+                    help_info['purpose'] = line.replace('# Purpose:', '').strip()
+                elif line.startswith('# Usage:'):
+                    help_info['usage'] = line.replace('# Usage:', '').strip()
+                elif line.startswith('# Prerequisites:'):
+                    help_info['prerequisites'] = line.replace('# Prerequisites:', '').strip()
+                elif line.startswith('# Recipe:'):
+                    help_info['description'] = line.replace('# Recipe:', '').strip()
+            
+            # Parse YAML to extract variables and tags
+            try:
+                yaml_content = yaml.safe_load(content)
+                if isinstance(yaml_content, list) and yaml_content:
+                    playbook = yaml_content[0]
+                    
+                    # Extract variables from vars section
+                    if 'vars' in playbook:
+                        for var_name, var_value in playbook['vars'].items():
+                            # Skip internal variables
+                            if not var_name.startswith('task_'):
+                                help_info['variables'][var_name] = var_value
+                    
+                    # Extract tags from tasks
+                    if 'tasks' in playbook:
+                        for task in playbook['tasks']:
+                            if isinstance(task, dict) and 'tags' in task:
+                                if isinstance(task['tags'], list):
+                                    help_info['tags'].update(task['tags'])
+                                else:
+                                    help_info['tags'].add(task['tags'])
+            
+            except yaml.YAMLError:
+                pass  # Skip YAML parsing errors
+            
+            # Get inventory variables for this recipe
+            help_info['inventory_vars'] = self._get_inventory_variables()
+            
+        except Exception:
+            pass  # Skip file reading errors
+        
+        return help_info
+    
+    def _get_inventory_variables(self) -> Dict[str, Any]:
+        """Extract variables from inventory files"""
+        variables = {}
+        
+        # Check test inventory
+        test_inventory = self.config.cloudy_dir / "inventory" / "test.yml"
+        if test_inventory.exists():
+            try:
+                with open(test_inventory, 'r') as f:
+                    inventory = yaml.safe_load(f)
+                    if 'all' in inventory and 'vars' in inventory['all']:
+                        # Filter out variables that don't apply to all recipes
+                        all_vars = inventory['all']['vars']
+                        for var_name, var_value in all_vars.items():
+                            # Skip context-specific variables that shouldn't appear in all recipes
+                            if not self._is_context_specific_variable(var_name):
+                                variables[var_name] = var_value
+            except:
+                pass
+        
+        return variables
+    
+    def _is_context_specific_variable(self, var_name: str) -> bool:
+        """Check if a variable is context-specific and shouldn't appear in all recipe help"""
+        context_specific_vars = {
+            # Service-specific variables  
+            'postgresql_version', 'postgis_version', 'database_port',
+            'redis_memory_mb', 'redis_port', 
+            'webserver', 'webserver_port',
+            'domain_name',
+            # Other service-specific vars that might be added
+        }
+        return var_name in context_specific_vars
+    
+    def display_recipe_help(self, recipe_name: str, recipe_path) -> None:
+        """Display comprehensive help for a recipe"""
+        # Convert to Path object if it's a string
+        if isinstance(recipe_path, str):
+            recipe_path = self.config.recipes_dir / recipe_path
+        help_info = self.parse_recipe_help(recipe_path)
+        
+        print(f"\n{Colors.CYAN}📖 Help: {recipe_name}{Colors.NC}")
+        print("=" * 50)
+        
+        if help_info['description']:
+            print(f"\n{Colors.BLUE}Description:{Colors.NC}")
+            print(f"  {help_info['description']}")
+        
+        if help_info['purpose']:
+            print(f"\n{Colors.BLUE}Purpose:{Colors.NC}")
+            print(f"  {help_info['purpose']}")
+        
+        if help_info['prerequisites']:
+            print(f"\n{Colors.BLUE}Prerequisites:{Colors.NC}")
+            print(f"  {help_info['prerequisites']}")
+        
+        # Usage examples
+        print(f"\n{Colors.BLUE}Usage:{Colors.NC}")
+        if help_info['usage']:
+            print(f"  {help_info['usage']}")
+        print(f"  ali {recipe_name}                    # Run on test environment")
+        print(f"  ali {recipe_name} --prod             # Run on production")
+        print(f"  ali {recipe_name} --check            # Dry run (no changes)")
+        print(f"  ali {recipe_name} --verbose          # Verbose output")
+        
+        # Display key variables (combine inventory and recipe variables)
+        all_variables = {}
+        all_variables.update(help_info.get('inventory_vars', {}))
+        all_variables.update(help_info.get('variables', {}))
+        
+        if all_variables:
+            print(f"\n{Colors.BLUE}Available Variables (override with -e):{Colors.NC}")
+            for var_name, var_value in sorted(all_variables.items()):
+                if not var_name.startswith('ansible_'):  # Skip ansible internal vars
+                    print(f"  {Colors.GREEN}{var_name:<20}{Colors.NC} = {var_value}")
+        
+        # Display tags
+        if help_info['tags']:
+            print(f"\n{Colors.BLUE}Available Tags (use with --tags):{Colors.NC}")
+            sorted_tags = sorted(help_info['tags'])
+            # Group tags in lines of 5
+            for i in range(0, len(sorted_tags), 5):
+                tag_group = sorted_tags[i:i+5]
+                print(f"  {', '.join(tag_group)}")
+        
+        # Usage examples with variables and tags
+        print(f"\n{Colors.YELLOW}Advanced Examples:{Colors.NC}")
+        print(f"  ali {recipe_name} -- -e \"admin_user=myuser\"        # Override variables")
+        print(f"  ali {recipe_name} -- --tags ssh                    # Run only SSH tasks")
+        print(f"  ali {recipe_name} -- --skip-tags firewall         # Skip firewall tasks")
+        print(f"  ali {recipe_name} -- --limit test-server           # Run on specific host")
+
 def list_recipes(config: AliConfig) -> None:
     """List all available recipes"""
     finder = RecipeFinder(config)
@@ -412,25 +574,55 @@ def list_recipes(config: AliConfig) -> None:
     print("  ali django --prod      # Run www/django.yml on production")
     print("  ali redis --check      # Dry run cache/redis.yml")
     print("  ali nginx -- --tags ssl # Pass --tags ssl to ansible-playbook")
+    print(f"\n{Colors.CYAN}💡 Tip:{Colors.NC} Use 'ali RECIPE --help' for detailed recipe help")
+
+class ColoredHelpFormatter(argparse.RawDescriptionHelpFormatter):
+    """Custom help formatter with colors"""
+    
+    def _format_usage(self, usage, actions, groups, prefix):
+        if prefix is None:
+            prefix = f'{Colors.CYAN}usage:{Colors.NC} '
+        return super()._format_usage(usage, actions, groups, prefix)
+    
+    def format_help(self):
+        help_text = super().format_help()
+        # Add colors to section headers
+        help_text = help_text.replace('positional arguments:', f'{Colors.BLUE}positional arguments:{Colors.NC}')
+        help_text = help_text.replace('options:', f'{Colors.BLUE}options:{Colors.NC}')
+        
+        # Color individual arguments and options
+        import re
+        
+        # Color positional arguments (like "command", "subcommand")
+        help_text = re.sub(r'^  (command|subcommand)(\s+)', 
+                          f'  {Colors.GREEN}\\1{Colors.NC}\\2', 
+                          help_text, flags=re.MULTILINE)
+        
+        # Color option flags (handle both "-h, --help" and "--list, -l" patterns)
+        help_text = re.sub(r'^  ((?:-[a-zA-Z-]+(?:, --[a-zA-Z-]+)?|--[a-zA-Z-]+(?:, -[a-zA-Z])?))(\s+)', 
+                          f'  {Colors.CYAN}\\1{Colors.NC}\\2', 
+                          help_text, flags=re.MULTILINE)
+        
+        return help_text
 
 def create_parser() -> argparse.ArgumentParser:
     """Create command line argument parser"""
     parser = argparse.ArgumentParser(
-        description="Ali (Ansible Line Interpreter) - Simplified Ansible CLI",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  ali security                    Run security recipe on test environment
-  ali django --prod              Run django recipe on production
-  ali redis --check              Dry run redis recipe
-  ali nginx -- --tags ssl        Pass --tags ssl to ansible-playbook
-  ali --list                      Show all available recipes
+        description=f"{Colors.CYAN}Ali (Ansible Line Interpreter) - Simplified Ansible CLI{Colors.NC}",
+        formatter_class=ColoredHelpFormatter,
+        epilog=f"""
+{Colors.YELLOW}Examples:{Colors.NC}
+  {Colors.GREEN}ali security{Colors.NC}                    Run security recipe on test environment
+  {Colors.GREEN}ali django --prod{Colors.NC}              Run django recipe on production
+  {Colors.GREEN}ali redis --check{Colors.NC}              Dry run redis recipe
+  {Colors.GREEN}ali nginx -- --tags ssl{Colors.NC}        Pass --tags ssl to ansible-playbook
+  {Colors.GREEN}ali --list{Colors.NC}                      Show all available recipes
   
-  ali dev validate                Run comprehensive validation
-  ali dev syntax                 Quick syntax checking  
-  ali dev yaml                   YAML syntax validation
-  ali dev lint                   Complete linting (YAML + Ansible)
-  ali dev test                   Authentication testing
+  {Colors.GREEN}ali dev validate{Colors.NC}                Run comprehensive validation
+  {Colors.GREEN}ali dev syntax{Colors.NC}                 Quick syntax checking  
+  {Colors.GREEN}ali dev yaml{Colors.NC}                   YAML syntax validation
+  {Colors.GREEN}ali dev lint{Colors.NC}                   Complete linting (YAML + Ansible)
+  {Colors.GREEN}ali dev test{Colors.NC}                   Authentication testing
         """
     )
     
@@ -459,9 +651,27 @@ def main() -> None:
         ali_args = sys.argv[1:]
         ansible_args = []
     
+    # Check for recipe-specific help before parsing
+    if len(ali_args) >= 2 and ali_args[1] in ['--help', '-h']:
+        recipe_name = ali_args[0]
+        # Initialize config to find recipe
+        try:
+            config = AliConfig()
+            finder = RecipeFinder(config)
+            recipe_path = finder.find_recipe(recipe_name)
+            if recipe_path:
+                help_parser = RecipeHelpParser(config)
+                help_parser.display_recipe_help(recipe_name, recipe_path)
+                return
+        except:
+            pass  # Fall back to normal help
+    
     # Parse ali arguments
     parser = create_parser()
-    args = parser.parse_args(ali_args)
+    args, remaining_args = parser.parse_known_args(ali_args)
+    
+    # Combine remaining args with original ansible args
+    ansible_args.extend(remaining_args)
     
     # Initialize configuration
     try:
@@ -514,6 +724,12 @@ def main() -> None:
     
     if not recipe_path:
         error(f"Recipe '{args.command}' not found. Use 'ali --list' to see available recipes.")
+    
+    # Check if help is requested for this recipe
+    if '--help' in ansible_args or '-h' in ansible_args:
+        help_parser = RecipeHelpParser(config)
+        help_parser.display_recipe_help(args.command, recipe_path)
+        return
     
     # Get inventory
     inventory_manager = InventoryManager(config)

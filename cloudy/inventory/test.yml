@@ -16,7 +16,6 @@ all:
     admin_password: secure123
     admin_groups: "admin,www-data"
     ssh_port: 22022
-    setup_swap: false
     
     # Connection Settings
     ansible_host_key_checking: false
