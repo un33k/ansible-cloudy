@@ -24,7 +24,6 @@ all:
         admin_user: admin
         admin_password: secure_admin_password
         admin_groups: "admin,www-data"
-        ssh_port: 22022
         ssh_disable_root: true
         ssh_enable_password_auth: false
         python_version: "3.11"
@@ -44,7 +43,6 @@ all:
         admin_user: admin
         admin_password: secure_admin_password
         admin_groups: "admin,www-data"
-        ssh_port: 22022
         webserver: gunicorn
         webserver_port: 8181
         python_version: "3.11"
@@ -67,7 +65,6 @@ all:
         admin_user: admin
         admin_password: secure_admin_password
         admin_groups: "admin,www-data"
-        ssh_port: 22022
         postgresql_version: "15"
         postgis_version: "3.3"
         pgbouncer_enabled: true
@@ -91,7 +88,6 @@ all:
         admin_user: admin
         admin_password: secure_admin_password
         admin_groups: "admin,www-data"
-        ssh_port: 22022
         redis_memory: 512  # MB
         redis_interface: "0.0.0.0"
         
@@ -108,7 +104,6 @@ all:
         admin_user: admin
         admin_password: secure_admin_password
         admin_groups: "admin,www-data,docker"
-        ssh_port: 22022
         
       hosts:
         vpn-server:
@@ -129,7 +124,6 @@ all:
         admin_user: admin
         admin_password: secure_admin_password
         admin_groups: "admin,www-data"
-        ssh_port: 22022
         
       hosts:
         lb-prod:

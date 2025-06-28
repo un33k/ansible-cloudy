@@ -20,6 +20,8 @@ from operations.recipes import RecipeFinder, RecipeHelpParser, list_recipes
 from execution.ansible import AnsibleRunner, SmartSecurityRunner
 from discovery.service_scanner import ServiceScanner
 from operations.postgresql import PostgreSQLOperations
+from operations.redis import RedisOperations
+from operations.nginx import NginxOperations
 
 
 class ColoredHelpFormatter(argparse.RawDescriptionHelpFormatter):
@@ -155,10 +157,18 @@ def main() -> None:
         try:
             config = AliConfig()
             
-            # Handle PostgreSQL help specially
+            # Handle service-specific help
             if service_name == "psql":
                 psql_ops = PostgreSQLOperations(config)
                 psql_ops._show_psql_help()
+                return
+            elif service_name == "redis":
+                redis_ops = RedisOperations(config)
+                redis_ops._show_service_help()
+                return
+            elif service_name == "nginx":
+                nginx_ops = NginxOperations(config)
+                nginx_ops._show_service_help()
                 return
             
             # Handle other services with recipe help
@@ -232,6 +242,18 @@ def main() -> None:
     if args.service == "psql":
         psql_ops = PostgreSQLOperations(config)
         exit_code = psql_ops.handle_operation(args, ansible_args)
+        sys.exit(exit_code)
+
+    # Handle Redis operations
+    if args.service == "redis":
+        redis_ops = RedisOperations(config)
+        exit_code = redis_ops.handle_operation(args, ansible_args)
+        sys.exit(exit_code)
+
+    # Handle Nginx operations
+    if args.service == "nginx":
+        nginx_ops = NginxOperations(config)
+        exit_code = nginx_ops.handle_operation(args, ansible_args)
         sys.exit(exit_code)
 
     # For other services, fall back to recipe finder for now
