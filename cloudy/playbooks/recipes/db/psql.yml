@@ -201,3 +201,9 @@
           
           🚀 Database server is ready for applications!
              └── Connection: {{ admin_user }}@{{ ansible_host }}:{{ ssh_port }}
+             
+  handlers:
+    - name: restart postgresql
+      service:
+        name: postgresql
+        state: restarted

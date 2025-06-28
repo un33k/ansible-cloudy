@@ -11,8 +11,8 @@
   
   vars:
     task_paths: "../../../tasks"
-    # Base system configuration
-    setup_swap: "{{ setup_swap | default(false) }}"
+    # Base system configuration (configurable via inventory)
+    setup_swap: false
           
   tasks:
     # System Initialization

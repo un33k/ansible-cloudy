@@ -17,7 +17,7 @@ all:
     admin_groups: "admin,www-data"
     ssh_port: 22022
     
-    # Connection Settings (for secured server - use root for automation)
+    # Connection Settings (for secured server - use root with SSH keys)
     ansible_user: root
     ansible_port: 22022
     ansible_ssh_private_key_file: ~/.ssh/id_rsa
