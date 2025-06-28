@@ -2,9 +2,32 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Development Commands
+## Claude Code Execution Rules
 
-Note: Avoid saying things like: You're absolutely right!. Unless answering a specific question. 
+**CRITICAL EXECUTION GUIDELINES** - Follow these rules before ANY execution:
+
+### Communication Rules
+- **NO enthusiastic confirmations**: Avoid phrases like "You're absolutely right!" or "Excellent point!" unless answering a specific question
+- **Be direct and concise**: Get straight to implementation without excessive commentary
+
+### Ali CLI Mandatory Usage
+- **ALWAYS use `./ali` for operations**: Unless debugging internal mechanisms, use Ali CLI for all testing and execution
+- **NO direct ansible-playbook calls**: Use `./ali [recipe] --install` instead of direct Ansible commands
+- **Testing**: Use `./ali [recipe] --install --check` for dry runs
+
+### Ali Architecture Standards
+- **Smart intuitive interface**: Make Ali CLI intelligent and user-friendly
+- **Proper organization**: Keep everything under `dev/ali/` directory with clear separation of responsibilities
+- **File size limits**: Keep ALL files under 200 LOC, target 100 LOC maximum
+- **Modular design**: Each component handles one responsibility (recipes, runners, config, etc.)
+
+### Development Workflow
+1. **Use Ali CLI**: `./ali [recipe] --install` for all operations
+2. **Test with dry runs**: `./ali [recipe] --install --check` before real execution  
+3. **Maintain modularity**: Keep recipes focused, use `import_playbook` for orchestration
+4. **File organization**: `/ali/` for CLI, `/tasks/` for reusable components, `/recipes/` for orchestration
+
+## Development Commands
 
 ### Environment Setup
 
