@@ -1,0 +1,5 @@
+#!/bin/bash
+# Ali (Ansible Line Interpreter) wrapper script
+# This prevents pyenv from creating shims for the Python implementation
+
+exec python3 "$(dirname "$0")/dev/ali/ali.py" "$@"

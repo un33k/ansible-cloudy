@@ -1,0 +1,15 @@
+{
+  "python.defaultInterpreterPath": "python",
+  "python.analysis.typeCheckingMode": "basic",
+  "ansible.python.interpreterPath": "python",
+  "ansible.validation.enabled": true,
+  "ansible.validation.lint.enabled": true,
+  "ansible.validation.lint.path": "dev/.ansible-lint.yml",
+  "files.associations": {
+    "*.yml": "ansible",
+    "*.yaml": "ansible"
+  },
+  "cSpell.import": [
+    "dev/.cspell.json"
+  ]
+}

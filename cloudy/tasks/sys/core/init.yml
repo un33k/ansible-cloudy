@@ -1,0 +1,20 @@
+# System Initialization Tasks
+# Equivalent to: cloudy-old/sys/core.py::sys_init()
+
+---
+- name: Remove needrestart package to avoid unnecessary restarts
+  apt:
+    name: needrestart
+    state: absent
+  register: needrestart_removal
+  failed_when: false
+  
+- name: Clean up unused packages
+  apt:
+    autoremove: true
+    autoclean: true
+  when: needrestart_removal.changed
+  
+- name: Display initialization status
+  debug:
+    msg: "✅ System initialization completed"

@@ -1,0 +1,19 @@
+# Granular Task: Add User to Sudoers
+# Equivalent to: cloudy-old/sys/user.py::sys_user_add_sudoer()
+# Usage: ansible-playbook tasks/sys/user/add-sudoer.yml -e "username=admin"
+
+---
+- name: Add user to sudoers
+  lineinfile:
+    path: /etc/sudoers
+    line: "{{ username }}   ALL=(ALL:ALL) {{ 'NOPASSWD:ALL' if nopasswd_sudo | default(false) else 'ALL' }}"
+    validate: 'visudo -cf %s'
+    backup: true
+  register: sudoers_result
+  
+- name: Display sudoers addition status
+  debug:
+    msg: |
+      ✅ User added to sudoers: {{ username }}
+      Status: {{ 'Added' if sudoers_result.changed else 'Already present' }}
+      Access: ALL commands {{ 'without password (NOPASSWD)' if nopasswd_sudo | default(false) else 'with password required' }}
