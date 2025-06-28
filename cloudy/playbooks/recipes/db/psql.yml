@@ -1,6 +1,6 @@
 # Recipe: PostgreSQL Database Server with PostGIS Support
 # Purpose: Orchestrates security, base setup, and PostgreSQL installation
-# Usage: ./ali psql --install [--pgis] [--port 5433]
+# Usage: ./claudia psql --install [--pgis] [--port 5433]
 
 ---
 # Import prerequisite playbooks - security first

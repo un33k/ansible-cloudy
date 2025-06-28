@@ -9,13 +9,13 @@ from typing import Dict, Any, Optional, Tuple
 from pathlib import Path
 
 from .colors import Colors, warn, info
-from .config import AliConfig
+from .config import ClaudiaConfig
 
 
 class ConnectionManager:
     """Manages intelligent connection switching between fresh and secured servers"""
     
-    def __init__(self, config: AliConfig):
+    def __init__(self, config: ClaudiaConfig):
         self.config = config
         
     def detect_server_state(self, host: str, ansible_port: int) -> Dict[str, Any]:

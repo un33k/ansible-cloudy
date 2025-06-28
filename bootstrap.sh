@@ -260,17 +260,17 @@ main() {
     log "Bootstrap complete!"
     echo -e "${GREEN}To activate the environment:${NC} source $VENV_DIR/bin/activate"
     echo -e "${GREEN}To test the setup:${NC}"
-    echo "  ./ali dev syntax    # Quick syntax check"
-    echo "  ./ali dev yaml      # YAML syntax validation"
-    echo "  ./ali dev lint      # Complete linting (YAML + Ansible)"
-    echo "  ./ali dev validate  # Full validation"
+    echo "  ./claudia dev syntax    # Quick syntax check"
+    echo "  ./claudia dev yaml      # YAML syntax validation"
+    echo "  ./claudia dev lint      # Complete linting (YAML + Ansible)"
+    echo "  ./claudia dev validate  # Full validation"
     echo
     echo -e "${GREEN}To run recipes:${NC}"
-    echo "  ./ali security      # Security hardening"
-    echo "  ./ali django        # Django web server"
-    echo "  ./ali psql          # PostgreSQL database"
+    echo "  ./claudia security --install      # Security hardening"
+    echo "  ./claudia django --install        # Django web server"
+    echo "  ./claudia psql --install          # PostgreSQL database"
     echo
-    echo -e "${YELLOW}Remember to activate the environment (source .venv/bin/activate) and run ./ali from project root!${NC}"
+    echo -e "${YELLOW}Remember to activate the environment (source .venv/bin/activate) and run ./claudia from project root!${NC}"
 }
 
 main "$@"

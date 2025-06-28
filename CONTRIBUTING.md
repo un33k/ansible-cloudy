@@ -23,17 +23,17 @@ pip install ansible ansible-lint yamllint
 
 1. **Run Validation**: Always validate before making changes
    ```bash
-   ./ali dev syntax     # Quick syntax check
-   ./ali dev validate   # Comprehensive validation
+   ./claudia dev syntax     # Quick syntax check
+   ./claudia dev validate   # Comprehensive validation
    ```
 
 2. **Make Changes**: Follow the project structure and conventions
 
 3. **Test Changes**: Validate your changes
    ```bash
-   ./ali dev syntax     # Quick validation
-   ./ali dev spell      # Spell check
-   ./ali dev test       # Authentication testing
+   ./claudia dev syntax     # Quick validation
+   ./claudia dev spell      # Spell check
+   ./claudia dev test       # Authentication testing
    ```
 
 4. **Commit Changes**: Simple git workflow
@@ -49,12 +49,12 @@ Before committing, run the development tools:
 
 ```bash
 # Quick validation (recommended)
-./ali dev syntax
+./claudia dev syntax
 
 # Full validation (comprehensive)
-./ali dev validate
-./ali dev spell
-./ali dev lint      # If ansible-lint installed
+./claudia dev validate
+./claudia dev spell
+./claudia dev lint      # If ansible-lint installed
 ```
 
 ### Running GitHub Actions Locally
@@ -89,12 +89,12 @@ Run the workflow steps manually:
 ```bash
 # This runs the same validation as GitHub Actions
 ./bootstrap.sh -y && source .venv/bin/activate
-./ali dev syntax
-./ali dev lint
-./ali dev validate
-./ali dev test -- --syntax-check
-./ali security --check
-./ali django --check
+./claudia dev syntax
+./claudia dev lint
+./claudia dev validate
+./claudia dev test -- --syntax-check
+./claudia security --check
+./claudia django --check
 ```
 
 ### Testing Changes
@@ -103,11 +103,11 @@ Test your recipes safely with check mode:
 
 ```bash
 # Test specific recipes (dry run)
-./ali security --check    # Test security recipe
-./ali django --check      # Test django recipe
+./claudia security --check    # Test security recipe
+./claudia django --check      # Test django recipe
 
 # Test authentication flow
-./ali dev test
+./claudia dev test
 ```
 
 ## 📁 Project Structure

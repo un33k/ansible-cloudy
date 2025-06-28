@@ -109,7 +109,7 @@ generic_servers:
 
 Then run commands normally:
 ```bash
-./ali security
+./claudia security --install
 ```
 
 #### Method 2: Environment Variable
@@ -120,7 +120,7 @@ Set the sudo password via environment variable:
 export ANSIBLE_BECOME_PASS=secure123
 
 # Or provide it directly with the command
-ANSIBLE_BECOME_PASS=secure123 ./ali security
+ANSIBLE_BECOME_PASS=secure123 ./claudia security --install
 ```
 
 **SSH Key Configuration**:
@@ -156,16 +156,16 @@ generic_servers:
 **Complete Secure Workflow Example**:
 ```bash
 # 1. Setup secure server (root SSH keys + admin user, firewall, port change)
-./ali security --install
+./claudia security --install
 
 # 2. Deploy base configuration
-./ali base --install
+./claudia base --install
 
 # 3. Deploy services
-./ali psql --install    # PostgreSQL database
-./ali django --install  # Django web application
-./ali redis --install   # Redis cache
-./ali nginx --install   # Nginx load balancer
+./claudia psql --install    # PostgreSQL database
+./claudia django --install  # Django web application
+./claudia redis --install   # Redis cache
+./claudia nginx --install   # Nginx load balancer
 ```
 
 **Security Features**:
@@ -179,11 +179,11 @@ generic_servers:
 - ✅ **Default**: Shows only changes and failures (clean output)
 - ✅ **Minimal**: `ANSIBLE_STDOUT_CALLBACK=minimal` (compact format)
 - ✅ **One-line**: `ANSIBLE_STDOUT_CALLBACK=oneline` (single line per task)
-- ✅ **Verbose**: `./ali ... -v` (detailed debugging)
+- ✅ **Verbose**: `./claudia ... -v` (detailed debugging)
 - ✅ **Always Shown**: Changed tasks, failed tasks, unreachable hosts
 - ✅ **Hidden by Default**: Successful unchanged tasks, skipped tasks
 
-### Ali Recipe Examples
+### Claudia Recipe Examples
 
 ```bash
 # Claudia CLI - Universal Parameter Support

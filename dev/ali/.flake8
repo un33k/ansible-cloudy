@@ -1,4 +1,0 @@
-[flake8]
-max-line-length = 100
-exclude = ali_old.py
-ignore = E203,E501,E722,F541,F401,W291,W293,W503

@@ -58,38 +58,38 @@ jobs:
     - name: Run syntax validation
       run: |
         source .venv/bin/activate
-        ./ali dev syntax
+        ./claudia dev syntax
     
     - name: Run linting
       run: |
         source .venv/bin/activate
-        ./ali dev lint
+        ./claudia dev lint
     
     - name: Run spell checking (warnings only)
       continue-on-error: true
       run: |
         source .venv/bin/activate
-        ./ali dev spell || echo "Spell check completed with warnings"
+        ./claudia dev spell || echo "Spell check completed with warnings"
     
     - name: Run comprehensive validation
       run: |
         source .venv/bin/activate
-        ./ali dev validate
+        ./claudia dev validate
     
     - name: Test authentication flow (syntax only)
       run: |
         source .venv/bin/activate
         # Test auth playbook syntax without connecting to servers
-        ./ali dev test -- --syntax-check || echo "Auth test syntax check completed"
+        ./claudia dev test -- --syntax-check || echo "Auth test syntax check completed"
     
     - name: Test recipe dry runs
       run: |
         source .venv/bin/activate
         # Test key recipes in check mode
-        ./ali security --check || echo "Security dry run completed"
-        ./ali base --check || echo "Base dry run completed"
-        ./ali django --check || echo "Django dry run completed"
-        ./ali redis --check || echo "Redis dry run completed"
+        ./claudia security --check || echo "Security dry run completed"
+        ./claudia base --check || echo "Base dry run completed"
+        ./claudia django --check || echo "Django dry run completed"
+        ./claudia redis --check || echo "Redis dry run completed"
     
     - name: Generate test report
       if: always()
@@ -103,10 +103,10 @@ jobs:
         echo "- ✅ Recipe dry runs completed" >> test-report.md
         echo "" >> test-report.md
         echo "### Ali CLI Commands Tested" >> test-report.md
-        echo "- ./ali dev syntax: ✅" >> test-report.md
-        echo "- ./ali dev lint: ✅" >> test-report.md
-        echo "- ./ali dev spell: ⚠️ (warnings)" >> test-report.md
-        echo "- ./ali dev validate: ✅" >> test-report.md
-        echo "- ./ali security --check: ✅" >> test-report.md
-        echo "- ./ali base --check: ✅" >> test-report.md
+        echo "- ./claudia dev syntax: ✅" >> test-report.md
+        echo "- ./claudia dev lint: ✅" >> test-report.md
+        echo "- ./claudia dev spell: ⚠️ (warnings)" >> test-report.md
+        echo "- ./claudia dev validate: ✅" >> test-report.md
+        echo "- ./claudia security --check: ✅" >> test-report.md
+        echo "- ./claudia base --check: ✅" >> test-report.md
         cat test-report.md

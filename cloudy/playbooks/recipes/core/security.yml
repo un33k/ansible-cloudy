@@ -153,4 +153,4 @@
           🚀 Next Steps:
              • All automation continues as root (no connection switching)
              • Admin access: ssh {{ emergency_user }}@{{ ansible_host }}:{{ ansible_port }}
-             • Deploy services: ./ali base, ./ali psql, etc.
+             • Deploy services: ./claudia base --install, ./claudia psql --install, etc.

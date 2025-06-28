@@ -1,5 +1,5 @@
 """
-Configuration management for Ali CLI
+Configuration management for Claudia CLI
 """
 
 import os
@@ -7,8 +7,8 @@ from pathlib import Path
 from .colors import error, warn, Colors
 
 
-class AliConfig:
-    """Configuration and paths for Ali CLI"""
+class ClaudiaConfig:
+    """Configuration and paths for Claudia CLI"""
 
     def __init__(self):
         # Find project root (directory containing cloudy/)
@@ -35,7 +35,7 @@ class AliConfig:
                 return path
 
         error(
-            "Could not find project root. Run ali from the ansible-cloudy project directory."
+            "Could not find project root. Run claudia from the ansible-cloudy project directory."
         )
 
     def _validate_structure(self) -> None:
@@ -85,7 +85,7 @@ class AliConfig:
 class InventoryManager:
     """Manage inventory files with smart connection detection"""
 
-    def __init__(self, config: AliConfig):
+    def __init__(self, config: ClaudiaConfig):
         self.config = config
 
     def get_inventory_path(self, production: bool = False) -> str:
@@ -99,3 +99,7 @@ class InventoryManager:
             error(f"Inventory file not found: {inventory_file}")
 
         return str(inventory_file)
+
+
+# Compatibility alias for existing code
+AliConfig = ClaudiaConfig

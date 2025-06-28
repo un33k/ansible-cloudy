@@ -3,7 +3,7 @@
 Complete step-by-step guide for using Cloudy infrastructure automation with Ansible.
 
 ## Table of Contents
-- [Ali CLI Command Reference](#ali-cli-command-reference)
+- [Claudia CLI Command Reference](#claudia-cli-command-reference)
 - [Prerequisites](#prerequisites)
 - [First-Time Setup](#first-time-setup)
 - [Server Deployment Workflows](#server-deployment-workflows)
@@ -11,64 +11,64 @@ Complete step-by-step guide for using Cloudy infrastructure automation with Ansi
 - [Common Scenarios](#common-scenarios)
 - [Troubleshooting](#troubleshooting)
 
-## Ali CLI Command Reference
+## Claudia CLI Command Reference
 
-Complete reference for all Ali (Ansible Line Interpreter) commands.
+Complete reference for all Claudia (Ansible Line Interpreter) commands.
 
 ### 🎯 Recipe Commands
 
 #### Core Infrastructure
 ```bash
 # Help and configuration (default action)
-./ali security          # Show security setup help and configuration options
-./ali base              # Show base configuration help and available variables
+./claudia security          # Show security setup help and configuration options
+./claudia base              # Show base configuration help and available variables
 
 # Execution (requires --install flag)
-./ali security --install   # Execute security setup (admin user, SSH keys, firewall)
-./ali base --install       # Execute base configuration (hostname, git, timezone, swap)
+./claudia security --install   # Execute security setup (admin user, SSH keys, firewall)
+./claudia base --install       # Execute base configuration (hostname, git, timezone, swap)
 ```
 
 #### Database Services  
 ```bash
 # Help and configuration
-./ali psql              # Show PostgreSQL setup help and configuration options
-./ali postgis           # Show PostGIS help and extensions information
+./claudia psql              # Show PostgreSQL setup help and configuration options
+./claudia postgis           # Show PostGIS help and extensions information
 
 # Execution
-./ali psql --install       # Execute PostgreSQL database server setup
-./ali postgis --install    # Execute PostgreSQL with PostGIS extensions
+./claudia psql --install       # Execute PostgreSQL database server setup
+./claudia postgis --install    # Execute PostgreSQL with PostGIS extensions
 ```
 
 #### Web Services
 ```bash
 # Help and configuration
-./ali django           # Show Django setup help and deployment options
-./ali nginx            # Show Nginx load balancer help and SSL configuration
+./claudia django           # Show Django setup help and deployment options
+./claudia nginx            # Show Nginx load balancer help and SSL configuration
 
 # Execution
-./ali django --install     # Execute Django web application server
-./ali nginx --install      # Execute Nginx load balancer
+./claudia django --install     # Execute Django web application server
+./claudia nginx --install      # Execute Nginx load balancer
 ```
 
 #### Cache & VPN
 ```bash
 # Help and configuration
-./ali redis            # Show Redis cache server help and memory configuration
-./ali openvpn          # Show OpenVPN server help and Docker setup
+./claudia redis            # Show Redis cache server help and memory configuration
+./claudia openvpn          # Show OpenVPN server help and Docker setup
 
 # Execution
-./ali redis --install      # Execute Redis cache server setup
-./ali openvpn --install    # Execute OpenVPN server deployment
+./claudia redis --install      # Execute Redis cache server setup
+./claudia openvpn --install    # Execute OpenVPN server deployment
 ```
 
 ### 🛠️ Development Commands
 
 ```bash
-./ali dev validate      # Comprehensive validation suite
-./ali dev syntax        # Quick syntax checking  
-./ali dev lint          # Ansible-lint validation
-./ali dev test          # Authentication flow testing
-./ali dev spell         # Spell check documentation
+./claudia dev validate      # Comprehensive validation suite
+./claudia dev syntax        # Quick syntax checking  
+./claudia dev lint          # Ansible-lint validation
+./claudia dev test          # Authentication flow testing
+./claudia dev spell         # Spell check documentation
 ```
 
 ### ⚙️ Global Options
@@ -89,38 +89,38 @@ Available with any recipe command:
 
 #### Help and Discovery (Default Action)
 ```bash
-./ali security         # Show security help and configuration options
-./ali django           # Show Django help and deployment variables
-./ali redis             # Show Redis help and memory configuration
+./claudia security         # Show security help and configuration options
+./claudia django           # Show Django help and deployment variables
+./claudia redis             # Show Redis help and memory configuration
 ```
 
 #### Recipe Execution (Requires --install Flag)
 ```bash
-./ali security --install          # Execute security setup on test environment
-./ali django --install --prod     # Execute Django deployment on production  
-./ali redis --install --check     # Dry run Redis installation
+./claudia security --install          # Execute security setup on test environment
+./claudia django --install --prod     # Execute Django deployment on production  
+./claudia redis --install --check     # Dry run Redis installation
 ```
 
 #### Development Workflow
 ```bash
-./ali dev syntax       # Quick validation
-./ali dev validate     # Full validation  
-./ali dev spell        # Check spelling
-./ali dev test         # Test auth flow
+./claudia dev syntax       # Quick validation
+./claudia dev validate     # Full validation  
+./claudia dev spell        # Check spelling
+./claudia dev test         # Test auth flow
 ```
 
 #### Advanced Usage  
 ```bash
-./ali nginx --install -- --tags ssl              # Execute nginx with ansible-playbook args
-./ali django --install --prod --verbose          # Production execution with debug output
-./ali security --install --check -- --limit web  # Dry run on specific hosts
+./claudia nginx --install -- --tags ssl              # Execute nginx with ansible-playbook args
+./claudia django --install --prod --verbose          # Production execution with debug output
+./claudia security --install --check -- --limit web  # Dry run on specific hosts
 ```
 
 #### Discovery Commands
 ```bash
-./ali --list           # Show all recipes
-./ali dev              # Show all dev commands  
-./ali --help           # Show complete usage
+./claudia --list           # Show all recipes
+./claudia dev              # Show all dev commands  
+./claudia --help           # Show complete usage
 ```
 
 ### 📊 Command Summary
@@ -145,7 +145,7 @@ Available with any recipe command:
 source .venv/bin/activate
 
 # Verify installation
-./ali dev syntax
+./claudia dev syntax
 ```
 
 ### Option 2: Manual Setup

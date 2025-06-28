@@ -16,16 +16,16 @@ cd cloudy/
 ### Basic Usage
 ```bash
 # Show help and configuration options (default action)
-./ali security    # View security setup help and available variables
-./ali base        # View base configuration help and options
-./ali psql        # View PostgreSQL setup help and configuration
+./claudia security    # View security setup help and available variables
+./claudia base        # View base configuration help and options
+./claudia psql        # View PostgreSQL setup help and configuration
 
-# Execute recipes (requires --install flag for safety)
-./ali security --install    # Security setup (creates admin user, SSH keys, firewall)
-./ali base --install        # Base configuration (hostname, git, timezone, swap)
-./ali django --install      # Deploy Django web application
-./ali redis --install       # Deploy Redis cache server
-./ali nginx --install       # Deploy Nginx load balancer
+# Execute recipes with universal parameter support
+./claudia security --install    # Security setup (creates admin user, SSH keys, firewall)
+./claudia base --install        # Base configuration (hostname, git, timezone, swap)
+./claudia django --install      # Deploy Django web application
+./claudia redis --install --port 6380 --memory 512   # Deploy Redis with custom parameters
+./claudia nginx --install --domain example.com --ssl  # Deploy Nginx with SSL domain
 ```
 
 ## Features
@@ -47,19 +47,19 @@ cd cloudy/
 ### 📊 Clean Output Control
 ```bash
 # Show help by default (safe exploration)
-./ali security
+./claudia security
 
 # Execute with default output (show only changes and failures)
-./ali security --install
+./claudia security --install
 
 # Compact output
-ANSIBLE_STDOUT_CALLBACK=minimal ./ali security --install
+ANSIBLE_STDOUT_CALLBACK=minimal ./claudia security --install
 
 # One line per task
-ANSIBLE_STDOUT_CALLBACK=oneline ./ali security --install
+ANSIBLE_STDOUT_CALLBACK=oneline ./claudia security --install
 
 # Verbose debugging
-./ali security --install -v
+./claudia security --install -v
 ```
 
 ## Architecture
@@ -140,7 +140,7 @@ This Ansible implementation provides:
 - **🎯 Clean output**: Focus on changes and failures
 - **🏗️ Modern tooling**: Industry-standard configuration management
 - **📈 Scalability**: Easy multi-server deployments
-- **🧪 Validation tools**: Ali CLI provides syntax and structure checking
+- **🧪 Validation tools**: Claudia CLI provides syntax and structure checking
 - **📚 Extensive documentation**: Complete guides and examples
 - **🔧 Developer-friendly**: Granular tasks and composable recipes
 
@@ -149,28 +149,28 @@ This Ansible implementation provides:
 ### Complete Web Stack
 ```bash
 # 1. Secure server foundation
-./ali security --install
+./claudia security --install
 
 # 2. Base configuration
-./ali base --install
+./claudia base --install
 
-# 3. Database layer
-./ali psql --install
+# 3. Database layer with parameters
+./claudia psql --install --port 5544 --pgis
 
 # 4. Web application layer
-./ali django --install
+./claudia django --install
 
-# 5. Load balancer (optional)
-./ali nginx --install
+# 5. Load balancer with SSL
+./claudia nginx --install --domain example.com --ssl
 ```
 
 ### VPN Server
 ```bash
 # View VPN setup help and configuration
-./ali openvpn
+./claudia openvpn
 
 # Execute VPN deployment
-./ali openvpn --install
+./claudia openvpn --install
 ```
 
 ## Documentation
@@ -192,11 +192,11 @@ This Ansible implementation provides:
 Ansible Cloudy includes development validation tools:
 
 ```bash
-# Ali CLI validation commands  
-./ali dev syntax      # Quick syntax check
-./ali dev validate     # Comprehensive validation
-./ali dev lint         # Ansible linting
-./ali dev test         # Authentication flow test
+# Claudia CLI validation commands  
+./claudia dev syntax      # Quick syntax check
+./claudia dev validate     # Comprehensive validation
+./claudia dev lint         # Ansible linting
+./claudia dev test         # Authentication flow test
 
 # Traditional validation
 ./dev/syntax-check.sh  # Direct syntax validation
@@ -211,4 +211,4 @@ Ansible Cloudy includes development validation tools:
 
 ## 🤝 Contributing
 
-**Quick Contribution Workflow**: Fork the repo, install Ansible (`pip install ansible`), make your changes to tasks or recipes, run `./ali dev validate` to check syntax and structure, commit with descriptive messages, and submit a PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+**Quick Contribution Workflow**: Fork the repo, install Ansible (`pip install ansible`), make your changes to tasks or recipes, run `./claudia dev validate` to check syntax and structure, commit with descriptive messages, and submit a PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.

@@ -12,7 +12,7 @@
 
 ### Authentication Strategy
 - **Root User**: SSH keys ONLY (no password authentication)
-  - Used for: All automation via `./ali` commands
+  - Used for: All automation via `./claudia` commands
   - Security: Keys only, no brute force risk
   
 - **Admin User**: Password + SSH keys (dual access)

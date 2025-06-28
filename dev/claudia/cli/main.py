@@ -15,7 +15,7 @@ claudia_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(claudia_dir))
 
 from utils.colors import Colors, error
-from utils.config import AliConfig, InventoryManager
+from utils.config import ClaudiaConfig, InventoryManager
 from operations.recipes import RecipeFinder, RecipeHelpParser, list_recipes
 from execution.ansible import AnsibleRunner, SmartSecurityRunner
 from discovery.service_scanner import ServiceScanner
@@ -155,7 +155,7 @@ def main() -> None:
     if len(claudia_args) >= 2 and claudia_args[1] in ["--help", "-h"] and claudia_args[0] not in ["dev"]:
         service_name = claudia_args[0]
         try:
-            config = AliConfig()
+            config = ClaudiaConfig()
             
             # Handle service-specific help
             if service_name == "psql":
@@ -199,7 +199,7 @@ def main() -> None:
 
     # Initialize configuration
     try:
-        config = AliConfig()  # Will rename this to ClaudiaConfig later
+        config = ClaudiaConfig()
     except Exception as e:
         error(f"Configuration error: {e}")
 
@@ -216,10 +216,12 @@ def main() -> None:
             print(f"  {Colors.GREEN}claudia dev validate{Colors.NC}    Comprehensive validation")
             print(f"  {Colors.GREEN}claudia dev syntax{Colors.NC}     Quick syntax checking")
             print(f"  {Colors.GREEN}claudia dev test{Colors.NC}       Authentication testing")
+            print(f"  {Colors.GREEN}claudia dev lint{Colors.NC}       Ansible linting")
+            print(f"  {Colors.GREEN}claudia dev spell{Colors.NC}      Spell checking")
             return
 
-        # Import and use dev tools (will migrate later)
-        from dev.ali.dev_tools import DevTools
+        # Import dev tools
+        from utils.dev_tools import DevTools
         dev_tools = DevTools(config)
 
         if args.subcommand == "validate":
@@ -228,6 +230,10 @@ def main() -> None:
             exit_code = dev_tools.syntax()
         elif args.subcommand == "test":
             exit_code = dev_tools.test(ansible_args)
+        elif args.subcommand == "lint":
+            exit_code = dev_tools.lint()
+        elif args.subcommand == "spell":
+            exit_code = dev_tools.spell()
         else:
             error(f"Unknown dev command '{args.subcommand}'")
 
