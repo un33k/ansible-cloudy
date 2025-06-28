@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
+Note: Avoid saying things like: You're absolutely right!. Unless answering a specific question. 
+
 ### Environment Setup
 
 ```bash

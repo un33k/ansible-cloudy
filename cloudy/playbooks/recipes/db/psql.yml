@@ -1,7 +1,15 @@
-# Recipe: PostgreSQL Database Server Setup
-# Usage: ansible-playbook playbooks/recipes/db/psql.yml -i inventory/hosts.yml
+# Recipe: PostgreSQL Database Server with PostGIS Support
+# Purpose: Orchestrates security, base setup, and PostgreSQL installation
+# Usage: ./ali psql --install [--pgis] [--port 5433]
 
 ---
+# Import prerequisite playbooks - security first
+- import_playbook: ../core/security.yml
+
+# Import base configuration
+- import_playbook: ../core/base.yml
+
+# PostgreSQL-specific setup
 - name: PostgreSQL Database Server Setup
   hosts: all
   gather_facts: true
@@ -9,40 +17,35 @@
   
   vars:
     task_paths: "../../../tasks"
-    # Override these in inventory or command line
+    # PostgreSQL configuration
     setup_postgresql: true
-    setup_mysql: false
-    setup_redis: false
-    pg_version: "{{ postgresql_version | default('17') }}"
-    mysql_version: "8.0"
+    setup_postgis: false
+    postgresql_version: "17"
+    database_port: 5432
+    postgis_version: "3"
     
   pre_tasks:
-    - name: Display database server setup information
+    - name: Display PostgreSQL setup information
       debug:
         msg: |
-          🗄️  Starting Database Server Setup
+          🗄️  PostgreSQL Database Server Setup
           Target: {{ inventory_hostname }} ({{ ansible_host }})
-          PostgreSQL: {{ 'Yes (v' + pg_version + ')' if setup_postgresql else 'No' }}
-          MySQL: {{ 'Yes (v' + mysql_version + ')' if setup_mysql else 'No' }}
-          Redis: {{ 'Yes' if setup_redis else 'No' }}
+          
+          📋 Setup Phases:
+          ├── ✅ Security Setup (completed via import)
+          ├── ✅ Base Configuration (completed via import)
+          └── 🔄 PostgreSQL Installation (in progress)
+          
+          🗄️  Database Configuration:
+          ├── PostgreSQL: v{{ postgresql_version }}
+          ├── Port: {{ database_port }}
+          ├── PostGIS: {{ 'Yes (v' + postgis_version + ')' if setup_postgis else 'No' }}
+          └── Firewall: PostgreSQL port configured
           
   tasks:
-    # Foundation Setup - Include core generic server tasks
-    - name: Initialize system
-      include_tasks: "{{ task_paths }}/sys/core/init.yml"
-      tags: [foundation, init]
-      
-    - name: Update system packages
-      include_tasks: "{{ task_paths }}/sys/core/update.yml"
-      tags: [foundation, update]
-      
-    - name: Install common utilities
-      include_tasks: "{{ task_paths }}/sys/core/install-common.yml"
-      tags: [foundation, packages]
-      
-    - name: Install UFW firewall
-      include_tasks: "{{ task_paths }}/sys/firewall/install.yml"
-      tags: [foundation, firewall]
+    # =============================================================================
+    # POSTGRESQL DATABASE SETUP
+    # =============================================================================
       
     # PostgreSQL Setup
     - name: Install PostgreSQL repository
@@ -53,14 +56,22 @@
     - name: Install PostgreSQL server
       include_tasks: "{{ task_paths }}/db/postgresql/install.yml"
       vars:
-        pg_version: "{{ pg_version }}"
+        pg_version: "{{ postgresql_version }}"
       when: setup_postgresql | bool
       tags: [postgresql, install]
+      
+    - name: Install PostGIS extension
+      include_tasks: "{{ task_paths }}/db/postgresql/install-postgis.yml"
+      vars:
+        pg_version: "{{ postgresql_version }}"
+        postgis_version: "{{ postgis_version }}"
+      when: setup_postgresql | bool and setup_postgis | bool
+      tags: [postgresql, postgis, install]
       
     - name: Configure PostgreSQL port
       include_tasks: "{{ task_paths }}/db/postgresql/configure-port.yml"
       vars:
-        pg_port: "{{ database_port | default(5432) }}"
+        pg_port: "{{ database_port }}"
       when: setup_postgresql | bool
       tags: [postgresql, config]
       
@@ -94,113 +105,30 @@
       when: setup_postgresql | bool and pg_users is defined and item.database is defined
       tags: [postgresql, privileges]
       
-    # MySQL Setup
-    - name: Install MySQL server
-      include_tasks: "{{ task_paths }}/db/mysql/install-server.yml"
-      vars:
-        mysql_version: "{{ mysql_version }}"
-      when: setup_mysql | bool
-      tags: [mysql, install]
-      
-    - name: Set MySQL root password
-      include_tasks: "{{ task_paths }}/db/mysql/set-root-password.yml"
-      vars:
-        root_password: "{{ mysql_root_password }}"
-      when: setup_mysql | bool and mysql_root_password is defined
-      tags: [mysql, security]
-      
-    - name: Create MySQL databases
-      include_tasks: "{{ task_paths }}/db/mysql/create-database.yml"
-      vars:
-        root_password: "{{ mysql_root_password }}"
-        database: "{{ item.name }}"
-        charset: "{{ item.charset | default('utf8mb4') }}"
-        collation: "{{ item.collation | default('utf8mb4_unicode_ci') }}"
-      loop: "{{ mysql_databases | default([]) }}"
-      when: setup_mysql | bool and mysql_root_password is defined
-      tags: [mysql, databases]
-      
-    - name: Create MySQL users
-      include_tasks: "{{ task_paths }}/db/mysql/create-user.yml"
-      vars:
-        root_password: "{{ mysql_root_password }}"
-        username: "{{ item.name }}"
-        user_password: "{{ item.password }}"
-        host: "{{ item.host | default('localhost') }}"
-      loop: "{{ mysql_users | default([]) }}"
-      when: setup_mysql | bool and mysql_root_password is defined
-      tags: [mysql, users]
-      
-    - name: Grant MySQL privileges
-      include_tasks: "{{ task_paths }}/db/mysql/grant-privileges.yml"
-      vars:
-        root_password: "{{ mysql_root_password }}"
-        username: "{{ item.name }}"
-        database: "{{ item.database }}"
-        privileges: "{{ item.privileges | default('ALL') }}"
-        host: "{{ item.host | default('localhost') }}"
-      loop: "{{ mysql_users | default([]) }}"
-      when: setup_mysql | bool and mysql_root_password is defined and item.database is defined
-      tags: [mysql, privileges]
-      
-    # Redis Setup
-    - name: Install Redis server
-      include_tasks: "{{ task_paths }}/services/redis/install.yml"
-      when: setup_redis | bool
-      tags: [redis, install]
-      
-    - name: Configure Redis memory
-      include_tasks: "{{ task_paths }}/services/redis/configure-memory.yml"
-      vars:
-        memory_mb: "{{ redis_maxmemory | default(0) }}"
-      when: setup_redis | bool
-      tags: [redis, config]
-      
-    - name: Configure Redis port
-      include_tasks: "{{ task_paths }}/services/redis/configure-port.yml"
-      vars:
-        redis_port: "{{ redis_port | default(6379) }}"
-      when: setup_redis | bool
-      tags: [redis, config]
       
     # Firewall Configuration
     - name: Allow PostgreSQL through firewall
       include_tasks: "{{ task_paths }}/sys/firewall/allow-postgresql.yml"
       vars:
-        pg_port: "{{ database_port | default(5432) }}"
+        pg_port: "{{ database_port }}"
       when: setup_postgresql | bool
       tags: [firewall, postgresql]
       
-    - name: Allow MySQL through firewall
-      include_tasks: "{{ task_paths }}/sys/firewall/allow-port.yml"
-      vars:
-        port: 3306
-      when: setup_mysql | bool
-      tags: [firewall, mysql]
-      
-    - name: Allow Redis through firewall
-      include_tasks: "{{ task_paths }}/sys/firewall/allow-port.yml"
-      vars:
-        port: "{{ redis_port | default(6379) }}"
-      when: setup_redis | bool
-      tags: [firewall, redis]
-      
   post_tasks:
-    - name: Display database server completion summary
+    - name: Display PostgreSQL completion summary
       debug:
         msg: |
-          🎉 ✅ DATABASE SERVER SETUP COMPLETED SUCCESSFULLY!
+          🎉 ✅ POSTGRESQL SERVER SETUP COMPLETED SUCCESSFULLY!
           📋 Configuration Summary:
              ├── Server: {{ inventory_hostname }} ({{ ansible_host }})
-             ├── PostgreSQL: {{ 'v' + pg_version + ' installed' if setup_postgresql else 'Not installed' }}
-             ├── MySQL: {{ 'v' + mysql_version + ' installed' if setup_mysql else 'Not installed' }}
-             ├── Redis: {{ 'Installed on port ' + (redis_port | default(6379) | string) if setup_redis else 'Not installed' }}
-             ├── Databases: {{ (pg_databases | length if pg_databases is defined else 0) + (mysql_databases | length if mysql_databases is defined else 0) }} created
-             ├── Users: {{ (pg_users | length if pg_users is defined else 0) + (mysql_users | length if mysql_users is defined else 0) }} created
-             └── Firewall: Database ports configured
+             ├── PostgreSQL: v{{ postgresql_version }} installed on port {{ database_port }}
+             ├── PostGIS: {{ 'v' + postgis_version + ' extension installed' if setup_postgis else 'Not installed' }}
+             ├── Databases: {{ pg_databases | length if pg_databases is defined else 0 }} created
+             ├── Users: {{ pg_users | length if pg_users is defined else 0 }} created
+             └── Firewall: PostgreSQL port {{ database_port }} configured
           
-          🚀 Database server is ready for applications!
-             └── Connection: {{ admin_user }}@{{ ansible_host }}:{{ ssh_port }}
+          🚀 PostgreSQL server is ready for applications!
+             └── Connection: psql -h {{ ansible_host }} -p {{ database_port }} -U postgres
              
   handlers:
     - name: restart postgresql

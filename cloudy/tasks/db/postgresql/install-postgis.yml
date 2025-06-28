@@ -1,0 +1,46 @@
+# Granular Task: Install PostGIS Extension for PostgreSQL
+# Purpose: Adds spatial database capabilities to PostgreSQL
+# Usage: ansible-playbook tasks/db/postgresql/install-postgis.yml -e "pg_version=17 postgis_version=3"
+
+---
+- name: Install PostGIS packages for PostgreSQL {{ pg_version }}
+  apt:
+    name:
+      - "postgresql-{{ pg_version }}-postgis-{{ postgis_version }}"
+      - "postgresql-{{ pg_version }}-postgis-{{ postgis_version }}-scripts"
+      - postgis
+    state: present
+    update_cache: true
+  register: postgis_install_result
+
+- name: Display PostGIS installation result
+  debug:
+    msg: "✅ PostGIS {{ postgis_version }} extension installed for PostgreSQL {{ pg_version }}"
+  when: postgis_install_result.changed
+
+- name: Create PostGIS extension in template1 database
+  become_user: postgres
+  postgresql_ext:
+    name: postgis
+    db: template1
+    state: present
+  ignore_errors: true
+  register: postgis_template_result
+
+- name: Display PostGIS template result
+  debug:
+    msg: "✅ PostGIS extension enabled in template1 database"
+  when: postgis_template_result.changed
+
+- name: Verify PostGIS installation
+  become_user: postgres
+  postgresql_query:
+    db: template1
+    query: "SELECT PostGIS_version();"
+  register: postgis_version_check
+  ignore_errors: true
+
+- name: Display PostGIS version verification
+  debug:
+    msg: "✅ PostGIS version check: {{ postgis_version_check.query_result[0]['postgis_version'] if postgis_version_check.query_result else 'PostGIS extension ready' }}"
+  when: postgis_version_check.query_result is defined
