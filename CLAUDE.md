@@ -17,18 +17,12 @@ cd ansible-cloudy/
 ### Core Development Commands
 
 #### Simplified Server Setup (Recommended) - Using Ali CLI
-- **Step 1 - Security**: `./ali security` (creates admin user, SSH keys, firewall, disables root)
+- **Step 1 - Security**: `./ali security` (root SSH keys + admin user, firewall, port change)
 - **Step 2 - Core**: `./ali base` (hostname, git, timezone, swap, etc.)
 - **Step 3 - Services**: `./ali django`, `./ali redis`, `./ali nginx` (deploy specific services)
 
-#### Traditional Commands (if preferred)
-- **Step 1 - Security**: `ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/security.yml`
-- **Step 2 - Core**: `ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/base.yml`
-- **Step 3 - Services**: `ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/[category]/[service].yml`
-
 #### Production Setup
 - **Ali CLI**: `./ali security --prod`, `./ali django --prod`, `./ali redis --prod`
-- **Traditional**: `ansible-playbook -i cloudy/inventory/production.yml cloudy/playbooks/recipes/[category]/[service].yml`
 
 #### Development Tools
 - **Bootstrap**: `./bootstrap.sh` - Sets up .venv with all development tools
@@ -75,7 +69,7 @@ generic_servers:
 
 Then run commands normally:
 ```bash
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/generic-server.yml
+./ali security
 ```
 
 #### Method 2: Environment Variable
@@ -86,7 +80,7 @@ Set the sudo password via environment variable:
 export ANSIBLE_BECOME_PASS=secure123
 
 # Or provide it directly with the command
-ANSIBLE_BECOME_PASS=secure123 ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/generic-server.yml
+ANSIBLE_BECOME_PASS=secure123 ./ali security
 ```
 
 **SSH Key Configuration**:
@@ -121,17 +115,17 @@ generic_servers:
 
 **Complete Secure Workflow Example**:
 ```bash
-# 1. Setup secure server (disables root, creates admin user with SSH keys)
-# Pass root password via command line (recommended for security)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/generic-server.yml -e "ansible_ssh_pass=pass4now"
+# 1. Setup secure server (root SSH keys + admin user, firewall, port change)
+./ali security
 
-# Alternative: Prompt for password (most secure)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/generic-server.yml --ask-pass
+# 2. Deploy base configuration
+./ali base
 
-# 2. Deploy additional services (uses admin user authentication)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/web-server.yml
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/database-server.yml
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/cache-server.yml
+# 3. Deploy services
+./ali psql    # PostgreSQL database
+./ali django  # Django web application
+./ali redis   # Redis cache
+./ali nginx   # Nginx load balancer
 ```
 
 **Security Features**:
@@ -145,11 +139,11 @@ ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/cache-server.ym
 - ✅ **Default**: Shows only changes and failures (clean output)
 - ✅ **Minimal**: `ANSIBLE_STDOUT_CALLBACK=minimal` (compact format)
 - ✅ **One-line**: `ANSIBLE_STDOUT_CALLBACK=oneline` (single line per task)
-- ✅ **Verbose**: `ansible-playbook ... -v` (detailed debugging)
+- ✅ **Verbose**: `./ali ... -v` (detailed debugging)
 - ✅ **Always Shown**: Changed tasks, failed tasks, unreachable hosts
 - ✅ **Hidden by Default**: Successful unchanged tasks, skipped tasks
 
-### Ansible Recipe Examples
+### Ali Recipe Examples
 
 ```bash
 # Ali CLI - Simplified Commands (Recommended)
@@ -174,24 +168,10 @@ ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/cache-server.ym
 ./ali redis --check
 ./ali nginx -- --tags ssl
 
-# Traditional Commands (if preferred)
-# Step 1: Security (run as root on port 22)
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/security.yml
-
-# Step 2: Core setup (run as admin on port 22022)  
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/core/base.yml
-
-# Step 3: Service deployment (run as admin)
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/db/psql.yml
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/www/django.yml
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/cache/redis.yml
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/lb/nginx.yml
-ansible-playbook -i cloudy/inventory/test.yml cloudy/playbooks/recipes/vpn/openvpn.yml
-
-# Individual task execution
-ansible-playbook -i inventory/test.yml playbooks/recipes/core/base.yml --tags ssh
-ansible-playbook -i inventory/test.yml playbooks/recipes/core/base.yml --tags firewall
-ansible-playbook -i inventory/test.yml playbooks/recipes/www/django.yml --tags nginx
+# Individual components and tags
+./ali base -- --tags ssh
+./ali base -- --tags firewall  
+./ali django -- --tags nginx
 
 # Development and validation
 ./ali dev validate                  # Comprehensive validation (with fallback)
@@ -200,10 +180,9 @@ ansible-playbook -i inventory/test.yml playbooks/recipes/www/django.yml --tags n
 ./ali dev lint                      # Ansible linting
 ./ali dev spell                     # Spell checking
 
-# Traditional dev commands (if preferred)
+# Advanced dev commands (if needed)
 ./dev/validate.py                   # Direct validation script
 ./dev/syntax-check.sh              # Direct syntax check script
-ansible-playbook -i cloudy/inventory/test.yml dev/test-auth.yml --check
 ```
 
 #### Recipe Categories
@@ -293,34 +272,35 @@ pip install ansible
 cd ansible-cloudy/
 ```
 
-### Core Ansible Commands
-- **Run recipe playbooks**: `ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/[recipe-name].yml`
-- **Test authentication flow**: `ansible-playbook -i inventory/test-recipes.yml test-simple-auth.yml`
+### Core Ali Commands
+- **Run recipe deployments**: `./ali [recipe-name]` (security, base, psql, django, etc.)
+- **Test authentication flow**: `./ali dev test`
 - **Clean output (changes only)**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Alternative output formats**:
-  - `ANSIBLE_STDOUT_CALLBACK=minimal ansible-playbook ...` (compact format)
-  - `ANSIBLE_STDOUT_CALLBACK=oneline ansible-playbook ...` (one line per task)
-  - Standard verbose: `ansible-playbook ... -v` (detailed debugging)
+  - `ANSIBLE_STDOUT_CALLBACK=minimal ./ali ...` (compact format)
+  - `ANSIBLE_STDOUT_CALLBACK=oneline ./ali ...` (one line per task)
+  - Standard verbose: `./ali ... -v` (detailed debugging)
 
-### Ansible Recipe Examples
+### Ali Recipe Examples
 ```bash
-# Generic server setup (secure SSH, user management, firewall)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/generic-server.yml
+# Security setup (root SSH keys + admin user, firewall, port change)
+./ali security
 
 # VPN server setup (OpenVPN with Docker)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/vpn-server.yml
+./ali openvpn
 
-# Web server setup (Nginx, Apache, Supervisor)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/web-server.yml
+# Web server setup (Django with Nginx/Apache/Supervisor)
+./ali django
 
 # Database server setup (PostgreSQL, PostGIS, PgBouncer)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/database-server.yml
+./ali psql
+./ali postgis
 
 # Cache server setup (Redis)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/cache-server.yml
+./ali redis
 
 # Load balancer setup (Nginx with SSL)
-ansible-playbook -i inventory/test-recipes.yml playbooks/recipes/load-balancer.yml
+./ali nginx
 ```
 
 ### Ansible Security Features

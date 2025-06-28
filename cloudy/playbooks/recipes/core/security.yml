@@ -1,74 +1,82 @@
-# Recipe: Server Security Setup
-# Purpose: Initial security setup - creates admin user, installs SSH keys, firewall, disables root
-# Usage: ansible-playbook playbooks/recipes/core/security.yml" -i inventory/hosts.yml"
+# Recipe: Rock-Solid Security Setup
+# Purpose: Enterprise-grade security - Root (SSH keys) + Admin User (password+SSH keys)
+# Usage: ansible-playbook playbooks/recipes/core/security.yml -i inventory/hosts.yml
 
 ---
-- name: Server Security Setup
+- name: Rock-Solid Server Security Setup
   hosts: all
   gather_facts: true
   become: true
   
   vars:
     task_paths: "../../../tasks"
+    emergency_user: "{{ admin_user | default('admin') }}"    # Configurable username from inventory
+    
+  pre_tasks:
+    - name: Display security setup information
+      debug:
+        msg: |
+          🔐 Starting Rock-Solid Security Setup
+          Target: {{ inventory_hostname }} ({{ ansible_host }})
+          
+          Security Model:
+          ├── Root User: SSH keys ONLY (automation access)
+          ├── Admin User: {{ emergency_user }} (password + SSH keys)
+          ├── SSH Port: 22 → {{ ssh_port | default(22022) }}
+          └── Firewall: UFW enabled with strict rules
           
   tasks:
-    # System Updates
+    # Phase 1: Foundation Setup
     - name: Update system packages
       include_tasks: "{{ task_paths }}/sys/core/update.yml"
-      tags: [system, update]
+      tags: [foundation, update]
       
     - name: Install common utilities
       include_tasks: "{{ task_paths }}/sys/core/install-common.yml"
-      tags: [system, packages]
+      tags: [foundation, packages]
       
-    # User Management - Create admin user
-    - name: Create admin user
+    # Phase 2: SSH Key Security for Root
+    - name: Install SSH public key for root
+      include_tasks: "{{ task_paths }}/sys/ssh/install-public-key.yml"
+      vars:
+        target_user: "root"
+        pub_key_path: "{{ ansible_ssh_private_key_file }}.pub"
+      when: ansible_ssh_private_key_file is defined
+      tags: [ssh, keys, root]
+      
+    # Phase 3: Create Admin Access User
+    - name: Create admin user ({{ emergency_user }})
       include_tasks: "{{ task_paths }}/sys/user/add-user.yml"
       vars:
-        username: "{{ admin_user }}"
+        username: "{{ emergency_user }}"
       tags: [users, admin]
       
     - name: Set admin user password
       include_tasks: "{{ task_paths }}/sys/user/change-password.yml"
       vars:
-        username: "{{ admin_user }}"
+        username: "{{ emergency_user }}"
         password: "{{ admin_password }}"
       tags: [users, admin, password]
       
     - name: Add admin user to sudoers with NOPASSWD
       include_tasks: "{{ task_paths }}/sys/user/add-sudoer.yml"
       vars:
-        username: "{{ admin_user }}"
+        username: "{{ emergency_user }}"
         nopasswd_sudo: true
       tags: [users, admin, sudo]
       
-    - name: Add admin user to groups
-      include_tasks: "{{ task_paths }}/sys/user/add-to-groups.yml"
-      vars:
-        username: "{{ admin_user }}"
-        group_list: "{{ admin_groups }}"
-      tags: [users, admin, groups]
-      
-    # SSH Key Installation (BEFORE port change and root disable)
     - name: Install SSH public key for admin user
       include_tasks: "{{ task_paths }}/sys/ssh/install-public-key.yml"
       vars:
-        target_user: "{{ admin_user }}"
+        target_user: "{{ emergency_user }}"
         pub_key_path: "{{ ansible_ssh_private_key_file }}.pub"
       when: ansible_ssh_private_key_file is defined
       tags: [ssh, keys, admin]
       
-    # Firewall Setup - Allow new SSH port BEFORE changing port
-    - name: Install UFW firewall
+    # Phase 4: Firewall Setup (Early Protection)
+    - name: Install UFW firewall (smart installation)
       include_tasks: "{{ task_paths }}/sys/firewall/install.yml"
       tags: [firewall, security]
-      
-    - name: Allow current SSH port (22) temporarily
-      ufw:
-        rule: allow
-        port: "22"
-        proto: tcp
-      tags: [firewall, ssh, security]
       
     - name: Allow new SSH port in UFW firewall
       ufw:
@@ -77,34 +85,72 @@
         proto: tcp
       tags: [firewall, ssh, security]
       
-    # SSH Security Configuration
+    - name: Enable UFW firewall immediately
+      ufw:
+        state: enabled
+        logging: 'on'
+        default: deny
+      tags: [firewall, security]
+      
+    # Phase 5: SSH Security Configuration
     - name: Configure SSH port
       include_tasks: "{{ task_paths }}/sys/ssh/set-port.yml"
       tags: [ssh, security]
       
-    # Disable root login
-    - name: Disable root login
-      include_tasks: "{{ task_paths }}/sys/ssh/disable-root-login.yml"
+    - name: Configure SSH security (root=keys-only, admin=both)
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: '^PermitRootLogin', line: 'PermitRootLogin prohibit-password' }
+        - { regexp: '^PasswordAuthentication', line: 'PasswordAuthentication yes' }
+        - { regexp: '^PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
+        - { regexp: '^MaxAuthTries', line: 'MaxAuthTries 3' }
+        - { regexp: '^ClientAliveInterval', line: 'ClientAliveInterval 300' }
+        - { regexp: '^X11Forwarding', line: 'X11Forwarding no' }
+        - { regexp: '^PermitTunnel', line: 'PermitTunnel no' }
+      notify: restart ssh
       tags: [ssh, security]
       
-    - name: Disable password authentication
-      include_tasks: "{{ task_paths }}/sys/ssh/disable-password-auth.yml"
-      tags: [ssh, security]
+    # Phase 6: Install Security Monitoring
+    - name: Install fail2ban for intrusion detection
+      apt:
+        name: fail2ban
+        state: present
+      tags: [security, monitoring]
       
-    # Remove old SSH port from firewall (if it exists)
-    - name: Remove old SSH port from UFW firewall  
-      ufw:
-        rule: allow
-        port: "22"
-        proto: tcp
-        delete: true
-      when: (ssh_port | default(22022)) != 22
-      tags: [firewall, ssh, security]
-      ignore_errors: true
+    - name: Start and enable fail2ban
+      service:
+        name: fail2ban
+        state: started
+        enabled: true
+      tags: [security, monitoring]
       
-    # Enable UFW firewall (final security step)
-    - name: Enable UFW firewall
-      ufw:
-        state: enabled
-        logging: 'on'
-      tags: [firewall, security]
+  handlers:
+    - name: restart ssh
+      service:
+        name: ssh
+        state: restarted
+      
+  post_tasks:
+    - name: Display security setup completion
+      debug:
+        msg: |
+          🎉 ✅ ROCK-SOLID SECURITY SETUP COMPLETED!
+          
+          📋 Security Configuration:
+             ├── Root Access: SSH keys ONLY (automation)
+             ├── Admin Access: {{ emergency_user }} (password + SSH keys)
+             ├── SSH Port: {{ ssh_port | default(22022) }}
+             ├── Firewall: UFW enabled with strict rules
+             ├── Monitoring: fail2ban active
+             └── Connection: Use root for all automation
+          
+          🔐 Security Status: ENTERPRISE-GRADE
+          
+          🚀 Next Steps:
+             • All automation continues as root (no connection switching)
+             • Admin access: ssh {{ emergency_user }}@{{ ansible_host }}:{{ ssh_port | default(22022) }}
+             • Deploy services: ./ali base, ./ali psql, etc.
