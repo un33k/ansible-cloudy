@@ -133,11 +133,6 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Show Claudia version information",
     )
-    parser.add_argument(
-        "--no-smart-connection",
-        action="store_true",
-        help="Disable smart connection detection (use static inventory)",
-    )
 
     return parser
 
@@ -259,10 +254,7 @@ def main() -> None:
     if args.verbose:
         ansible_args.insert(0, "-v")
 
-    inventory_path = inventory_manager.get_inventory_path(
-        args.prod, 
-        smart_connection=not args.no_smart_connection
-    )
+    inventory_path = inventory_manager.get_inventory_path(args.prod)
     exit_code = runner.run_recipe(
         recipe_path=recipe_path,
         inventory_path=inventory_path,

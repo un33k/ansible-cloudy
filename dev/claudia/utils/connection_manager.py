@@ -19,64 +19,40 @@ class ConnectionManager:
         self.config = config
         
     def detect_server_state(self, host: str) -> Dict[str, Any]:
-        """Detect current server state and return appropriate connection settings"""
+        """Detect if server is fresh (password) or secured (SSH key) - always port 22"""
         
-        # Test connection scenarios in order of preference
-        connection_attempts = [
-            {
-                'name': 'secured_admin',
-                'user': 'admino', 
-                'port': 22022,
-                'auth': 'key',
-                'description': 'Admin user with SSH keys on secured port'
-            },
-            {
-                'name': 'secured_root',
-                'user': 'root',
-                'port': 22022, 
-                'auth': 'key',
-                'description': 'Root user with SSH keys on secured port'
-            },
-            {
-                'name': 'fresh_root',
-                'user': 'root',
-                'port': 22,
-                'auth': 'key_fallback_password',
-                'description': 'Fresh server - root with SSH key or password fallback'
+        # Simple: test if SSH key works on port 22
+        if self._test_ssh_key_auth(host, 22):
+            info("🔐 Secured server detected (SSH key authentication)")
+            return {
+                'connection_type': 'secured',
+                'auth_method': 'ssh_key'
             }
-        ]
-        
-        for attempt in connection_attempts:
-            if self._test_connection(host, attempt):
-                info(f"✅ Connected via {attempt['description']}")
-                return self._build_connection_config(attempt)
-        
-        # If all fail, return fresh server config as fallback
-        warn("⚠️  All connection attempts failed, using fresh server fallback")
-        return self._build_connection_config(connection_attempts[2])
+        else:
+            info("🆕 Fresh server detected (password authentication required)")
+            return {
+                'connection_type': 'fresh', 
+                'auth_method': 'password'
+            }
     
-    def _test_connection(self, host: str, attempt: Dict) -> bool:
-        """Test if a specific connection configuration works"""
+    def _test_ssh_key_auth(self, host: str, port: int) -> bool:
+        """Test if SSH key authentication works for root user on specified port"""
+        key_path = Path.home() / '.ssh' / 'id_rsa'
         
-        # First check if port is open
-        if not self._is_port_open(host, attempt['port']):
+        if not key_path.exists():
             return False
             
-        # Test SSH connection
         ssh_cmd = [
             'ssh',
             '-o', 'ConnectTimeout=5',
             '-o', 'StrictHostKeyChecking=no',
             '-o', 'BatchMode=yes',  # No interactive prompts
-            '-p', str(attempt['port']),
+            '-o', 'PasswordAuthentication=no',  # Force key-only auth
+            '-i', str(key_path),
+            '-p', str(port),
+            f"root@{host}",
+            'echo "connection_test"'
         ]
-        
-        # Add key-based auth if available
-        key_path = Path.home() / '.ssh' / 'id_rsa'
-        if key_path.exists() and attempt['auth'] in ['key', 'key_fallback_password']:
-            ssh_cmd.extend(['-i', str(key_path)])
-            
-        ssh_cmd.extend([f"{attempt['user']}@{host}", 'echo "connection_test"'])
         
         try:
             result = subprocess.run(
@@ -97,107 +73,11 @@ class ConnectionManager:
         except (socket.timeout, socket.error):
             return False
     
-    def _build_connection_config(self, attempt: Dict) -> Dict[str, Any]:
-        """Build Ansible connection configuration from attempt details"""
+    def get_connection_info(self, host: str) -> str:
+        """Get simple connection information for logging"""
+        server_state = self.detect_server_state(host)
         
-        config = {
-            'ansible_user': attempt['user'],
-            'ansible_port': attempt['port'],
-            'ansible_host_key_checking': False,
-            'ansible_ssh_common_args': '-o StrictHostKeyChecking=no',
-            'connection_type': attempt['name']
-        }
-        
-        # Add SSH key if available and auth method supports it
-        key_path = Path.home() / '.ssh' / 'id_rsa'
-        if key_path.exists() and attempt['auth'] in ['key', 'key_fallback_password']:
-            config['ansible_ssh_private_key_file'] = str(key_path)
-        
-        # For fresh server, we might need password fallback
-        if attempt['name'] == 'fresh_root' and attempt['auth'] == 'key_fallback_password':
-            # Password will be handled by ansible-playbook prompting or inventory
-            pass
-            
-        return config
-    
-    def get_smart_inventory_vars(self, host: str) -> Dict[str, Any]:
-        """Get smart inventory variables that auto-detect connection method"""
-        
-        detected_config = self.detect_server_state(host)
-        
-        # Base inventory vars (unchanged)
-        base_vars = {
-            'git_user_full_name': "Test User",
-            'git_user_email': "test@example.com", 
-            'timezone': "America/New_York",
-            'admin_user': 'admino',
-            'admin_password': 'secure123',
-            'admin_groups': "admin,www-data",
-            'admin_ssh_private_key_file': '~/.ssh/id_rsa',
-            'ssh_port': 22022,
-        }
-        
-        # Merge with detected connection settings
-        base_vars.update(detected_config)
-        
-        return base_vars
-    
-    def create_dynamic_inventory(self, host: str, output_path: Optional[Path] = None) -> Path:
-        """Create a dynamic inventory file with smart connection detection"""
-        
-        smart_vars = self.get_smart_inventory_vars(host)
-        connection_type = smart_vars.get('connection_type', 'unknown')
-        
-        inventory_content = f"""# Dynamic Inventory - Auto-detected connection: {connection_type}
-# Generated by Claudia Connection Manager
-
----
-all:
-  vars:
-    # Global Settings
-    git_user_full_name: "{smart_vars['git_user_full_name']}"
-    git_user_email: "{smart_vars['git_user_email']}"
-    timezone: "{smart_vars['timezone']}"
-    
-    # Smart Connection Settings (auto-detected)
-    ansible_user: {smart_vars['ansible_user']}
-    ansible_port: {smart_vars['ansible_port']}
-    ansible_host_key_checking: {str(smart_vars['ansible_host_key_checking']).lower()}
-    ansible_ssh_common_args: '{smart_vars['ansible_ssh_common_args']}'"""
-
-        if 'ansible_ssh_private_key_file' in smart_vars:
-            inventory_content += f"""
-    ansible_ssh_private_key_file: {smart_vars['ansible_ssh_private_key_file']}"""
-
-        inventory_content += f"""
-    
-    # Admin User Configuration
-    admin_user: {smart_vars['admin_user']}
-    admin_password: {smart_vars['admin_password']}
-    admin_groups: "{smart_vars['admin_groups']}"
-    admin_ssh_private_key_file: {smart_vars['admin_ssh_private_key_file']}
-    ssh_port: {smart_vars['ssh_port']}
-    
-  hosts:
-    test-server:
-      ansible_host: {host}
-      hostname: test-server.example.com
-      
-      # Service-specific configs
-      domain_name: test-server.example.com
-      postgresql_version: "15"
-      postgis_version: "3.3"
-      database_port: 5433
-      redis_memory_mb: 512
-      redis_port: 6379
-      webserver: gunicorn
-      webserver_port: 8181
-"""
-        
-        if output_path is None:
-            output_path = self.config.base_dir / "cloudy" / "inventory" / "dynamic.yml"
-            
-        output_path.write_text(inventory_content)
-        info(f"📝 Created dynamic inventory: {output_path}")
-        
-        return output_path
+        if server_state['connection_type'] == 'secured':
+            return "Secured server (root@22 with SSH keys)"
+        else:
+            return "Fresh server (root@22 with password required)"

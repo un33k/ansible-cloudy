@@ -26,6 +26,17 @@ class PostgreSQLOperations:
     def handle_operation(self, args, ansible_args: List[str]) -> int:
         """Route PostgreSQL operation to appropriate handler"""
         
+        # Show connection info if performing actual operations
+        if args.install or self._detect_operation(ansible_args):
+            from utils.connection_manager import ConnectionManager
+            conn_manager = ConnectionManager(self.config)
+            # Get host from inventory for connection info
+            inventory_path = self.inventory_manager.get_inventory_path(args.prod)
+            host = self._extract_host_from_inventory(inventory_path)
+            if host:
+                conn_info = conn_manager.get_connection_info(host)
+                print(f"🔍 {conn_info}")
+        
         # Extract PostgreSQL-specific arguments
         psql_args = self._extract_psql_args(ansible_args)
         
@@ -224,10 +235,7 @@ class PostgreSQLOperations:
             extra_vars.insert(0, "-v")
         
         # Execute recipe
-        inventory_path = self.inventory_manager.get_inventory_path(
-            args.prod, 
-            smart_connection=not getattr(args, 'no_smart_connection', False)
-        )
+        inventory_path = self.inventory_manager.get_inventory_path(args.prod)
         return self.runner.run_recipe(
             recipe_path=recipe_path,
             inventory_path=inventory_path,
@@ -345,10 +353,7 @@ class PostgreSQLOperations:
             extra_vars.insert(0, "-v")
         
         # Execute task
-        inventory_path = self.inventory_manager.get_inventory_path(
-            args.prod, 
-            smart_connection=not getattr(args, 'no_smart_connection', False)
-        )
+        inventory_path = self.inventory_manager.get_inventory_path(args.prod)
         return self.runner.run_task(
             task_path=str(task_path),
             inventory_path=inventory_path,
@@ -412,3 +417,20 @@ class PostgreSQLOperations:
                 print(f"  {Colors.YELLOW}{op_name}{Colors.NC}")
         
         return 0
+    
+    def _extract_host_from_inventory(self, inventory_path: str) -> str:
+        """Extract the primary host IP from inventory file"""
+        try:
+            import yaml
+            with open(inventory_path) as f:
+                inventory = yaml.safe_load(f)
+            
+            # Look for ansible_host in the first host entry
+            hosts = inventory.get('all', {}).get('hosts', {})
+            for host_name, host_config in hosts.items():
+                if 'ansible_host' in host_config:
+                    return host_config['ansible_host']
+            
+            return None
+        except Exception:
+            return None

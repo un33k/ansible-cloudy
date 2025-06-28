@@ -88,9 +88,8 @@ class InventoryManager:
     def __init__(self, config: AliConfig):
         self.config = config
 
-    def get_inventory_path(self, production: bool = False, smart_connection: bool = True) -> str:
-        """Get the appropriate inventory file path with optional smart connection detection"""
-        
+    def get_inventory_path(self, production: bool = False) -> str:
+        """Get the appropriate inventory file path"""
         if production:
             inventory_file = self.config.inventory_dir / "production.yml"
         else:
@@ -99,47 +98,4 @@ class InventoryManager:
         if not inventory_file.exists():
             error(f"Inventory file not found: {inventory_file}")
 
-        # For smart connection, create dynamic inventory if enabled
-        if smart_connection and not production:
-            return self._get_smart_inventory_path()
-        
         return str(inventory_file)
-    
-    def _get_smart_inventory_path(self) -> str:
-        """Create and return path to smart inventory with connection detection"""
-        try:
-            from .connection_manager import ConnectionManager
-            
-            # Get target host from static inventory
-            static_inventory = self.config.inventory_dir / "test.yml"
-            host = self._extract_host_from_inventory(static_inventory)
-            
-            if host:
-                conn_manager = ConnectionManager(self.config)
-                dynamic_inventory = conn_manager.create_dynamic_inventory(host)
-                return str(dynamic_inventory)
-            else:
-                # Fallback to static inventory if we can't extract host
-                return str(static_inventory)
-                
-        except Exception as e:
-            # Fallback to static inventory on any error
-            warn(f"Smart connection failed: {e}")
-            return str(self.config.inventory_dir / "test.yml")
-    
-    def _extract_host_from_inventory(self, inventory_path: Path) -> str:
-        """Extract the primary host IP from inventory file"""
-        try:
-            import yaml
-            with open(inventory_path) as f:
-                inventory = yaml.safe_load(f)
-            
-            # Look for ansible_host in the first host entry
-            hosts = inventory.get('all', {}).get('hosts', {})
-            for host_name, host_config in hosts.items():
-                if 'ansible_host' in host_config:
-                    return host_config['ansible_host']
-            
-            return None
-        except Exception:
-            return None
