@@ -19,26 +19,46 @@ Complete reference for all Ali (Ansible Line Interpreter) commands.
 
 #### Core Infrastructure
 ```bash
-./ali security          # Initial server security setup (admin user, SSH keys, firewall)
-./ali base              # Basic server configuration (hostname, git, timezone, swap)
+# Help and configuration (default action)
+./ali security          # Show security setup help and configuration options
+./ali base              # Show base configuration help and available variables
+
+# Execution (requires --install flag)
+./ali security --install   # Execute security setup (admin user, SSH keys, firewall)
+./ali base --install       # Execute base configuration (hostname, git, timezone, swap)
 ```
 
 #### Database Services  
 ```bash
-./ali psql              # PostgreSQL database server
-./ali postgis           # PostgreSQL with PostGIS extensions
+# Help and configuration
+./ali psql              # Show PostgreSQL setup help and configuration options
+./ali postgis           # Show PostGIS help and extensions information
+
+# Execution
+./ali psql --install       # Execute PostgreSQL database server setup
+./ali postgis --install    # Execute PostgreSQL with PostGIS extensions
 ```
 
 #### Web Services
 ```bash
-./ali django           # Django web application server
-./ali nginx            # Nginx load balancer
+# Help and configuration
+./ali django           # Show Django setup help and deployment options
+./ali nginx            # Show Nginx load balancer help and SSL configuration
+
+# Execution
+./ali django --install     # Execute Django web application server
+./ali nginx --install      # Execute Nginx load balancer
 ```
 
 #### Cache & VPN
 ```bash
-./ali redis            # Redis cache server  
-./ali openvpn          # OpenVPN server
+# Help and configuration
+./ali redis            # Show Redis cache server help and memory configuration
+./ali openvpn          # Show OpenVPN server help and Docker setup
+
+# Execution
+./ali redis --install      # Execute Redis cache server setup
+./ali openvpn --install    # Execute OpenVPN server deployment
 ```
 
 ### 🛠️ Development Commands
@@ -56,20 +76,29 @@ Complete reference for all Ali (Ansible Line Interpreter) commands.
 Available with any recipe command:
 
 ```bash
+--install, --run        # Execute the recipe (required for all executions)
 --prod, --production    # Use production inventory (default: test)
 --check, --dry-run      # Run in check mode without changes
 --verbose, -v           # Enable verbose output
+--verify                # Run security verification (security recipe only)
 --list, -l             # List available commands
 --help, -h             # Show help information
 ```
 
 ### 🎨 Usage Examples
 
-#### Basic Recipe Execution
+#### Help and Discovery (Default Action)
 ```bash
-./ali security         # Run on test environment
-./ali django --prod    # Run on production  
-./ali redis --check    # Dry run validation
+./ali security         # Show security help and configuration options
+./ali django           # Show Django help and deployment variables
+./ali redis             # Show Redis help and memory configuration
+```
+
+#### Recipe Execution (Requires --install Flag)
+```bash
+./ali security --install          # Execute security setup on test environment
+./ali django --install --prod     # Execute Django deployment on production  
+./ali redis --install --check     # Dry run Redis installation
 ```
 
 #### Development Workflow
@@ -82,9 +111,9 @@ Available with any recipe command:
 
 #### Advanced Usage  
 ```bash
-./ali nginx -- --tags ssl              # Pass ansible-playbook args
-./ali django --prod --verbose          # Production with debug output
-./ali security --check -- --limit web  # Dry run on specific hosts
+./ali nginx --install -- --tags ssl              # Execute nginx with ansible-playbook args
+./ali django --install --prod --verbose          # Production execution with debug output
+./ali security --install --check -- --limit web  # Dry run on specific hosts
 ```
 
 #### Discovery Commands

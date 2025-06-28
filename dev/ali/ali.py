@@ -62,11 +62,14 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=ColoredHelpFormatter,
         epilog=f"""
 {Colors.YELLOW}Examples:{Colors.NC}
-  {Colors.GREEN}ali security{Colors.NC}                    Run security setup on test environment
+  {Colors.GREEN}ali security{Colors.NC}                    Show security recipe help and configuration
+  {Colors.GREEN}ali security --install{Colors.NC}          Execute security setup on test environment
   {Colors.GREEN}ali security --verify{Colors.NC}           Run security verification/check
-  {Colors.GREEN}ali django --prod{Colors.NC}              Run django recipe on production
-  {Colors.GREEN}ali redis --check{Colors.NC}              Dry run redis recipe
-  {Colors.GREEN}ali nginx -- --tags ssl{Colors.NC}        Pass --tags ssl to ansible-playbook
+  {Colors.GREEN}ali base --install{Colors.NC}              Execute base server configuration
+  {Colors.GREEN}ali psql --install{Colors.NC}              Execute PostgreSQL installation
+  {Colors.GREEN}ali django --install --prod{Colors.NC}     Execute django recipe on production
+  {Colors.GREEN}ali redis --install --check{Colors.NC}     Dry run redis recipe installation
+  {Colors.GREEN}ali nginx --install -- --tags ssl{Colors.NC}  Execute nginx with --tags ssl passed to ansible-playbook
   {Colors.GREEN}ali --list{Colors.NC}                      Show all available recipes
   
   {Colors.GREEN}ali dev validate{Colors.NC}                Run comprehensive validation
@@ -112,6 +115,12 @@ def create_parser() -> argparse.ArgumentParser:
         "--verify",
         action="store_true",
         help="Run security verification instead of initial setup (security only)",
+    )
+    parser.add_argument(
+        "--install",
+        "--run",
+        action="store_true",
+        help="Execute the recipe (required to run any recipe)",
     )
 
     return parser
@@ -234,6 +243,15 @@ def main() -> None:
     # Add verbose flag if requested
     if args.verbose:
         ansible_args.insert(0, "-v")
+
+    # Check if execution is requested, otherwise show help
+    execution_requested = args.install or args.verify
+    
+    if not execution_requested:
+        # Show recipe help by default
+        help_parser = RecipeHelpParser(config)
+        help_parser.display_recipe_help(args.command, recipe_path)
+        return
 
     # Handle smart security execution
     if args.command == "security":

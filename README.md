@@ -15,16 +15,17 @@ cd cloudy/
 
 ### Basic Usage
 ```bash
-# Step 1: Security setup (creates admin user, SSH keys, firewall)
-./ali security
+# Show help and configuration options (default action)
+./ali security    # View security setup help and available variables
+./ali base        # View base configuration help and options
+./ali psql        # View PostgreSQL setup help and configuration
 
-# Step 2: Base configuration (hostname, git, timezone, swap)
-./ali base
-
-# Step 3: Deploy services as needed
-./ali django
-./ali redis
-./ali nginx
+# Execute recipes (requires --install flag for safety)
+./ali security --install    # Security setup (creates admin user, SSH keys, firewall)
+./ali base --install        # Base configuration (hostname, git, timezone, swap)
+./ali django --install      # Deploy Django web application
+./ali redis --install       # Deploy Redis cache server
+./ali nginx --install       # Deploy Nginx load balancer
 ```
 
 ## Features
@@ -45,17 +46,20 @@ cd cloudy/
 
 ### 📊 Clean Output Control
 ```bash
-# Default: Show only changes and failures
+# Show help by default (safe exploration)
 ./ali security
 
+# Execute with default output (show only changes and failures)
+./ali security --install
+
 # Compact output
-ANSIBLE_STDOUT_CALLBACK=minimal ./ali security
+ANSIBLE_STDOUT_CALLBACK=minimal ./ali security --install
 
 # One line per task
-ANSIBLE_STDOUT_CALLBACK=oneline ./ali security
+ANSIBLE_STDOUT_CALLBACK=oneline ./ali security --install
 
 # Verbose debugging
-./ali security -- -v
+./ali security --install -v
 ```
 
 ## Architecture
@@ -145,25 +149,28 @@ This Ansible implementation provides:
 ### Complete Web Stack
 ```bash
 # 1. Secure server foundation
-./ali security
+./ali security --install
 
 # 2. Base configuration
-./ali base
+./ali base --install
 
 # 3. Database layer
-./ali psql
+./ali psql --install
 
 # 4. Web application layer
-./ali django
+./ali django --install
 
 # 5. Load balancer (optional)
-./ali nginx
+./ali nginx --install
 ```
 
 ### VPN Server
 ```bash
-# Single command VPN deployment
+# View VPN setup help and configuration
 ./ali openvpn
+
+# Execute VPN deployment
+./ali openvpn --install
 ```
 
 ## Documentation

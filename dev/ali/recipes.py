@@ -210,11 +210,12 @@ class RecipeHelpParser:
         if help_info["usage"]:
             print(f"  {help_info['usage']}")
         print(
-            f"  ali {recipe_name}                    # Run on test environment"
+            f"  ali {recipe_name}                    # Show this help (default action)"
         )
-        print(f"  ali {recipe_name} --prod             # Run on production")
-        print(f"  ali {recipe_name} --check            # Dry run (no changes)")
-        print(f"  ali {recipe_name} --verbose          # Verbose output")
+        print(f"  ali {recipe_name} --install          # Execute recipe on test environment")
+        print(f"  ali {recipe_name} --install --prod   # Execute recipe on production")
+        print(f"  ali {recipe_name} --install --check  # Dry run (no changes)")
+        print(f"  ali {recipe_name} --install --verbose # Verbose output")
         
         # Add security-specific options
         if recipe_name == "security":
@@ -251,22 +252,22 @@ class RecipeHelpParser:
         # Usage examples with variables and tags
         print(f"\n{Colors.YELLOW}Advanced Examples:{Colors.NC}")
         print(
-            f'  ali {recipe_name} -- -e "admin_user=myuser"         # Override variables'
+            f'  ali {recipe_name} --install -- -e "admin_user=myuser"  # Override variables'
         )
         print(
-            f"  ali {recipe_name} -- --tags ssh                     # Run only SSH tasks"
+            f"  ali {recipe_name} --install -- --tags ssh              # Run only SSH tasks"
         )
         print(
-            f"  ali {recipe_name} -- --skip-tags firewall           # Skip firewall tasks"
+            f"  ali {recipe_name} --install -- --skip-tags firewall    # Skip firewall tasks"
         )
         print(
-            f"  ali {recipe_name} -- --limit test-server            # Run on specific host"
+            f"  ali {recipe_name} --install -- --limit test-server     # Run on specific host"
         )
         
         # Add security-specific advanced examples
         if recipe_name == "security":
             print(
-                f"  ali {recipe_name} --verify --prod                   # Verify production security"
+                f"  ali {recipe_name} --verify --prod                      # Verify production security"
             )
 
 
@@ -288,10 +289,11 @@ def list_recipes(config: AliConfig) -> None:
             print(f"  • {recipe_name}")
 
     print(f"\n{Colors.YELLOW}Usage examples:{Colors.NC}")
-    print("  ali security           # Run core/security.yml on test")
-    print("  ali django --prod      # Run www/django.yml on production")
-    print("  ali redis --check      # Dry run cache/redis.yml")
-    print("  ali nginx -- --tags ssl # Pass --tags ssl to ansible-playbook")
+    print("  ali security                # Show security recipe help")
+    print("  ali security --install      # Execute core/security.yml on test")
+    print("  ali django --install --prod # Execute www/django.yml on production")
+    print("  ali redis --install --check # Dry run cache/redis.yml")
+    print("  ali nginx --install -- --tags ssl # Execute nginx with --tags ssl")
     print(
-        f"\n{Colors.CYAN}💡 Tip:{Colors.NC} Use 'ali RECIPE --help' for detailed recipe help"
+        f"\n{Colors.CYAN}💡 Tip:{Colors.NC} Use 'ali RECIPE' to see detailed help and available options"
     )

@@ -17,16 +17,17 @@ cd ansible-cloudy/
 ### Core Development Commands
 
 #### Simplified Server Setup (Recommended) - Using Ali CLI
-- **Step 1 - Security**: `./ali security` (root SSH keys + admin user, firewall, port change)
-- **Step 2 - Core**: `./ali base` (hostname, git, timezone, swap, etc.)
-- **Step 3 - Services**: `./ali django`, `./ali redis`, `./ali nginx` (deploy specific services)
+- **Help First**: `./ali security`, `./ali base`, `./ali psql` (shows help, configuration, and usage)
+- **Step 1 - Security**: `./ali security --install` (root SSH keys + admin user, firewall, port change)
+- **Step 2 - Core**: `./ali base --install` (hostname, git, timezone, swap, etc.)
+- **Step 3 - Services**: `./ali django --install`, `./ali redis --install`, `./ali nginx --install` (deploy specific services)
 
 #### Production Setup
-- **Ali CLI**: `./ali security --prod`, `./ali django --prod`, `./ali redis --prod`
+- **Ali CLI**: `./ali security --install --prod`, `./ali django --install --prod`, `./ali redis --install --prod`
 
 #### Development Tools
 - **Bootstrap**: `./bootstrap.sh` - Sets up .venv with all development tools
-- **Ali CLI**: `./ali security` - Simplified Ansible commands (90% shorter)
+- **Ali CLI**: `./ali security --install` - Simplified Ansible commands (90% shorter)
 - **Ali Dev Commands**: `./ali dev syntax`, `./ali dev validate`, `./ali dev lint`, `./ali dev test`
 - **Authentication test**: `./ali dev test` - Test server authentication flow
 - **Clean output**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
@@ -116,16 +117,16 @@ generic_servers:
 **Complete Secure Workflow Example**:
 ```bash
 # 1. Setup secure server (root SSH keys + admin user, firewall, port change)
-./ali security
+./ali security --install
 
 # 2. Deploy base configuration
-./ali base
+./ali base --install
 
 # 3. Deploy services
-./ali psql    # PostgreSQL database
-./ali django  # Django web application
-./ali redis   # Redis cache
-./ali nginx   # Nginx load balancer
+./ali psql --install    # PostgreSQL database
+./ali django --install  # Django web application
+./ali redis --install   # Redis cache
+./ali nginx --install   # Nginx load balancer
 ```
 
 **Security Features**:
@@ -147,31 +148,36 @@ generic_servers:
 
 ```bash
 # Ali CLI - Simplified Commands (Recommended)
+# Help and Discovery (default action)
+./ali security                  # Show security help and configuration options
+./ali base                      # Show base setup help and variables
+./ali psql                      # Show PostgreSQL help and configuration
+
 # Step 1: Security setup
-./ali security
+./ali security --install
 
 # Step 2: Core setup  
-./ali base
+./ali base --install
 
 # Step 3: Service deployment
-./ali psql
-./ali django
-./ali redis
-./ali nginx
-./ali openvpn
+./ali psql --install
+./ali django --install
+./ali redis --install
+./ali nginx --install
+./ali openvpn --install
 
 # Production deployment
-./ali security --prod
-./ali django --prod
+./ali security --install --prod
+./ali django --install --prod
 
 # Dry runs and testing
-./ali redis --check
-./ali nginx -- --tags ssl
+./ali redis --install --check
+./ali nginx --install -- --tags ssl
 
 # Individual components and tags
-./ali base -- --tags ssh
-./ali base -- --tags firewall  
-./ali django -- --tags nginx
+./ali base --install -- --tags ssh
+./ali base --install -- --tags firewall  
+./ali django --install -- --tags nginx
 
 # Development and validation
 ./ali dev validate                  # Comprehensive validation (with fallback)
@@ -273,34 +279,30 @@ cd ansible-cloudy/
 ```
 
 ### Core Ali Commands
-- **Run recipe deployments**: `./ali [recipe-name]` (security, base, psql, django, etc.)
+- **Show recipe help**: `./ali [recipe-name]` (security, base, psql, django, etc.)
+- **Execute recipes**: `./ali [recipe-name] --install` (requires explicit flag for safety)
 - **Test authentication flow**: `./ali dev test`
 - **Clean output (changes only)**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Alternative output formats**:
-  - `ANSIBLE_STDOUT_CALLBACK=minimal ./ali ...` (compact format)
-  - `ANSIBLE_STDOUT_CALLBACK=oneline ./ali ...` (one line per task)
-  - Standard verbose: `./ali ... -v` (detailed debugging)
+  - `ANSIBLE_STDOUT_CALLBACK=minimal ./ali ... --install` (compact format)
+  - `ANSIBLE_STDOUT_CALLBACK=oneline ./ali ... --install` (one line per task)
+  - Standard verbose: `./ali ... --install -v` (detailed debugging)
 
 ### Ali Recipe Examples
 ```bash
-# Security setup (root SSH keys + admin user, firewall, port change)
-./ali security
+# Help and configuration (default action)
+./ali security                  # Show security help and options
+./ali base                      # Show base configuration help
+./ali psql                      # Show PostgreSQL help and variables
 
-# VPN server setup (OpenVPN with Docker)
-./ali openvpn
-
-# Web server setup (Django with Nginx/Apache/Supervisor)
-./ali django
-
-# Database server setup (PostgreSQL, PostGIS, PgBouncer)
-./ali psql
-./ali postgis
-
-# Cache server setup (Redis)
-./ali redis
-
-# Load balancer setup (Nginx with SSL)
-./ali nginx
+# Recipe execution (requires --install flag)
+./ali security --install        # Security setup (root SSH keys + admin user, firewall, port change)
+./ali openvpn --install         # VPN server setup (OpenVPN with Docker)
+./ali django --install          # Web server setup (Django with Nginx/Apache/Supervisor)
+./ali psql --install            # Database server setup (PostgreSQL, PostGIS, PgBouncer)
+./ali postgis --install         # PostgreSQL with PostGIS extensions
+./ali redis --install           # Cache server setup (Redis)
+./ali nginx --install           # Load balancer setup (Nginx with SSL)
 ```
 
 ### Ansible Security Features
