@@ -14,33 +14,46 @@ from recipes import RecipeFinder, RecipeHelpParser, list_recipes
 from runners import AnsibleRunner, SmartSecurityRunner
 from dev_tools import DevTools, list_dev_commands
 
+
 class ColoredHelpFormatter(argparse.RawDescriptionHelpFormatter):
     """Custom help formatter with colors"""
-    
+
     def _format_usage(self, usage, actions, groups, prefix):
         if prefix is None:
-            prefix = f'{Colors.CYAN}usage:{Colors.NC} '
+            prefix = f"{Colors.CYAN}usage:{Colors.NC} "
         return super()._format_usage(usage, actions, groups, prefix)
-    
+
     def format_help(self):
         help_text = super().format_help()
         # Add colors to section headers
-        help_text = help_text.replace('positional arguments:', f'{Colors.BLUE}positional arguments:{Colors.NC}')
-        help_text = help_text.replace('options:', f'{Colors.BLUE}options:{Colors.NC}')
-        
+        help_text = help_text.replace(
+            "positional arguments:",
+            f"{Colors.BLUE}positional arguments:{Colors.NC}",
+        )
+        help_text = help_text.replace(
+            "options:", f"{Colors.BLUE}options:{Colors.NC}"
+        )
+
         # Color individual arguments and options
-        
+
         # Color positional arguments (like "command", "subcommand")
-        help_text = re.sub(r'^  (command|subcommand)(\s+)', 
-                          f'  {Colors.GREEN}\\1{Colors.NC}\\2', 
-                          help_text, flags=re.MULTILINE)
-        
+        help_text = re.sub(
+            r"^  (command|subcommand)(\s+)",
+            f"  {Colors.GREEN}\\1{Colors.NC}\\2",
+            help_text,
+            flags=re.MULTILINE,
+        )
+
         # Color option flags (handle both "-h, --help" and "--list, -l" patterns)
-        help_text = re.sub(r'^  ((?:-[a-zA-Z-]+(?:, --[a-zA-Z-]+)?|--[a-zA-Z-]+(?:, -[a-zA-Z])?))(\s+)', 
-                          f'  {Colors.CYAN}\\1{Colors.NC}\\2', 
-                          help_text, flags=re.MULTILINE)
-        
+        help_text = re.sub(
+            r"^  ((?:-[a-zA-Z-]+(?:, --[a-zA-Z-]+)?|--[a-zA-Z-]+(?:, -[a-zA-Z])?))(\s+)",
+            f"  {Colors.CYAN}\\1{Colors.NC}\\2",
+            help_text,
+            flags=re.MULTILINE,
+        )
+
         return help_text
+
 
 def create_parser() -> argparse.ArgumentParser:
     """Create command line argument parser"""
@@ -60,36 +73,58 @@ def create_parser() -> argparse.ArgumentParser:
   {Colors.GREEN}ali dev yaml{Colors.NC}                   YAML syntax validation
   {Colors.GREEN}ali dev lint{Colors.NC}                   Complete linting (YAML + Ansible)
   {Colors.GREEN}ali dev test{Colors.NC}                   Authentication testing
-        """
+        """,
     )
-    
-    parser.add_argument("command", nargs="?", help="Recipe name or 'dev' for development commands")
-    parser.add_argument("subcommand", nargs="?", help="Development subcommand (when using 'dev')")
-    parser.add_argument("--prod", "--production", action="store_true",
-                       help="Use production inventory instead of test")
-    parser.add_argument("--check", "--dry-run", action="store_true",
-                       help="Run in dry-run mode (--check)")
-    parser.add_argument("--list", "-l", action="store_true",
-                       help="List all available recipes or dev commands")
-    parser.add_argument("--verbose", "-v", action="store_true",
-                       help="Enable verbose output")
-    
+
+    parser.add_argument(
+        "command",
+        nargs="?",
+        help="Recipe name or 'dev' for development commands",
+    )
+    parser.add_argument(
+        "subcommand",
+        nargs="?",
+        help="Development subcommand (when using 'dev')",
+    )
+    parser.add_argument(
+        "--prod",
+        "--production",
+        action="store_true",
+        help="Use production inventory instead of test",
+    )
+    parser.add_argument(
+        "--check",
+        "--dry-run",
+        action="store_true",
+        help="Run in dry-run mode (--check)",
+    )
+    parser.add_argument(
+        "--list",
+        "-l",
+        action="store_true",
+        help="List all available recipes or dev commands",
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+
     return parser
+
 
 def main() -> None:
     """Main entry point for Ali CLI"""
-    
+
     # Parse arguments, splitting on -- for ansible args
     if "--" in sys.argv:
         split_idx = sys.argv.index("--")
         ali_args = sys.argv[1:split_idx]
-        ansible_args = sys.argv[split_idx + 1:]
+        ansible_args = sys.argv[split_idx + 1 :]
     else:
         ali_args = sys.argv[1:]
         ansible_args = []
-    
+
     # Check for recipe-specific help before parsing
-    if len(ali_args) >= 2 and ali_args[1] in ['--help', '-h']:
+    if len(ali_args) >= 2 and ali_args[1] in ["--help", "-h"]:
         recipe_name = ali_args[0]
         # Initialize config to find recipe
         try:
@@ -102,26 +137,28 @@ def main() -> None:
                 return
             else:
                 # Recipe not found, show error then general help
-                print(f"{Colors.RED}(✗){Colors.NC} {Colors.YELLOW}{recipe_name}{Colors.NC} {Colors.RED}not found{Colors.NC}:\n")
+                print(
+                    f"{Colors.RED}(✗){Colors.NC} {Colors.YELLOW}{recipe_name}{Colors.NC} {Colors.RED}not found{Colors.NC}:\n"
+                )
                 parser = create_parser()
                 parser.print_help()
                 return
         except:
             pass  # Fall back to normal help
-    
+
     # Parse ali arguments
     parser = create_parser()
     args, remaining_args = parser.parse_known_args(ali_args)
-    
+
     # Combine remaining args with original ansible args
     ansible_args.extend(remaining_args)
-    
+
     # Initialize configuration
     try:
         config = AliConfig()
     except Exception as e:
         error(f"Configuration error: {e}")
-    
+
     # Handle list command
     if args.list:
         if args.command == "dev":
@@ -129,15 +166,15 @@ def main() -> None:
         else:
             list_recipes(config)
         return
-    
+
     # Handle dev commands
     if args.command == "dev":
         if not args.subcommand:
             list_dev_commands()
             return
-        
+
         dev_tools = DevTools(config)
-        
+
         # Route to appropriate dev command
         if args.subcommand == "validate":
             exit_code = dev_tools.validate()
@@ -152,21 +189,23 @@ def main() -> None:
         elif args.subcommand == "spell":
             exit_code = dev_tools.spell()
         else:
-            error(f"Unknown dev command '{args.subcommand}'. Use 'ali dev --list' to see available commands.")
-        
+            error(
+                f"Unknown dev command '{args.subcommand}'. Use 'ali dev --list' to see available commands."
+            )
+
         sys.exit(exit_code)
-    
+
     # Require recipe name if not listing or dev command
     if not args.command:
         parser.print_help()
         return
-    
+
     # Find the recipe
     finder = RecipeFinder(config)
     recipe_path = finder.find_recipe(args.command)
-    
+
     # Check if help is requested for this recipe
-    if '--help' in ansible_args or '-h' in ansible_args:
+    if "--help" in ansible_args or "-h" in ansible_args:
         if recipe_path:
             help_parser = RecipeHelpParser(config)
             help_parser.display_recipe_help(args.command, recipe_path)
@@ -176,25 +215,25 @@ def main() -> None:
             print(f"{Colors.RED}✗{Colors.NC} {args.command} not found:")
             parser.print_help()
             return
-    
+
     if not recipe_path:
-        error(f"Recipe '{args.command}' not found. Use 'ali --list' to see available recipes.")
-    
+        error(
+            f"Recipe '{args.command}' not found. Use 'ali --list' to see available recipes."
+        )
+
     # Get inventory and runner
     inventory_manager = InventoryManager(config)
     runner = AnsibleRunner(config)
-    
+
     # Add verbose flag if requested
     if args.verbose:
         ansible_args.insert(0, "-v")
-    
+
     # Handle smart security execution
     if args.command == "security":
         smart_security = SmartSecurityRunner(config, inventory_manager, runner)
         exit_code = smart_security.run_smart_security(
-            production=args.prod,
-            extra_args=ansible_args,
-            dry_run=args.check
+            production=args.prod, extra_args=ansible_args, dry_run=args.check
         )
     else:
         # Run regular recipe
@@ -203,10 +242,11 @@ def main() -> None:
             recipe_path=recipe_path,
             inventory_path=inventory_path,
             extra_args=ansible_args,
-            dry_run=args.check
+            dry_run=args.check,
         )
-    
+
     sys.exit(exit_code)
+
 
 if __name__ == "__main__":
     main()
