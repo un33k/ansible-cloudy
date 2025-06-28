@@ -27,7 +27,7 @@ class ColoredHelpFormatter(argparse.RawDescriptionHelpFormatter):
 
     def _format_usage(self, usage, actions, groups, prefix):
         if prefix is None:
-            prefix = f"{Colors.CYAN}usage:{Colors.NC} "
+            prefix = f"\n\n{Colors.CYAN}Usage:{Colors.NC} "
         return super()._format_usage(usage, actions, groups, prefix)
 
     def format_help(self):
@@ -79,6 +79,13 @@ def create_parser() -> argparse.ArgumentParser:
   {Colors.GREEN}claudia dev validate{Colors.NC}               Run comprehensive validation
   {Colors.GREEN}claudia dev syntax{Colors.NC}                Quick syntax checking  
   {Colors.GREEN}claudia dev test{Colors.NC}                  Authentication testing
+
+{Colors.YELLOW}Advanced:{Colors.NC}
+  {Colors.GREEN}claudia psql --install -- --tags postgresql{Colors.NC}  Pass args to ansible-playbook
+  {Colors.GREEN}claudia psql --install -- -e "admin_user=myuser"{Colors.NC}  Override variables
+  {Colors.GREEN}claudia redis --install -- --skip-tags firewall{Colors.NC}  Skip specific tasks
+  
+{Colors.BLUE}Note:{Colors.NC} Use {Colors.CYAN}`--`{Colors.NC} to pass parameters directly to ansible-playbook
         """,
     )
 
