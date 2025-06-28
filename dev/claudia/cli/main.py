@@ -14,14 +14,14 @@ from pathlib import Path
 claudia_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(claudia_dir))
 
-from utils.colors import Colors, error
-from utils.config import ClaudiaConfig, InventoryManager
-from operations.recipes import RecipeFinder, RecipeHelpParser, list_recipes
-from execution.ansible import AnsibleRunner, SmartSecurityRunner
-from discovery.service_scanner import ServiceScanner
-from operations.postgresql import PostgreSQLOperations
-from operations.redis import RedisOperations
-from operations.nginx import NginxOperations
+from utils.colors import Colors, error  # noqa: E402
+from utils.config import ClaudiaConfig, InventoryManager  # noqa: E402
+from operations.recipes import RecipeFinder, RecipeHelpParser, list_recipes  # noqa: E402
+from execution.ansible import AnsibleRunner, SmartSecurityRunner  # noqa: E402
+from discovery.service_scanner import ServiceScanner  # noqa: E402
+from operations.postgresql import PostgreSQLOperations  # noqa: E402
+from operations.redis import RedisOperations  # noqa: E402
+from operations.nginx import NginxOperations  # noqa: E402
 
 
 class ColoredHelpFormatter(argparse.RawDescriptionHelpFormatter):
@@ -217,6 +217,8 @@ def main() -> None:
             print(f"  {Colors.GREEN}claudia dev syntax{Colors.NC}     Quick syntax checking")
             print(f"  {Colors.GREEN}claudia dev test{Colors.NC}       Authentication testing")
             print(f"  {Colors.GREEN}claudia dev lint{Colors.NC}       Ansible linting")
+            print(f"  {Colors.GREEN}claudia dev yamlint{Colors.NC}    YAML linting")
+            print(f"  {Colors.GREEN}claudia dev flake8{Colors.NC}     Python code linting")
             print(f"  {Colors.GREEN}claudia dev spell{Colors.NC}      Spell checking")
             return
 
@@ -232,6 +234,10 @@ def main() -> None:
             exit_code = dev_tools.test(ansible_args)
         elif args.subcommand == "lint":
             exit_code = dev_tools.lint()
+        elif args.subcommand == "yamlint":
+            exit_code = dev_tools.yamlint()
+        elif args.subcommand == "flake8":
+            exit_code = dev_tools.flake8()
         elif args.subcommand == "spell":
             exit_code = dev_tools.spell()
         else:

@@ -1,6 +1,6 @@
 """
 Development tools for Claudia CLI
-Integrates with existing validation scripts
+Integrates with existing validation scripts and linting configurations
 """
 
 import subprocess
@@ -15,6 +15,7 @@ class DevTools:
     def __init__(self, config):
         self.config = config
         self.dev_dir = config.project_root / "dev"
+        self.claudia_dir = self.dev_dir / "claudia"
     
     def validate(self) -> int:
         """Run comprehensive validation using the existing validate.py script"""
@@ -86,7 +87,7 @@ class DevTools:
             return 1
     
     def lint(self) -> int:
-        """Run ansible linting"""
+        """Run ansible linting with dev configuration"""
         info("Running Ansible linting...")
         
         try:
@@ -101,12 +102,20 @@ class DevTools:
                 error("ansible-lint not available. Install with: pip install ansible-lint")
                 return 1
             
-            # Run ansible-lint on the cloudy directory
-            result = subprocess.run(
-                ["ansible-lint", "cloudy/"],
-                cwd=self.config.project_root,
-                capture_output=False
-            )
+            # Run ansible-lint on the cloudy directory with dev config
+            config_file = self.dev_dir / ".ansible-lint.yml"
+            if config_file.exists():
+                result = subprocess.run(
+                    ["ansible-lint", "-c", str(config_file), "cloudy/"],
+                    cwd=self.config.project_root,
+                    capture_output=False
+                )
+            else:
+                result = subprocess.run(
+                    ["ansible-lint", "cloudy/"],
+                    cwd=self.config.project_root,
+                    capture_output=False
+                )
             return result.returncode
             
         except Exception as e:
@@ -114,7 +123,7 @@ class DevTools:
             return 1
     
     def spell(self) -> int:
-        """Run spell checking if cspell is available"""
+        """Run spell checking with dev configuration"""
         info("Running spell check...")
         
         try:
@@ -129,7 +138,7 @@ class DevTools:
                 error("cspell not available. Install with: npm install -g cspell")
                 return 1
             
-            # Run cspell with configuration
+            # Run cspell with dev configuration
             cspell_config = self.dev_dir / ".cspell.json"
             if cspell_config.exists():
                 result = subprocess.run(
@@ -147,4 +156,76 @@ class DevTools:
             
         except Exception as e:
             error(f"Failed to run spell check: {e}")
+            return 1
+    
+    def flake8(self) -> int:
+        """Run Python code linting with flake8"""
+        info("Running Python linting (flake8)...")
+        
+        try:
+            # Check if flake8 is available
+            result = subprocess.run(
+                ["flake8", "--version"],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode != 0:
+                error("flake8 not available. Install with: pip install flake8")
+                return 1
+            
+            # Run flake8 on the claudia directory with dev config
+            flake8_config = self.dev_dir / ".flake8"
+            if flake8_config.exists():
+                result = subprocess.run(
+                    ["flake8", "--config", str(flake8_config), str(self.claudia_dir)],
+                    cwd=self.config.project_root,
+                    capture_output=False
+                )
+            else:
+                result = subprocess.run(
+                    ["flake8", str(self.claudia_dir)],
+                    cwd=self.config.project_root,
+                    capture_output=False
+                )
+            return result.returncode
+            
+        except Exception as e:
+            error(f"Failed to run flake8: {e}")
+            return 1
+    
+    def yamlint(self) -> int:
+        """Run YAML linting with dev configuration"""
+        info("Running YAML linting...")
+        
+        try:
+            # Check if yamllint is available
+            result = subprocess.run(
+                ["yamllint", "--version"],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode != 0:
+                error("yamllint not available. Install with: pip install yamllint")
+                return 1
+            
+            # Run yamllint on the cloudy directory with dev config
+            yamllint_config = self.dev_dir / ".yamlint.yml"
+            if yamllint_config.exists():
+                result = subprocess.run(
+                    ["yamllint", "-c", str(yamllint_config), "cloudy/"],
+                    cwd=self.config.project_root,
+                    capture_output=False
+                )
+            else:
+                result = subprocess.run(
+                    ["yamllint", "cloudy/"],
+                    cwd=self.config.project_root,
+                    capture_output=False
+                )
+            return result.returncode
+            
+        except Exception as e:
+            error(f"Failed to run yamllint: {e}")
             return 1

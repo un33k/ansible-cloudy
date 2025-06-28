@@ -344,8 +344,8 @@ class PostgreSQLOperations:
             extra_vars.extend(["-e", f"cluster_name={psql_args['cluster_name']}"])
             
         # Operations that don't require additional parameters
-        elif operation in ['list-users', 'list-databases', 'install-postgis', 'get-installed-version', 
-                          'get-latest-version', 'install-client', 'install-repo']:
+        elif operation in ['list-users', 'list-databases', 'install-postgis', 'get-installed-version',
+                           'get-latest-version', 'install-client', 'install-repo']:
             pass  # No additional parameters needed
         
         # Add verbose flag if requested
