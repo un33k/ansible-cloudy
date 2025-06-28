@@ -8,6 +8,9 @@ all:
   vars:
     # Global Settings
     git_user_full_name: "Test User"
+    
+    # Load dev vault variables  
+    vault_file: ".secrets/dev.yml"
     git_user_email: "test@example.com"
     timezone: "America/New_York"
     
@@ -16,6 +19,7 @@ all:
     # Once the SSH key is installed, password access for super user is disabled
     ansible_user: root
     ansible_port: 22
+    ansible_ssh_pass: "{{ vault_root_password }}"
     ansible_host_key_checking: false
     ansible_ssh_private_key_file: ~/.ssh/id_rsa
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

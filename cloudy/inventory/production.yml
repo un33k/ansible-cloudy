@@ -5,11 +5,13 @@
 ---
 all:
   vars:
-    # Connection Settings (adjust after initial setup)
+    # Default Connection Settings (SSH keys used after security setup)
     ansible_user: admin
-    ansible_ssh_pass: "{{ vault_admin_ssh_password }}"
     ansible_port: 22022
     ansible_host_key_checking: false
+    
+    # Initial Root Access (for security setup only)
+    root_ssh_password: "{{ vault_root_password }}"
     
     # Global Settings
     git_user_full_name: "John Doe"

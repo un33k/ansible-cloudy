@@ -70,3 +70,10 @@ cloudy-old/
 
 .DS_Store
 .python-version
+
+# Vault password files (security)
+.vault_pass*
+*vault_pass*
+
+# Unencrypted secrets (if any - encrypted vaults are safe to commit)
+.secrets/**/unencrypted_*

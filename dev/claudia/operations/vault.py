@@ -16,7 +16,7 @@ class VaultOperations:
 
     def __init__(self, config: ClaudiaConfig):
         self.config = config
-        self.vault_file = config.base_dir / "cloudy" / "inventory" / "group_vars" / "vault.yml"
+        self.vault_file = config.base_dir / ".secrets" / "vault.yml"
 
     def handle_operation(self, args, ansible_args: List[str]) -> int:
         """Route vault operation to appropriate handler"""
@@ -231,10 +231,10 @@ class VaultOperations:
         print(f"  {Colors.GREEN}claudia vault --rekey{Colors.NC}                      Change vault password")
         print()
         
-        print(f"{Colors.BLUE}Custom Vault Files:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia vault --create --file secrets/prod.yml{Colors.NC}    Create custom vault")
-        print(f"  {Colors.GREEN}claudia vault --edit --file secrets/prod.yml{Colors.NC}      Edit custom vault")
-        print(f"  {Colors.GREEN}claudia vault --view --file secrets/prod.yml{Colors.NC}      View custom vault")
+        print(f"{Colors.BLUE}Environment-Specific Vaults:{Colors.NC}")
+        print(f"  {Colors.GREEN}claudia vault --create --file .secrets/dev.yml{Colors.NC}     Create dev vault")
+        print(f"  {Colors.GREEN}claudia vault --edit --file .secrets/prod.yml{Colors.NC}      Edit prod vault")
+        print(f"  {Colors.GREEN}claudia vault --view --file .secrets/staging.yml{Colors.NC}   View staging vault")
         print()
         
         print(f"{Colors.BLUE}Default Vault Location:{Colors.NC}")

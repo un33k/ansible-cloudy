@@ -10,9 +10,11 @@
 # IMPORTANT: Replace these example values with your actual secure credentials
 # before encrypting the vault file
 
-# Admin User Credentials
+# Root User Credentials (for initial server setup before SSH keys)
+vault_root_password: "REPLACE_WITH_SECURE_ROOT_PASSWORD"
+
+# Admin User Credentials (for ongoing admin operations)
 vault_admin_password: "REPLACE_WITH_SECURE_ADMIN_PASSWORD"
-vault_admin_ssh_password: "REPLACE_WITH_SECURE_SSH_PASSWORD"
 
 # Database Credentials
 vault_postgres_password: "REPLACE_WITH_SECURE_DATABASE_PASSWORD"

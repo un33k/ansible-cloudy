@@ -430,17 +430,22 @@ Claudia provides integrated Ansible Vault support for secure credential manageme
 # Change vault password
 ./claudia vault --rekey
 
-# Work with custom vault files
-./claudia vault --create --file secrets/production.yml
-./claudia vault --edit --file secrets/production.yml
+# Work with environment-specific vault files
+./claudia vault --create --file .secrets/dev.yml
+./claudia vault --edit --file .secrets/prod.yml
+./claudia vault --view --file .secrets/staging.yml
 ```
 
 ### Default Vault Location
 
 Claudia automatically manages credentials in:
 ```
-cloudy/inventory/group_vars/vault.yml
+.secrets/vault.yml
 ```
+
+**Security Best Practices:**
+- `.secrets/` directory - Hidden, environment-separated, restrictive permissions
+- Alternative locations: `.secrets/dev.yml`, `.secrets/prod.yml`, `.secrets/staging.yml`
 
 ### Vault Integration with Playbooks
 
@@ -482,9 +487,11 @@ export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass
 ```yaml
 # After running: ./claudia vault --edit
 ---
-# Admin User Credentials  
-vault_admin_password: "secure_random_password_123"
-vault_admin_ssh_password: "another_secure_password_456"
+# Root User Credentials (for initial server setup before SSH keys)
+vault_root_password: "secure_root_password_123"
+
+# Admin User Credentials (for ongoing admin operations)
+vault_admin_password: "secure_admin_password_456"
 
 # Database Credentials
 vault_postgres_password: "database_password_789" 
