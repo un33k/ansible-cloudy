@@ -30,11 +30,11 @@ class PostgreSQLOperations:
         if args.install or self._detect_operation(ansible_args):
             from utils.connection_manager import ConnectionManager
             conn_manager = ConnectionManager(self.config)
-            # Get host from inventory for connection info
+            # Get host and port from inventory for connection info
             inventory_path = self.inventory_manager.get_inventory_path(args.prod)
-            host = self._extract_host_from_inventory(inventory_path)
-            if host:
-                conn_info = conn_manager.get_connection_info(host)
+            host, ansible_port = self._extract_host_and_port_from_inventory(inventory_path)
+            if host and ansible_port:
+                conn_info = conn_manager.get_connection_info(host, ansible_port)
                 print(f"🔍 {conn_info}")
         
         # Extract PostgreSQL-specific arguments
@@ -418,19 +418,22 @@ class PostgreSQLOperations:
         
         return 0
     
-    def _extract_host_from_inventory(self, inventory_path: str) -> str:
-        """Extract the primary host IP from inventory file"""
+    def _extract_host_and_port_from_inventory(self, inventory_path: str) -> tuple:
+        """Extract the primary host IP and ansible_port from inventory file"""
         try:
             import yaml
             with open(inventory_path) as f:
                 inventory = yaml.safe_load(f)
             
+            # Get ansible_port from global vars (fallback to 22)
+            ansible_port = inventory.get('all', {}).get('vars', {}).get('ansible_port', 22)
+            
             # Look for ansible_host in the first host entry
             hosts = inventory.get('all', {}).get('hosts', {})
             for host_name, host_config in hosts.items():
                 if 'ansible_host' in host_config:
-                    return host_config['ansible_host']
+                    return host_config['ansible_host'], ansible_port
             
-            return None
+            return None, None
         except Exception:
-            return None
+            return None, None

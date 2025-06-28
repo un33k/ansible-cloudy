@@ -18,18 +18,18 @@ class ConnectionManager:
     def __init__(self, config: AliConfig):
         self.config = config
         
-    def detect_server_state(self, host: str) -> Dict[str, Any]:
-        """Detect if server is fresh (password) or secured (SSH key) - always port 22"""
+    def detect_server_state(self, host: str, ansible_port: int) -> Dict[str, Any]:
+        """Detect if server is fresh (password) or secured (SSH key) using configured port"""
         
-        # Simple: test if SSH key works on port 22
-        if self._test_ssh_key_auth(host, 22):
-            info("🔐 Secured server detected (SSH key authentication)")
+        # Simple: test if SSH key works on configured port
+        if self._test_ssh_key_auth(host, ansible_port):
+            info(f"🔐 Secured server detected (SSH key authentication on port {ansible_port})")
             return {
                 'connection_type': 'secured',
                 'auth_method': 'ssh_key'
             }
         else:
-            info("🆕 Fresh server detected (password authentication required)")
+            info(f"🆕 Fresh server detected (password authentication required on port {ansible_port})")
             return {
                 'connection_type': 'fresh', 
                 'auth_method': 'password'
@@ -73,11 +73,11 @@ class ConnectionManager:
         except (socket.timeout, socket.error):
             return False
     
-    def get_connection_info(self, host: str) -> str:
+    def get_connection_info(self, host: str, ansible_port: int) -> str:
         """Get simple connection information for logging"""
-        server_state = self.detect_server_state(host)
+        server_state = self.detect_server_state(host, ansible_port)
         
         if server_state['connection_type'] == 'secured':
-            return "Secured server (root@22 with SSH keys)"
+            return f"Secured server (root@{ansible_port} with SSH keys)"
         else:
-            return "Fresh server (root@22 with password required)"
+            return f"Fresh server (root@{ansible_port} with password required)"
