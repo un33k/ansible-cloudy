@@ -237,9 +237,9 @@ generic_servers:
 ./claudia redis --install --check --port 6380
 ./claudia nginx --install --check --domain example.com --ssl
 
-# Backward compatibility (still supported)
-./claudia redis --install -- -e "redis_port=6380" -e "redis_memory_mb=512"
-./claudia nginx --install -- --tags ssl
+# Legacy syntax (not recommended - use universal parameters instead)
+# OLD: ./claudia redis --install -- -e "redis_port=6380" -e "redis_memory_mb=512"
+# NEW: ./claudia redis --install --port 6380 --memory 512
 
 # Development and validation
 ./claudia dev validate                  # Comprehensive validation (with fallback)

@@ -1,6 +1,6 @@
-# Vault Configuration Directory
+# Ansible Vault Configuration & Credential Management
 
-This directory contains **example vault files** and templates for open source usage. No real secrets are stored here.
+This guide covers **Ansible Vault** configuration and credential management for secure **Ansible Cloudy** automation. The `.secrets/` directory contains example vault files and templates for open source usage.
 
 ## Vault Access Control Strategy
 
@@ -191,7 +191,7 @@ vim my-dev.vault.yml
 ### 4. Use with Ansible
 ```bash
 # Use in playbooks with vault password
-ansible-playbook -i inventory/dev.yml --ask-vault-pass playbook.yml
+./claudia [service] --install --ask-vault-pass
 ```
 
 **Benefits of this approach:**
@@ -223,7 +223,7 @@ vim .secrets/dev.yml
 ansible-vault encrypt .secrets/dev.yml
 
 # 4. Vault is automatically loaded via symlink
-ansible-playbook -i cloudy/inventory/dev.yml [your-playbook] --ask-vault-pass
+./claudia [service] --install --ask-vault-pass
 ```
 
 ### CI/CD Environment
@@ -241,7 +241,7 @@ ansible-vault encrypt .secrets/ci.yml
 ln -s ../../../../.secrets/ci.yml cloudy/inventory/group_vars/all/vault_ci.yml
 
 # 5. Use CI inventory
-ansible-playbook -i cloudy/inventory/ci.yml [your-playbook] --ask-vault-pass
+./claudia [service] --install --prod --ask-vault-pass
 ```
 
 ### Production Environment
@@ -259,7 +259,7 @@ ansible-vault encrypt .secrets/prod.yml
 ln -s ../../../../.secrets/prod.yml cloudy/inventory/group_vars/all/vault_prod.yml
 
 # 5. Use production inventory
-ansible-playbook -i cloudy/inventory/prod.yml [your-playbook] --ask-vault-pass
+./claudia [service] --install --prod --ask-vault-pass
 ```
 
 ## Vault Variables

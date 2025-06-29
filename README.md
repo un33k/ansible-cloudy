@@ -1,214 +1,284 @@
-# Cloudy - Ansible Infrastructure Automation
+# Ansible Cloudy - Infrastructure Automation
 
-Modern infrastructure automation tool built with Ansible for secure server deployment and management.
+**Ansible Cloudy** is a comprehensive infrastructure automation toolkit featuring the **Claudia CLI** - an intelligent command-line interface that simplifies server deployment and management through Ansible playbooks.
+
+## 🚀 Key Features
+
+- **🔐 Enterprise Security**: Two-phase authentication with SSH keys and secure firewall configuration
+- **🧠 Intelligent CLI**: Auto-discovery of services and operations with intuitive parameter mapping
+- **⚡ Universal Parameters**: `./claudia redis --install --port 6380 --memory 512` instead of complex Ansible variables
+- **🔄 Granular Operations**: Service-specific tasks like `./claudia psql --adduser foo --password 1234`
+- **🛡️ Production-Ready**: Secure defaults, comprehensive validation, and enterprise-grade security model
 
 ## Quick Start
 
 ### Installation
 ```bash
-# Install Ansible
-pip install ansible
+# Bootstrap environment (recommended)
+./bootstrap.sh
+source .venv/bin/activate
 
-# Clone and navigate to project
-cd cloudy/
+# Or install manually
+pip install ansible
 ```
 
 ### Basic Usage
 ```bash
 # Show help and configuration options (default action)
 ./claudia security    # View security setup help and available variables
-./claudia base        # View base configuration help and options
 ./claudia psql        # View PostgreSQL setup help and configuration
+./claudia redis       # View Redis setup help and all parameters
 
 # Execute recipes with universal parameter support
-./claudia security --install    # Security setup (creates admin user, SSH keys, firewall)
-./claudia base --install        # Base configuration (hostname, git, timezone, swap)
-./claudia django --install      # Deploy Django web application
-./claudia redis --install --port 6380 --memory 512   # Deploy Redis with custom parameters
-./claudia nginx --install --domain example.com --ssl  # Deploy Nginx with SSL domain
+./claudia security --install                           # Security setup (admin user, SSH keys, firewall)
+./claudia base --install                               # Base configuration (hostname, git, timezone, swap)
+./claudia psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
+./claudia redis --install --port 6380 --memory 512    # Redis with custom port and memory
+./claudia nginx --install --domain example.com --ssl  # Nginx with SSL domain
+
+# Granular operations (no recipe installation)
+./claudia psql --adduser myuser --password secret123  # Add PostgreSQL user
+./claudia redis --configure-port 6379                 # Change Redis port
+./claudia nginx --setup-ssl example.com               # Setup SSL for domain
 ```
 
-## Features
+## 🏗️ Architecture Overview
 
-### 🔐 Secure Server Automation
-- **Safe Authentication Flow**: UFW firewall configured before SSH port changes
-- **SSH Key Management**: Automated public key installation and validation  
-- **Root Login Disable**: Safely disabled after admin user verification
-- **Custom SSH Ports**: Default port 22022 with firewall integration
+### Claudia CLI - Intelligent Command Interface
+The **Claudia CLI** is the heart of Ansible Cloudy, providing:
 
-### 🚀 One-Command Server Deployment
-- **Generic Server**: Secure SSH, user management, firewall
-- **VPN Server**: OpenVPN with Docker containerization
-- **Web Server**: Nginx, Apache, Supervisor process management
-- **Database Server**: PostgreSQL, PostGIS, PgBouncer pooling
-- **Cache Server**: Redis with memory management
-- **Load Balancer**: Nginx with SSL termination
+- **🔍 Auto-Discovery**: Services and operations automatically discovered from filesystem
+- **📋 Universal Parameters**: Intuitive CLI with `--port`, `--domain`, `--ssl` instead of complex Ansible variables
+- **🎯 Granular Operations**: Service-specific tasks without full recipe installation
+- **🔒 Smart Security**: Two-phase authentication model with connection validation
+- **📊 Clean Output**: Shows only changes and failures by default
 
-### 📊 Clean Output Control
+### Service Categories
+- **Core**: `security`, `base` - Foundation server setup
+- **Database**: `psql`, `postgis` - PostgreSQL with spatial extensions
+- **Web**: `django`, `nginx` - Web applications and load balancing
+- **Cache**: `redis` - High-performance caching
+- **VPN**: `openvpn` - Secure remote access
+- **Development**: `dev` - Validation and testing tools
+
+### Security Model
+- **🔑 SSH Key Authentication**: Root access via SSH keys only (no password brute force)
+- **👤 Admin Emergency Access**: Dual authentication (password + SSH keys) for manual operations
+- **🔥 Smart Firewall**: UFW automatically configured with service-specific ports
+- **🚪 Custom SSH Port**: Default port 22022 with seamless migration
+- **🛡️ Enterprise Hardening**: Fail2ban, connection limits, secure SSH configuration
+
+### 📊 Output Control
 ```bash
 # Show help by default (safe exploration)
 ./claudia security
 
-# Execute with default output (show only changes and failures)
+# Execute with clean output (show only changes and failures)
 ./claudia security --install
 
 # Compact output
 ANSIBLE_STDOUT_CALLBACK=minimal ./claudia security --install
 
-# One line per task
-ANSIBLE_STDOUT_CALLBACK=oneline ./claudia security --install
-
 # Verbose debugging
 ./claudia security --install -v
 ```
 
-## Architecture
+## 📁 Project Structure
 
-### Directory Structure
 ```
-cloudy/
-├── playbooks/recipes/     # High-level deployment recipes
-├── tasks/                 # Modular task files
-│   ├── sys/              # System operations (SSH, firewall, users)
-│   ├── db/               # Database automation (PostgreSQL, MySQL)
-│   ├── web/              # Web server management
-│   └── services/         # Service management (Docker, Redis, VPN)
-├── templates/            # Configuration file templates
-├── inventory/            # Server inventory configurations
-└── ansible.cfg          # Ansible configuration
+ansible-cloudy/
+├── claudia                    # Main CLI entry point
+├── bootstrap.sh              # Environment setup script
+├── cloudy/                   # Ansible automation core
+│   ├── playbooks/recipes/    # High-level deployment recipes
+│   │   ├── core/            # security.yml, base.yml
+│   │   ├── db/              # psql.yml, postgis.yml
+│   │   ├── www/             # django.yml
+│   │   ├── cache/           # redis.yml
+│   │   ├── lb/              # nginx.yml
+│   │   └── vpn/             # openvpn.yml
+│   ├── tasks/                # Granular, reusable task files
+│   │   ├── sys/             # System operations (SSH, firewall, users)
+│   │   ├── db/              # Database automation (PostgreSQL, MySQL)
+│   │   ├── web/             # Web server management
+│   │   └── services/        # Service management (Docker, Redis, VPN)
+│   ├── templates/           # Configuration file templates
+│   ├── inventory/           # Server inventory configurations
+│   └── ansible.cfg          # Ansible configuration
+├── dev/                     # Development tools and CLI implementation
+│   ├── claudia/             # Python CLI implementation
+│   │   ├── cli/             # Command parsing and routing
+│   │   ├── operations/      # Service-specific operations
+│   │   ├── discovery/       # Auto-discovery of services
+│   │   ├── execution/       # Ansible execution engine
+│   │   └── utils/           # Configuration and utilities
+│   └── validate.py         # Development validation tools
+└── docs/                   # Project documentation
+    ├── CONTRIBUTING.md     # Development guidelines
+    ├── USAGE.md           # Complete usage guide
+    ├── IMPLEMENTATION_PLAN.md  # Technical implementation details
+    ├── DEVELOPMENT.md     # Development tools and CLI implementation guide
+    └── SECRETS.md         # Ansible Vault configuration and credential management
 ```
 
-### Recipe Categories
-- **`cloudy/playbooks/recipes/core/security.yml`**: Initial server security setup
-- **`cloudy/playbooks/recipes/core/base.yml`**: Foundation server configuration
-- **`cloudy/playbooks/recipes/vpn/openvpn.yml`**: VPN with OpenVPN Docker
-- **`cloudy/playbooks/recipes/www/django.yml`**: Django web server deployment
-- **`cloudy/playbooks/recipes/db/psql.yml`**: PostgreSQL database server
-- **`cloudy/playbooks/recipes/cache/redis.yml`**: Redis cache server
-- **`cloudy/playbooks/recipes/lb/nginx.yml`**: Nginx load balancer with SSL
+## ⚙️ Configuration
 
-## Configuration
-
-### Inventory Setup
+### 1. Server Inventory
 Configure servers in `cloudy/inventory/dev.yml`:
 ```yaml
 all:
   vars:
-    ansible_user: admin
-    ansible_ssh_pass: secure123
-    ansible_port: 22022
+    ansible_user: admin         # Connect as admin user (after setup)
+    ansible_port: 22022         # Custom SSH port
+    ansible_host_key_checking: false
     
   children:
-    test_servers:
+    generic_servers:
       hosts:
-        test-server:
+        my-server:
           ansible_host: 10.10.10.100
-          hostname: test.example.com
+          hostname: my-server.example.com
+          admin_user: admin
+          admin_password: secure123
 ```
 
-### Output Customization
-The `cloudy/ansible.cfg` provides clean output by default:
-```ini
-[defaults]
-display_skipped_hosts = no    # Hide unchanged tasks
-display_ok_hosts = no         # Show only changes/failures
-```
-
-## Security
-
-### Authentication Flow
-1. Connect as root with initial password
-2. Create admin user with SSH key access
-3. Configure UFW firewall for new SSH port
-4. Change SSH port (default: 22022)
-5. Test admin user connection
-6. Disable root login safely
-7. Remove old SSH port from firewall
-
-### Best Practices
-- SSH keys required for production
-- Custom SSH ports (not 22)
-- UFW firewall enabled by default
-- Admin users with sudo access
-- Root login disabled after setup
-
-## Key Benefits
-
-This Ansible implementation provides:
-- **🔄 Idempotency**: Tasks only run when changes are needed
-- **🛡️ Error handling**: Rollback and validation built-in
-- **🎯 Clean output**: Focus on changes and failures
-- **🏗️ Modern tooling**: Industry-standard configuration management
-- **📈 Scalability**: Easy multi-server deployments
-- **🧪 Validation tools**: Claudia CLI provides syntax and structure checking
-- **📚 Extensive documentation**: Complete guides and examples
-- **🔧 Developer-friendly**: Granular tasks and composable recipes
-
-## Examples
-
-### Complete Web Stack
+### 2. Vault Configuration (Recommended)
+For production deployments, use Ansible Vault for credentials:
 ```bash
-# 1. Secure server foundation
+# Create encrypted vault
+./claudia vault --create
+
+# Edit vault with real credentials
+./claudia vault --edit
+```
+
+Example vault content:
+```yaml
+vault_root_password: "secure_root_password_123"
+vault_admin_password: "secure_admin_password_456"
+vault_admin_user: "admin"
+vault_ssh_port: 22022
+```
+
+### 3. Two-Phase Authentication Model
+**Phase 1 - Initial Security Setup** (Root + Password):
+```yaml
+# For fresh servers - inventory configuration
+ansible_user: root
+ansible_ssh_pass: "{{ vault_root_password }}"
+ansible_port: 22
+```
+
+**Phase 2 - Service Operations** (Admin + SSH Keys):
+```yaml
+# After security setup - inventory configuration
+ansible_user: "{{ vault_admin_user | default('admin') }}"
+ansible_port: "{{ vault_ssh_port | default(22022) }}"
+```
+
+## 🎯 Workflow Examples
+
+### Complete Web Application Stack
+```bash
+# Step 1: Secure server foundation (creates admin user, SSH keys, firewall)
 ./claudia security --install
 
-# 2. Base configuration
+# Step 2: Base server configuration (hostname, git, timezone, swap)
 ./claudia base --install
 
-# 3. Database layer with parameters
+# Step 3: Database layer with custom parameters
 ./claudia psql --install --port 5544 --pgis
 
-# 4. Web application layer
+# Step 4: Web application layer
 ./claudia django --install
 
-# 5. Load balancer with SSL
+# Step 5: Load balancer with SSL domain
 ./claudia nginx --install --domain example.com --ssl
 ```
 
-### VPN Server
+### Redis Cache Server with Custom Configuration
 ```bash
-# View VPN setup help and configuration
+# View Redis configuration options
+./claudia redis
+
+# Install Redis with custom port and memory limit
+./claudia redis --install --port 6380 --memory 512 --password secret123
+
+# Granular operations (without recipe installation)
+./claudia redis --configure-port 6379    # Change port
+./claudia redis --set-password newpass   # Update password
+```
+
+### PostgreSQL Database Management
+```bash
+# Install PostgreSQL with PostGIS on custom port
+./claudia psql --install --port 5544 --pgis
+
+# Database user management (granular operations)
+./claudia psql --adduser myapp --password secret123
+./claudia psql --adddb myapp_db --owner myapp
+./claudia psql --list-users
+./claudia psql --list-databases
+```
+
+### VPN Server Deployment
+```bash
+# View OpenVPN configuration options
 ./claudia openvpn
 
-# Execute VPN deployment
+# Deploy complete VPN server with Docker
 ./claudia openvpn --install
 ```
 
-## Documentation
+## 🧪 Development & Validation
 
-- **📚 [USAGE.md](USAGE.md)**: Complete step-by-step tutorials and troubleshooting
-- **🔧 [CLAUDE.md](CLAUDE.md)**: Developer reference and command documentation  
-- **🤝 [CONTRIBUTING.md](CONTRIBUTING.md)**: Development guidelines and contribution workflow
-- **🐛 Issues**: Report bugs and feature requests via GitHub Issues
-
-## Quick Links
-
-- 🚀 [Getting Started](USAGE.md) - Complete setup and usage guide
-- 🔧 [Ali CLI Commands](CLAUDE.md) - Simplified Ansible wrapper commands
-- 🏗️ [Development Setup](CONTRIBUTING.md) - Contributing to the project
-- 🧪 [Validation Tools](dev/) - Syntax checking and validation scripts
-
-## 🧪 Testing & Validation
-
-Ansible Cloudy includes development validation tools:
+Ansible Cloudy includes comprehensive development tools:
 
 ```bash
-# Claudia CLI validation commands  
-./claudia dev syntax      # Quick syntax check
-./claudia dev validate     # Comprehensive validation
-./claudia dev lint         # Ansible linting
-./claudia dev test         # Authentication flow test
+# Environment setup
+./bootstrap.sh                    # Setup Python virtual environment with all tools
+source .venv/bin/activate         # Activate development environment
 
-# Traditional validation
-./dev/syntax-check.sh  # Direct syntax validation
-./dev/validate.py      # Python validation script
+# Validation commands via Claudia CLI
+./claudia dev syntax              # Quick syntax check
+./claudia dev validate            # Comprehensive validation suite
+./claudia dev lint                # Ansible linting with rules
+./claudia dev test                # Authentication flow testing
+./claudia dev spell               # Spell check documentation
+
+# Direct development tools
+./dev/validate.py                 # Python validation script
+./dev/syntax-check.sh             # Shell syntax validation
 ```
 
-**Validation Coverage:**
-- ✅ Syntax validation for all playbooks and tasks
-- ✅ YAML structure validation
-- ✅ Ansible configuration validation
-- ✅ Authentication flow testing
+**Development Features:**
+- ✅ **Auto-Discovery**: Services automatically discovered from filesystem
+- ✅ **Universal Parameters**: Smart parameter mapping for all services
+- ✅ **Comprehensive Validation**: YAML, Ansible, inventory, and template validation
+- ✅ **Clean Architecture**: Modular design with clear separation of concerns
+- ✅ **File Size Limits**: All files kept under 200 LOC for maintainability
+
+## 📚 Documentation
+
+- **📖 [docs/USAGE.md](docs/USAGE.md)**: Complete step-by-step tutorials and troubleshooting
+- **🔧 [CLAUDE.md](CLAUDE.md)**: Developer reference and Claudia CLI command documentation  
+- **🤝 [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)**: Development guidelines and contribution workflow
+- **📋 [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)**: Technical architecture and implementation details
+- **🛠️ [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: Development tools and CLI implementation guide
+- **🔐 [docs/SECRETS.md](docs/SECRETS.md)**: Ansible Vault configuration and credential management
+
+## 🎯 Key Benefits
+
+- **🔄 Idempotent Operations**: Tasks only run when changes are needed
+- **🛡️ Enterprise Security**: Two-phase authentication with SSH keys and firewall automation
+- **🧠 Intelligent CLI**: Auto-discovery with intuitive parameter mapping
+- **📊 Clean Output**: Focus on changes and failures, hide unchanged tasks
+- **🏗️ Modern Tooling**: Industry-standard Ansible with intelligent Python CLI layer
+- **📈 Production Ready**: Secure defaults, comprehensive validation, vault integration
+- **🔧 Developer Friendly**: Granular operations, modular architecture, extensive documentation
 
 ## 🤝 Contributing
 
-**Quick Contribution Workflow**: Fork the repo, install Ansible (`pip install ansible`), make your changes to tasks or recipes, run `./claudia dev validate` to check syntax and structure, commit with descriptive messages, and submit a PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+**Quick Start**: Fork the repo → run `./bootstrap.sh` → make changes → run `./claudia dev validate` → commit → PR
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed development guidelines and workflow.
