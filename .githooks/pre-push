@@ -47,18 +47,20 @@ if [[ ${#unencrypted_files[@]} -gt 0 ]]; then
     done
     
     echo -e "\n${YELLOW}To encrypt these files:${NC}"
-    echo -e "${GREEN}# Encrypt individual files:${NC}"
+    echo -e "${GREEN}# Use Claudia CLI to encrypt vault files:${NC}"
+    echo -e "  ./claudia vault encrypt"
+    
+    echo -e "\n${GREEN}# Or encrypt individual files:${NC}"
     for file in "${unencrypted_files[@]}"; do
-        echo -e "  ansible-vault encrypt $file"
+        filename=$(basename "$file" .yml)
+        echo -e "  ./claudia vault encrypt --file $filename"
     done
     
-    echo -e "\n${GREEN}# Or encrypt all at once:${NC}"
-    echo -e "  ansible-vault encrypt .secrets/*.yml --vault-password-file ~/.ansible-vault-pass"
-    
-    echo -e "\n${BLUE}💡 Pro tip: Set up your vault password file:${NC}"
-    echo -e "  echo 'your_vault_password' > ~/.ansible-vault-pass"
-    echo -e "  chmod 600 ~/.ansible-vault-pass"
-    echo -e "  export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass"
+    echo -e "\n${BLUE}💡 Claudia vault commands:${NC}"
+    echo -e "  ./claudia vault create     # Create new vault file"
+    echo -e "  ./claudia vault edit       # Edit vault file"
+    echo -e "  ./claudia vault encrypt    # Encrypt vault files"
+    echo -e "  ./claudia vault decrypt    # Decrypt for editing"
     
     echo -e "\n${YELLOW}After encrypting, commit and push again.${NC}"
     exit 1

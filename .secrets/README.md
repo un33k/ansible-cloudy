@@ -114,9 +114,9 @@ source ~/.bashrc  # or ~/.zshrc
 - ✅ Store in your home directory, NOT in the project
 - ⚠️ Add the export to your shell profile for persistence
 
-## Smart Development Workflow (Recommended)
+## Simple Security Workflow (Recommended)
 
-The git hooks provide a seamless development experience:
+The git hooks provide clear security guidance:
 
 ```bash
 # 1. Edit vault files directly (unencrypted for fast development)
@@ -126,35 +126,45 @@ vim .secrets/dev.yml
 git add .secrets/dev.yml
 git commit -m "Update vault configuration"
 
-# 3. Push automatically encrypts, pushes, then decrypts back
+# 3. Encrypt before pushing (using Claudia CLI)
+./claudia vault encrypt
+
+# 4. Commit encrypted files and push safely
+git add .secrets/
+git commit -m "Encrypt vault files"
 git push origin main
-# → Auto-encrypts .secrets/dev.yml (using your ~/.ansible-vault-pass)
-# → Commits encrypted version  
-# → Pushes to remote safely
-# → Decrypts back to .secrets/dev.yml for continued development
 ```
 
-**Password Handling:**
-- ✅ **Automatic**: Uses `$ANSIBLE_VAULT_PASSWORD_FILE` (no prompts)
-- ⚠️ **Manual**: Prompts for password if `ANSIBLE_VAULT_PASSWORD_FILE` not set
-- 💡 **Setup Help**: Hook provides helpful setup instructions if missing
+**Security Features:**
+- ✅ **Pre-commit**: Warns about unencrypted files (allows commits)
+- ✅ **Pre-push**: Blocks push if vault files are unencrypted
+- ✅ **Clear guidance**: Shows exact Claudia commands to fix issues
+- 🎯 **Simple**: No complex automation to break
 
-## Manual Vault Commands (Alternative)
+## Claudia Vault Commands
 
 ```bash
-# Edit encrypted vault
-ansible-vault edit .secrets/dev.yml
+# Main vault operations
+./claudia vault create              # Create new vault file
+./claudia vault edit                # Edit vault file (decrypts, opens editor, re-encrypts)
+./claudia vault view                # View encrypted vault contents
+./claudia vault encrypt             # Encrypt all vault files
+./claudia vault decrypt             # Decrypt vault files for editing
+./claudia vault rekey               # Change vault password
 
-# View encrypted vault (read-only)
-ansible-vault view .secrets/dev.yml
+# File-specific operations
+./claudia vault edit --file dev     # Edit specific vault file
+./claudia vault encrypt --file dev  # Encrypt specific vault file
+```
 
-# Change vault password
-ansible-vault rekey .secrets/dev.yml
+## Manual Ansible Vault Commands (Alternative)
 
-# Manual encrypt/decrypt cycle
-ansible-vault decrypt .secrets/dev.yml  # Edit in IDE
-# ... make changes ...
-ansible-vault encrypt .secrets/dev.yml  # Re-encrypt
+```bash
+# Direct ansible-vault usage
+ansible-vault edit .secrets/dev.yml    # Edit encrypted vault
+ansible-vault view .secrets/dev.yml    # View encrypted vault
+ansible-vault encrypt .secrets/dev.yml # Encrypt file
+ansible-vault decrypt .secrets/dev.yml # Decrypt file
 ```
 
 ## Git Hook Installation
