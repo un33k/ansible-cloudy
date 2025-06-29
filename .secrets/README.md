@@ -1,80 +1,205 @@
 # Vault Configuration Directory
 
-This directory contains Ansible Vault files with sensitive credentials and configuration.
+This directory contains **example vault files** and templates for open source usage. No real secrets are stored here.
 
 ## Vault Access Control Strategy
 
-**Different teams get different vault passwords for security isolation:**
+**Hierarchical access model based on team roles and responsibilities:**
 
-### Environment-Specific Access
+### Role-Based Access Levels
 
-1. **Development Team** → Only has `dev.yml` vault password
-   - Can decrypt/edit development secrets
-   - Cannot access CI/staging or production vaults
-   - Used for local development and testing
+1. **Junior Developers** → `dev.yml` vault password only
+   - Local development environment access
+   - Can test and iterate on features safely
+   - Cannot deploy to shared environments
 
-2. **CI/CD System** → Only has `ci.yml` vault password  
+2. **Senior Developers** → `dev.yml` + `ci.yml` vault passwords
+   - Can debug CI/staging deployment issues
+   - Can test integration scenarios
+   - Still cannot access production secrets
+   - Trusted with staging environment troubleshooting
+
+3. **QA/Testing Team** → `ci.yml` vault password only
+   - Can access staging environment for testing
+   - Can validate deployments before production
+   - Cannot access development or production secrets
+
+4. **CI/CD Systems** → `ci.yml` vault password only
    - Automated deployments to CI/staging environment
    - Stored in CI/CD secrets management (GitHub Actions, Jenkins, etc.)
-   - Cannot access production secrets
+   - Cannot access development or production secrets
 
-3. **DevOps/SRE Team** → Has `prod.yml` vault password
+5. **DevOps/SRE Team** → All vault passwords (`dev.yml` + `ci.yml` + `prod.yml`)
+   - Full environment access for operational needs
    - Production deployments and emergency access
    - Highly restricted, audit-logged access
-   - Separate from development credentials
+   - Responsible for security and infrastructure
+
+### Multi-Vault Setup for Senior Developers
+
+**Configure multiple vault passwords:**
+```bash
+# Create separate password files for each environment
+echo "dev_vault_password" > ~/.ansible-vault-pass-dev
+echo "ci_vault_password" > ~/.ansible-vault-pass-ci
+echo "prod_vault_password" > ~/.ansible-vault-pass-prod
+
+# Secure the files
+chmod 600 ~/.ansible-vault-pass-*
+
+# Add to shell profile (.bashrc/.zshrc)
+export ANSIBLE_VAULT_PASSWORD_FILE_DEV=~/.ansible-vault-pass-dev
+export ANSIBLE_VAULT_PASSWORD_FILE_CI=~/.ansible-vault-pass-ci
+export ANSIBLE_VAULT_PASSWORD_FILE_PROD=~/.ansible-vault-pass-prod
+```
 
 ### Access Pattern Examples
 
-**For Developers:**
+**Junior Developer (dev only):**
 ```bash
 # Set dev vault password
 export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-dev
 
-# They can work with dev environment
+# Can work with dev environment
 ./claudia django --install  # Uses dev.yml vault
 
-# But cannot access production (fails - no prod vault password)
-./claudia django --install --prod  # ❌ Access denied
+# Cannot access other environments
+./claudia django --install --ci   # ❌ Access denied
+./claudia django --install --prod # ❌ Access denied
 ```
 
-**For CI/CD System:**
+**Senior Developer (dev + ci):**
 ```bash
-# CI server has ci vault password in secure environment
-export ANSIBLE_VAULT_PASSWORD_FILE=/secure/ci-vault-pass
+# Switch between environments as needed
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-dev
+./claudia django --install  # Development deployment
 
-# CI can deploy to staging
-./claudia django --install --ci  # Uses ci.yml vault
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-ci  
+./claudia django --install --ci  # Debug CI issues
 
-# But cannot deploy to production
-./claudia django --install --prod  # ❌ Access denied
+# Still cannot access production
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-prod  # They don't have this
+./claudia django --install --prod # ❌ Access denied
 ```
 
-**For Production Deployments:**
+**QA Team (ci only):**
 ```bash
-# Only DevOps team has this password
-export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-prod  
+# Set CI vault password for staging testing
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-ci
 
-# Production deployments
-./claudia django --install --prod  # Uses prod.yml vault
+# Can test on staging environment
+./claudia django --install --ci  # Staging deployment
+
+# Cannot access dev or production
+./claudia django --install      # ❌ Access denied (no dev password)
+./claudia django --install --prod # ❌ Access denied (no prod password)
+```
+
+**DevOps Team (full access):**
+```bash
+# Can switch between any environment as needed
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-dev
+./claudia django --install  # Development
+
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-ci
+./claudia django --install --ci  # Staging
+
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-prod
+./claudia django --install --prod  # Production
 ```
 
 ### Security Benefits
 
-- **Separation of Concerns**: Each team/system only has access to appropriate environments
-- **Least Privilege Access**: No one has more access than needed
-- **Audit Trail**: Production vault access is limited and tracked
-- **Breach Containment**: Compromise of dev credentials doesn't affect production
+- **Hierarchical Access**: Role-based permissions match team responsibilities  
+- **Least Privilege**: Each person gets minimum access needed for their role
+- **Flexible Debugging**: Senior devs can troubleshoot CI without prod access
+- **Audit Trail**: Production vault access limited to DevOps team only
+- **Breach Containment**: Compromise of dev/ci credentials doesn't affect production
+- **Clear Escalation**: Junior → Senior → DevOps access progression
 
-## File Structure
+### Security Guidelines
+
+**Password Distribution:**
+- **Junior Devs**: Get `dev.yml` password during onboarding
+- **Senior Devs**: Get `dev.yml` + `ci.yml` after 6+ months and team lead approval  
+- **QA Team**: Get `ci.yml` password for staging testing responsibilities
+- **DevOps**: Get all passwords, with mandatory 2FA and audit logging
+
+**Access Management:**
+- Rotate passwords when team members leave
+- Regular access reviews (quarterly)
+- Log all production vault usage
+- Use environment variables, never hardcode passwords
+- Separate password files per environment
+
+**Common Scenarios:**
+
+1. **"CI deployment failed, need to debug"**
+   - Senior dev uses `ci.yml` password to investigate
+   - Can replicate CI environment locally
+   - Cannot accidentally affect production
+
+2. **"Need to test integration between services"**  
+   - Senior dev deploys to staging with `ci.yml`
+   - QA team validates on staging with `ci.yml`
+   - Production remains isolated
+
+3. **"Production emergency"**
+   - Only DevOps team has `prod.yml` password
+   - Emergency access is logged and audited
+   - Clear escalation from dev → ci → prod environments
+
+## Open Source File Structure
 
 ```
 .secrets/
 ├── README.md                    # This file
-├── vault.yml.template           # Template for creating new vault files
-├── dev.yml                     # Development environment vault (encrypted)
-├── ci.yml                      # CI/CD environment vault (encrypted)
-└── prod.yml                    # Production environment vault (encrypted)
+├── vault.yml.template           # Base template for creating vaults
+├── dev.yml.example             # Development environment example (unencrypted)
+├── ci.yml.example              # CI/CD environment example (unencrypted)
+└── prod.yml.example            # Production environment example (unencrypted)
+
+# User's real vault files (gitignored):
+my-dev.vault.yml                # User's actual dev vault (encrypted)
+staging-vault.yml               # User's actual staging vault (encrypted)
+production-secrets.vault.yml    # User's actual prod vault (encrypted)
 ```
+
+## Open Source Usage Workflow
+
+**For open source projects, users create their own vault files:**
+
+### 1. Copy Example to Real Vault
+```bash
+# Copy the appropriate example file
+cp .secrets/dev.yml.example my-dev.vault.yml
+cp .secrets/prod.yml.example my-production.vault.yml
+```
+
+### 2. Edit with Real Credentials
+```bash
+# Replace example values with your actual credentials
+vim my-dev.vault.yml
+```
+
+### 3. Encrypt Your Vault
+```bash
+# Encrypt your real vault file
+./claudia vault --encrypt --file my-dev.vault.yml
+```
+
+### 4. Use with Ansible
+```bash
+# Use in playbooks with vault password
+ansible-playbook -i inventory/dev.yml --ask-vault-pass playbook.yml
+```
+
+**Benefits of this approach:**
+- ✅ No real secrets in the repository
+- ✅ Clear examples for contributors
+- ✅ Users control their own vault files
+- ✅ Vault CLI still provides encryption utilities
+- ✅ Gitignored patterns protect user's real vaults
 
 ## How Vault Loading Works
 

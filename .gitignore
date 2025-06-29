@@ -74,6 +74,15 @@ cloudy-old/
 # Vault password files (security)
 .vault_pass*
 *vault_pass*
+*.ansible-vault-pass*
 
-# Unencrypted secrets (if any - encrypted vaults are safe to commit)
+# User's real vault files (examples are safe to commit)
+*.vault.yml
+*-vault.yml
+.secrets/*.local.yml
+.secrets/dev.yml
+.secrets/ci.yml
+.secrets/prod.yml
+
+# Unencrypted secrets (if any)
 .secrets/**/unencrypted_*

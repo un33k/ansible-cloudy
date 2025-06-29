@@ -1,0 +1,55 @@
+# 📋 Ansible Vault Template
+# This is a TEMPLATE file showing the structure and variables needed for vault files
+# 
+# 🎯 Usage:
+# 1. Copy this template: cp vault.yml.template dev.yml
+# 2. Replace placeholder values with real credentials
+# 3. Encrypt the file: ./claudia vault --encrypt --file .secrets/dev.yml
+# 
+# 🔧 Creating vaults:
+# ./claudia vault --create --file .secrets/dev.yml      # Development
+# ./claudia vault --create --file .secrets/prod.yml     # Production  
+# ./claudia vault --create --file .secrets/staging.yml  # Staging
+#
+# 📖 Documentation: See CLAUDE.md for complete vault management guide
+
+# IMPORTANT: Replace these example values with your actual secure credentials
+# before encrypting the vault file
+
+# === AUTHENTICATION CREDENTIALS ===
+
+# Root User Password (ONLY for initial security setup)
+# Used for first-time server access before SSH keys are installed
+vault_root_password: "ci_root_password_change_me"
+
+# Admin User Password (for account creation and sudo only)  
+# NOT used for SSH authentication - SSH keys only after security setup
+vault_admin_password: "ci_admin_password_change_me"
+
+# === CONNECTION CONFIGURATION ===
+
+# Admin user account name (default: admin)
+vault_admin_user: "admin"
+
+# Secure SSH port (default: 222)  
+vault_ssh_port: 222
+
+# === GLOBAL SERVER CONFIGURATION ===
+
+# Git configuration for server operations
+vault_git_user_full_name: "CI/CD User"
+vault_git_user_email: "ci@example.com"
+
+# Server locale and timezone settings
+vault_timezone: "America/New_York"
+vault_locale: "en_US.UTF-8"
+
+# Database Credentials
+vault_postgres_password: "ci_db_password_change_me"
+vault_mysql_root_password: "ci_mysql_password_change_me"
+
+# Cache Credentials
+vault_redis_password: "ci_redis_password_change_me"
+
+# VPN Credentials
+vault_vpn_passphrase: "ci_vpn_passphrase_change_me"

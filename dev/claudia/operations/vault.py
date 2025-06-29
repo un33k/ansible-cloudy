@@ -103,21 +103,27 @@ class VaultOperations:
             return 1
 
     def _handle_all_vaults(self, operation: str, vault_args: dict) -> int:
-        """Handle vault operations on all vault files in .secrets/"""
+        """Handle vault operations on all vault files in current directory and .secrets/"""
         
-        # Find all .yml files in .secrets/ (excluding templates)
-        secrets_dir = self.config.base_dir / ".secrets"
-        if not secrets_dir.exists():
-            error(f"Secrets directory not found: {secrets_dir}")
-            return 1
-        
+        # Find all .yml files in current directory and .secrets/ (excluding templates and examples)
         vault_files = []
-        for file_path in secrets_dir.glob("*.yml"):
-            if not file_path.name.endswith('.template'):
-                vault_files.append(file_path)
+        
+        # Check current directory for vault files
+        for file_path in self.config.base_dir.glob("*.vault.yml"):
+            vault_files.append(file_path)
+        for file_path in self.config.base_dir.glob("*-vault.yml"):
+            vault_files.append(file_path)
+        
+        # Check .secrets directory (if it exists)
+        secrets_dir = self.config.base_dir / ".secrets"
+        if secrets_dir.exists():
+            for file_path in secrets_dir.glob("*.yml"):
+                # Skip templates and examples
+                if not (file_path.name.endswith('.template') or file_path.name.endswith('.example')):
+                    vault_files.append(file_path)
         
         if not vault_files:
-            error("No vault files found in .secrets/")
+            error("No vault files found. Looking for *.vault.yml, *-vault.yml, and .secrets/*.yml files")
             return 1
         
         print(f"{Colors.BLUE}🔒 {operation.title()}ing all vault files:{Colors.NC}")
@@ -288,23 +294,24 @@ class VaultOperations:
         print(f"  {Colors.GREEN}claudia vault --rekey{Colors.NC}                      Change vault password")
         print()
         
-        print(f"{Colors.BLUE}Environment-Specific Vaults:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia vault --create --file .secrets/dev.yml{Colors.NC}     Create dev vault")
-        print(f"  {Colors.GREEN}claudia vault --edit --file .secrets/prod.yml{Colors.NC}      Edit prod vault")
-        print(f"  {Colors.GREEN}claudia vault --view --file .secrets/ci.yml{Colors.NC}       View CI vault")
+        print(f"{Colors.BLUE}Working with User Vault Files:{Colors.NC}")
+        print(f"  {Colors.GREEN}claudia vault --create --file my-dev.vault.yml{Colors.NC}     Create user vault")
+        print(f"  {Colors.GREEN}claudia vault --edit --file my-prod.vault.yml{Colors.NC}      Edit user vault")
+        print(f"  {Colors.GREEN}claudia vault --view --file staging-vault.yml{Colors.NC}      View user vault")
         print()
         
         print(f"{Colors.BLUE}Batch Operations:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia vault --encrypt --all{Colors.NC}                      Encrypt all vault files in .secrets/")
-        print(f"  {Colors.GREEN}claudia vault --decrypt --all{Colors.NC}                      Decrypt all vault files in .secrets/")
-        print(f"  {Colors.GREEN}claudia vault --view --all{Colors.NC}                         View all vault files in .secrets/")
+        print(f"  {Colors.GREEN}claudia vault --encrypt --all{Colors.NC}                      Encrypt all vault files (*.vault.yml, *-vault.yml, .secrets/*.yml)")
+        print(f"  {Colors.GREEN}claudia vault --decrypt --all{Colors.NC}                      Decrypt all vault files")
+        print(f"  {Colors.GREEN}claudia vault --view --all{Colors.NC}                         View all vault files")
         print(f"  {Colors.GREEN}claudia vault --rekey --all{Colors.NC}                        Change password for all vaults")
         print()
         
-        print(f"{Colors.BLUE}Vault File Structure:{Colors.NC}")
-        print(f"  {Colors.YELLOW}Default vault:{Colors.NC} {self.vault_file}")
+        print(f"{Colors.BLUE}Open Source Vault Structure:{Colors.NC}")
+        print(f"  {Colors.YELLOW}Example files:{Colors.NC} .secrets/dev.yml.example, .secrets/ci.yml.example, .secrets/prod.yml.example")
         print(f"  {Colors.YELLOW}Template file:{Colors.NC} .secrets/vault.yml.template")
-        print(f"  {Colors.YELLOW}Environment vaults:{Colors.NC} .secrets/dev.yml, .secrets/prod.yml")
+        print(f"  {Colors.YELLOW}User vault files:{Colors.NC} *.vault.yml, *-vault.yml (gitignored)")
+        print(f"  {Colors.YELLOW}Workflow:{Colors.NC} Copy example → Edit → Encrypt → Use")
         print()
         
         print(f"{Colors.BLUE}Vault Security Features:{Colors.NC}")
@@ -314,10 +321,15 @@ class VaultOperations:
         print(f"  📋 {Colors.GREEN}Ansible Integration{Colors.NC}         - Native support in playbooks")
         print()
         
-        print(f"{Colors.BLUE}Usage with Playbooks:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia psql --install --prod --ask-vault-pass{Colors.NC}")
-        print(f"  {Colors.GREEN}export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia redis --install --prod{Colors.NC}")
+        print(f"{Colors.BLUE}Open Source Usage Workflow:{Colors.NC}")
+        print(f"  {Colors.GREEN}# 1. Copy example to your vault file{Colors.NC}")
+        print(f"  {Colors.GREEN}cp .secrets/dev.yml.example my-dev.vault.yml{Colors.NC}")
+        print(f"  {Colors.GREEN}# 2. Edit with your real credentials{Colors.NC}")
+        print(f"  {Colors.GREEN}vim my-dev.vault.yml{Colors.NC}")
+        print(f"  {Colors.GREEN}# 3. Encrypt it{Colors.NC}")
+        print(f"  {Colors.GREEN}claudia vault --encrypt --file my-dev.vault.yml{Colors.NC}")
+        print(f"  {Colors.GREEN}# 4. Use with playbooks{Colors.NC}")
+        print(f"  {Colors.GREEN}ansible-playbook -i inventory/dev.yml --ask-vault-pass playbook.yml{Colors.NC}")
         print()
         
         # Show vault vs .env comparison
