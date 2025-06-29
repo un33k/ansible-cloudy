@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Smart pre-push hook: Auto-encrypt secrets before push, then decrypt after
-# This allows fast local commits while ensuring only encrypted secrets reach remote
+# Simple pre-push hook: Check for unencrypted vault files and warn
+# This prevents accidental exposure of secrets to remote repositories
 
 set -e
 
@@ -12,7 +12,7 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🔒 Smart pre-push: Auto-encrypting secrets...${NC}"
+echo -e "${BLUE}🔒 Checking vault file encryption...${NC}"
 
 # Function to check if a file is encrypted with ansible-vault
 is_vault_encrypted() {
@@ -27,187 +27,42 @@ is_vault_encrypted() {
     return 1  # File doesn't exist
 }
 
-# Function to encrypt vault files
-encrypt_vault_files() {
-    local encrypted_files=()
-    
-    # Find all .secrets files that need encryption
-    for vault_file in .secrets/*.yml; do
-        if [[ -f "$vault_file" ]] && [[ "$vault_file" != *.template ]]; then
-            if ! is_vault_encrypted "$vault_file"; then
-                echo -e "${YELLOW}📝 Encrypting: $vault_file${NC}"
-                
-                # Activate virtual environment if it exists
-                if [[ -f ".venv/bin/activate" ]]; then
-                    source .venv/bin/activate
-                fi
-                
-                # Check for ANSIBLE_VAULT_PASSWORD_FILE first
-                if [[ -n "$ANSIBLE_VAULT_PASSWORD_FILE" ]] && [[ -f "$ANSIBLE_VAULT_PASSWORD_FILE" ]]; then
-                    # Try encryption with password file and capture result
-                    if ! ansible-vault encrypt "$vault_file" --vault-password-file="$ANSIBLE_VAULT_PASSWORD_FILE"; then
-                        echo -e "${RED}❌ Failed to encrypt $vault_file with password file${NC}"
-                        echo -e "${YELLOW}   Check your vault password file: $ANSIBLE_VAULT_PASSWORD_FILE${NC}"
-                        exit 1
-                    fi
-                else
-                    # Warn about missing ANSIBLE_VAULT_PASSWORD_FILE
-                    echo -e "${YELLOW}⚠️  ANSIBLE_VAULT_PASSWORD_FILE is not set or file doesn't exist${NC}"
-                    if [[ -n "$ANSIBLE_VAULT_PASSWORD_FILE" ]]; then
-                        echo -e "${RED}   File not found: $ANSIBLE_VAULT_PASSWORD_FILE${NC}"
-                    else
-                        echo -e "${BLUE}   To avoid manual password entry, set:${NC}"
-                        echo -e "${GREEN}   export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass${NC}"
-                    fi
-                    echo -e "${YELLOW}   Please enter vault password to encrypt $vault_file:${NC}"
-                    
-                    # Try manual encryption and capture result
-                    if ! ansible-vault encrypt "$vault_file"; then
-                        echo -e "${RED}❌ Failed to encrypt $vault_file${NC}"
-                        exit 1
-                    fi
-                fi
-                
-                encrypted_files+=("$vault_file")
-                echo -e "${GREEN}✅ Encrypted: $vault_file${NC}"
-            fi
+# Check for unencrypted vault files
+unencrypted_files=()
+for vault_file in .secrets/*.yml; do
+    if [[ -f "$vault_file" ]] && [[ "$vault_file" != *.template ]]; then
+        if ! is_vault_encrypted "$vault_file"; then
+            unencrypted_files+=("$vault_file")
         fi
+    fi
+done
+
+# If we found unencrypted files, block the push
+if [[ ${#unencrypted_files[@]} -gt 0 ]]; then
+    echo -e "\n${RED}🚨 PUSH BLOCKED: Unencrypted vault files detected!${NC}"
+    echo -e "${YELLOW}The following files contain unencrypted secrets:${NC}"
+    
+    for file in "${unencrypted_files[@]}"; do
+        echo -e "  • ${RED}$file${NC}"
     done
     
-    # If we encrypted any files, commit them
-    if [[ ${#encrypted_files[@]} -gt 0 ]]; then
-        echo -e "${BLUE}📦 Committing encrypted vault files...${NC}"
-        git add "${encrypted_files[@]}"
-        git commit -m "🔒 Auto-encrypt vault files before push
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
-        
-        # Store the list of files we encrypted for later decryption
-        printf '%s\n' "${encrypted_files[@]}" > .git/encrypted_files.tmp
-        echo -e "${GREEN}✅ Committed encrypted files${NC}"
-        return 0
-    else
-        echo -e "${GREEN}✅ All vault files already encrypted${NC}"
-        return 1  # No files were encrypted
-    fi
-}
-
-# Function to decrypt vault files after push
-decrypt_vault_files() {
-    if [[ -f .git/encrypted_files.tmp ]]; then
-        echo -e "${BLUE}🔓 Decrypting vault files for local development...${NC}"
-        
-        while IFS= read -r vault_file; do
-            if [[ -f "$vault_file" ]] && is_vault_encrypted "$vault_file"; then
-                echo -e "${YELLOW}🔓 Decrypting: $vault_file${NC}"
-                
-                # Activate virtual environment if it exists
-                if [[ -f ".venv/bin/activate" ]]; then
-                    source .venv/bin/activate
-                fi
-                
-                # Check for ANSIBLE_VAULT_PASSWORD_FILE first
-                if [[ -n "$ANSIBLE_VAULT_PASSWORD_FILE" ]] && [[ -f "$ANSIBLE_VAULT_PASSWORD_FILE" ]]; then
-                    # Try decryption with password file and capture result
-                    if ! ansible-vault decrypt "$vault_file" --vault-password-file="$ANSIBLE_VAULT_PASSWORD_FILE"; then
-                        echo -e "${RED}❌ Failed to decrypt $vault_file with password file${NC}"
-                        echo -e "${YELLOW}   Check your vault password file: $ANSIBLE_VAULT_PASSWORD_FILE${NC}"
-                        echo -e "${RED}   Leaving file encrypted to prevent data loss${NC}"
-                        continue
-                    fi
-                else
-                    # Warn about missing ANSIBLE_VAULT_PASSWORD_FILE
-                    echo -e "${YELLOW}⚠️  ANSIBLE_VAULT_PASSWORD_FILE is not set or file doesn't exist${NC}"
-                    if [[ -n "$ANSIBLE_VAULT_PASSWORD_FILE" ]]; then
-                        echo -e "${RED}   File not found: $ANSIBLE_VAULT_PASSWORD_FILE${NC}"
-                    else
-                        echo -e "${BLUE}   To avoid manual password entry, set:${NC}"
-                        echo -e "${GREEN}   export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass${NC}"
-                    fi
-                    echo -e "${YELLOW}   Please enter vault password to decrypt $vault_file:${NC}"
-                    
-                    # Try manual decryption and capture result
-                    if ! ansible-vault decrypt "$vault_file"; then
-                        echo -e "${RED}❌ Failed to decrypt $vault_file${NC}"
-                        echo -e "${RED}   Leaving file encrypted to prevent data loss${NC}"
-                        continue
-                    fi
-                fi
-                
-                echo -e "${GREEN}✅ Decrypted: $vault_file${NC}"
-            fi
-        done < .git/encrypted_files.tmp
-        
-        # Clean up temp file
-        rm .git/encrypted_files.tmp
-        echo -e "${GREEN}✅ All files decrypted for local development${NC}"
-    fi
-}
-
-# Function to check for other security violations
-check_security_violations() {
-    local violations=()
+    echo -e "\n${YELLOW}To encrypt these files:${NC}"
+    echo -e "${GREEN}# Encrypt individual files:${NC}"
+    for file in "${unencrypted_files[@]}"; do
+        echo -e "  ansible-vault encrypt $file"
+    done
     
-    # Check for private keys
-    local private_keys=$(git ls-files | grep -E 'id_(rsa|dsa|ecdsa|ed25519)$' | grep -v '\.pub$')
-    while IFS= read -r key_file; do
-        if [[ -n "$key_file" ]]; then
-            violations+=("❌ Private SSH key in repository: $key_file")
-        fi
-    done <<< "$private_keys"
+    echo -e "\n${GREEN}# Or encrypt all at once:${NC}"
+    echo -e "  ansible-vault encrypt .secrets/*.yml --vault-password-file ~/.ansible-vault-pass"
     
-    # Note: We skip checking non-vault files for secrets since we have a vault system
-    # and Ansible templates use variables like {{ vault_password }} which are safe
+    echo -e "\n${BLUE}💡 Pro tip: Set up your vault password file:${NC}"
+    echo -e "  echo 'your_vault_password' > ~/.ansible-vault-pass"
+    echo -e "  chmod 600 ~/.ansible-vault-pass"
+    echo -e "  export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass"
     
-    if [[ ${#violations[@]} -gt 0 ]]; then
-        printf '%s\n' "${violations[@]}"
-        return 1
-    fi
-    
-    return 0
-}
-
-# Check if there are any commits to push
-if git rev-parse --verify @{upstream} >/dev/null 2>&1; then
-    # We have an upstream branch, check for commits to push
-    commits_to_push=$(git rev-list --count @{upstream}..HEAD 2>/dev/null || echo "0")
-    if [[ "$commits_to_push" == "0" ]]; then
-        echo -e "${GREEN}📭 No commits to push - skipping vault operations${NC}"
-        exit 0
-    fi
-    echo -e "${BLUE}📤 Found $commits_to_push commit(s) to push${NC}"
-else
-    # No upstream branch (new branch), check if we have any commits
-    commit_count=$(git rev-list --count HEAD 2>/dev/null || echo "0")
-    if [[ "$commit_count" == "0" ]]; then
-        echo -e "${GREEN}📭 No commits in branch - skipping vault operations${NC}"
-        exit 0
-    fi
-    echo -e "${BLUE}📤 Pushing new branch with $commit_count commit(s)${NC}"
-fi
-
-# Main execution
-echo -e "${BLUE}🔍 Checking for security violations...${NC}"
-
-# Check for non-vault security issues
-if ! check_security_violations; then
-    echo -e "\n${RED}🚨 PUSH BLOCKED: Security violations detected!${NC}"
-    echo -e "${YELLOW}Please fix the above issues before pushing.${NC}"
+    echo -e "\n${YELLOW}After encrypting, commit and push again.${NC}"
     exit 1
 fi
 
-# Encrypt vault files if needed
-files_encrypted=false
-if encrypt_vault_files; then
-    files_encrypted=true
-fi
-
-# Create a trap to decrypt files even if push fails
-trap 'if [[ "$files_encrypted" == true ]]; then decrypt_vault_files; fi' EXIT
-
-echo -e "\n${GREEN}🚀 Security checks passed! Proceeding with push...${NC}"
-
-# Note: The actual push happens after this script
-# The trap will decrypt files after push completes (or fails)
+echo -e "${GREEN}✅ All vault files are properly encrypted${NC}"
+exit 0

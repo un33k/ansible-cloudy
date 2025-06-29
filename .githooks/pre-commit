@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Pre-commit hook: Warn about unencrypted vault files but allow commits
-# The pre-push hook will handle encryption automatically
+# Simple pre-commit hook: Warn about unencrypted vault files
+# Allows commits but reminds developers to encrypt before pushing
 
 set -e
 
@@ -30,7 +30,7 @@ is_vault_encrypted() {
 # Get list of staged files
 staged_files=$(git diff --cached --name-only)
 
-# Track warnings
+# Track warnings and critical violations
 warnings_found=false
 critical_violations=false
 
@@ -44,7 +44,7 @@ while IFS= read -r file; do
     if [[ "$file" == .secrets/*.yml ]] && [[ "$file" != *.template ]]; then
         if ! is_vault_encrypted "$file"; then
             echo -e "${YELLOW}⚠️  Unencrypted vault file: $file${NC}"
-            echo -e "${BLUE}   (Will be auto-encrypted on push)${NC}"
+            echo -e "${BLUE}   Remember to encrypt before pushing to remote${NC}"
             warnings_found=true
         fi
     fi
@@ -79,8 +79,8 @@ fi
 # Handle warnings (allow commit but inform)
 if [[ "$warnings_found" == true ]]; then
     echo -e "\n${YELLOW}ℹ️  Security Notice:${NC}"
-    echo -e "${BLUE}Unencrypted vault files detected - they will be automatically encrypted when you push.${NC}"
-    echo -e "${GREEN}✅ Commit allowed - push will handle encryption${NC}"
+    echo -e "${BLUE}Unencrypted vault files detected. The pre-push hook will block pushing until encrypted.${NC}"
+    echo -e "${GREEN}✅ Commit allowed - encrypt before pushing${NC}"
 else
     echo -e "${GREEN}✅ No security issues detected${NC}"
 fi
