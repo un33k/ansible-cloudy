@@ -44,7 +44,12 @@ encrypt_vault_files() {
                 
                 # Check for ANSIBLE_VAULT_PASSWORD_FILE first
                 if [[ -n "$ANSIBLE_VAULT_PASSWORD_FILE" ]] && [[ -f "$ANSIBLE_VAULT_PASSWORD_FILE" ]]; then
-                    ansible-vault encrypt "$vault_file" --vault-password-file="$ANSIBLE_VAULT_PASSWORD_FILE"
+                    # Try encryption with password file and capture result
+                    if ! ansible-vault encrypt "$vault_file" --vault-password-file="$ANSIBLE_VAULT_PASSWORD_FILE"; then
+                        echo -e "${RED}❌ Failed to encrypt $vault_file with password file${NC}"
+                        echo -e "${YELLOW}   Check your vault password file: $ANSIBLE_VAULT_PASSWORD_FILE${NC}"
+                        exit 1
+                    fi
                 else
                     # Warn about missing ANSIBLE_VAULT_PASSWORD_FILE
                     echo -e "${YELLOW}⚠️  ANSIBLE_VAULT_PASSWORD_FILE is not set or file doesn't exist${NC}"
@@ -55,7 +60,12 @@ encrypt_vault_files() {
                         echo -e "${GREEN}   export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass${NC}"
                     fi
                     echo -e "${YELLOW}   Please enter vault password to encrypt $vault_file:${NC}"
-                    ansible-vault encrypt "$vault_file"
+                    
+                    # Try manual encryption and capture result
+                    if ! ansible-vault encrypt "$vault_file"; then
+                        echo -e "${RED}❌ Failed to encrypt $vault_file${NC}"
+                        exit 1
+                    fi
                 fi
                 
                 encrypted_files+=("$vault_file")
@@ -100,7 +110,13 @@ decrypt_vault_files() {
                 
                 # Check for ANSIBLE_VAULT_PASSWORD_FILE first
                 if [[ -n "$ANSIBLE_VAULT_PASSWORD_FILE" ]] && [[ -f "$ANSIBLE_VAULT_PASSWORD_FILE" ]]; then
-                    ansible-vault decrypt "$vault_file" --vault-password-file="$ANSIBLE_VAULT_PASSWORD_FILE"
+                    # Try decryption with password file and capture result
+                    if ! ansible-vault decrypt "$vault_file" --vault-password-file="$ANSIBLE_VAULT_PASSWORD_FILE"; then
+                        echo -e "${RED}❌ Failed to decrypt $vault_file with password file${NC}"
+                        echo -e "${YELLOW}   Check your vault password file: $ANSIBLE_VAULT_PASSWORD_FILE${NC}"
+                        echo -e "${RED}   Leaving file encrypted to prevent data loss${NC}"
+                        continue
+                    fi
                 else
                     # Warn about missing ANSIBLE_VAULT_PASSWORD_FILE
                     echo -e "${YELLOW}⚠️  ANSIBLE_VAULT_PASSWORD_FILE is not set or file doesn't exist${NC}"
@@ -111,7 +127,13 @@ decrypt_vault_files() {
                         echo -e "${GREEN}   export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass${NC}"
                     fi
                     echo -e "${YELLOW}   Please enter vault password to decrypt $vault_file:${NC}"
-                    ansible-vault decrypt "$vault_file"
+                    
+                    # Try manual decryption and capture result
+                    if ! ansible-vault decrypt "$vault_file"; then
+                        echo -e "${RED}❌ Failed to decrypt $vault_file${NC}"
+                        echo -e "${RED}   Leaving file encrypted to prevent data loss${NC}"
+                        continue
+                    fi
                 fi
                 
                 echo -e "${GREEN}✅ Decrypted: $vault_file${NC}"
