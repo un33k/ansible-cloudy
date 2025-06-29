@@ -1,6 +1,6 @@
 # Cloudy Ansible - Usage Guide
 
-Complete step-by-step guide for using Cloudy infrastructure automation with Ansible.
+Complete step-by-step guide for using Cloudy infrastructure automation with Ansible. 
 
 ## Table of Contents
 - [Claudia CLI Command Reference](#claudia-cli-command-reference)
