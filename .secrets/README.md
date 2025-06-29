@@ -92,6 +92,28 @@ All vault variables use the `vault_` prefix and have fallback defaults in invent
 - ✅ **Environment separation**: Separate vault files for dev/staging/production
 - ⚠️ **Password protection**: Always use `--ask-vault-pass` or set `ANSIBLE_VAULT_PASSWORD_FILE`
 
+## Vault Password Setup (Required for Seamless Workflow)
+
+Set up the `ANSIBLE_VAULT_PASSWORD_FILE` environment variable to avoid manual password prompts:
+
+```bash
+# 1. Create vault password file (secure location)
+echo "your_vault_password" > ~/.ansible-vault-pass
+chmod 600 ~/.ansible-vault-pass
+
+# 2. Set environment variable (add to ~/.bashrc or ~/.zshrc)
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass
+
+# 3. Reload your shell or run:
+source ~/.bashrc  # or ~/.zshrc
+```
+
+**Security Notes**: 
+- ✅ Use a strong, unique password for your vault
+- ✅ File should have restricted permissions (600)
+- ✅ Store in your home directory, NOT in the project
+- ⚠️ Add the export to your shell profile for persistence
+
 ## Smart Development Workflow (Recommended)
 
 The git hooks provide a seamless development experience:
@@ -106,11 +128,16 @@ git commit -m "Update vault configuration"
 
 # 3. Push automatically encrypts, pushes, then decrypts back
 git push origin main
-# → Auto-encrypts .secrets/dev.yml
+# → Auto-encrypts .secrets/dev.yml (using your ~/.ansible-vault-pass)
 # → Commits encrypted version  
 # → Pushes to remote safely
 # → Decrypts back to .secrets/dev.yml for continued development
 ```
+
+**Password Handling:**
+- ✅ **Automatic**: Uses `$ANSIBLE_VAULT_PASSWORD_FILE` (no prompts)
+- ⚠️ **Manual**: Prompts for password if `ANSIBLE_VAULT_PASSWORD_FILE` not set
+- 💡 **Setup Help**: Hook provides helpful setup instructions if missing
 
 ## Manual Vault Commands (Alternative)
 
