@@ -446,7 +446,7 @@ Claudia provides integrated Ansible Vault support for secure credential manageme
 # Work with environment-specific vault files
 ./claudia vault --create --file .secrets/dev.yml
 ./claudia vault --edit --file .secrets/prod.yml
-./claudia vault --view --file .secrets/staging.yml
+./claudia vault --view --file .secrets/ci.yml
 
 # Create vault from template
 cp .secrets/vault.yml.template .secrets/dev.yml
@@ -462,7 +462,7 @@ Claudia manages vault files in the `.secrets/` directory:
 ├── vault.yml.template     # Template showing required variables
 ├── dev.yml               # Development environment vault
 ├── prod.yml              # Production environment vault  
-└── staging.yml           # Staging environment vault
+└── ci.yml                # CI/CD environment vault
 ```
 
 **Vault Configuration Benefits:**

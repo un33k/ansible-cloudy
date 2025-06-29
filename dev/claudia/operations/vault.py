@@ -63,6 +63,9 @@ class VaultOperations:
                     i += 2
                 else:
                     error("--file requires a file path")
+            elif arg == "--all":
+                vault_args['all'] = True
+                i += 1
             else:
                 i += 1
         
@@ -70,6 +73,10 @@ class VaultOperations:
 
     def _handle_vault_operation(self, operation: str, args, vault_args: dict) -> int:
         """Handle specific vault operations"""
+        
+        # Check if --all flag is used
+        if vault_args.get('all', False):
+            return self._handle_all_vaults(operation, vault_args)
         
         # Determine vault file path
         vault_file = vault_args.get('file', str(self.vault_file))
@@ -93,6 +100,56 @@ class VaultOperations:
             return self._rekey_vault(vault_path)
         else:
             error(f"Unknown vault operation: {operation}")
+            return 1
+
+    def _handle_all_vaults(self, operation: str, vault_args: dict) -> int:
+        """Handle vault operations on all vault files in .secrets/"""
+        
+        # Find all .yml files in .secrets/ (excluding templates)
+        secrets_dir = self.config.base_dir / ".secrets"
+        if not secrets_dir.exists():
+            error(f"Secrets directory not found: {secrets_dir}")
+            return 1
+        
+        vault_files = []
+        for file_path in secrets_dir.glob("*.yml"):
+            if not file_path.name.endswith('.template'):
+                vault_files.append(file_path)
+        
+        if not vault_files:
+            error("No vault files found in .secrets/")
+            return 1
+        
+        print(f"{Colors.BLUE}🔒 {operation.title()}ing all vault files:{Colors.NC}")
+        for vault_file in vault_files:
+            print(f"  • {vault_file.name}")
+        print()
+        
+        # Perform operation on each vault file
+        all_success = True
+        for vault_file in vault_files:
+            print(f"{Colors.YELLOW}Processing {vault_file.name}...{Colors.NC}")
+            
+            if operation == 'encrypt':
+                result = self._encrypt_vault(vault_file)
+            elif operation == 'decrypt':
+                result = self._decrypt_vault(vault_file)
+            elif operation == 'view':
+                result = self._view_vault(vault_file)
+            elif operation == 'rekey':
+                result = self._rekey_vault(vault_file)
+            else:
+                error(f"Operation '{operation}' not supported with --all flag")
+                return 1
+            
+            if result != 0:
+                all_success = False
+        
+        if all_success:
+            print(f"{Colors.GREEN}✅ All vault files processed successfully{Colors.NC}")
+            return 0
+        else:
+            error("Some vault operations failed")
             return 1
 
     def _create_vault(self, vault_path: Path) -> int:
@@ -234,7 +291,14 @@ class VaultOperations:
         print(f"{Colors.BLUE}Environment-Specific Vaults:{Colors.NC}")
         print(f"  {Colors.GREEN}claudia vault --create --file .secrets/dev.yml{Colors.NC}     Create dev vault")
         print(f"  {Colors.GREEN}claudia vault --edit --file .secrets/prod.yml{Colors.NC}      Edit prod vault")
-        print(f"  {Colors.GREEN}claudia vault --view --file .secrets/staging.yml{Colors.NC}   View staging vault")
+        print(f"  {Colors.GREEN}claudia vault --view --file .secrets/ci.yml{Colors.NC}       View CI vault")
+        print()
+        
+        print(f"{Colors.BLUE}Batch Operations:{Colors.NC}")
+        print(f"  {Colors.GREEN}claudia vault --encrypt --all{Colors.NC}                      Encrypt all vault files in .secrets/")
+        print(f"  {Colors.GREEN}claudia vault --decrypt --all{Colors.NC}                      Decrypt all vault files in .secrets/")
+        print(f"  {Colors.GREEN}claudia vault --view --all{Colors.NC}                         View all vault files in .secrets/")
+        print(f"  {Colors.GREEN}claudia vault --rekey --all{Colors.NC}                        Change password for all vaults")
         print()
         
         print(f"{Colors.BLUE}Vault File Structure:{Colors.NC}")

@@ -91,7 +91,7 @@ class InventoryManager:
     def get_inventory_path(self, production: bool = False) -> str:
         """Get the appropriate inventory file path"""
         if production:
-            inventory_file = self.config.inventory_dir / "production.yml"
+            inventory_file = self.config.inventory_dir / "prod.yml"
         else:
             inventory_file = self.config.inventory_dir / "test.yml"
 

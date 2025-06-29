@@ -94,7 +94,7 @@
 - [x] **Variable Standardization**
   - [x] Remove all hardcoded SSH port references (`ssh_port`)
   - [x] Standardize on `ansible_port` across all recipes and tasks
-  - [x] Fix inventory file inconsistencies (production.yml cleaned up)
+  - [x] Fix inventory file inconsistencies (prod.yml cleaned up)
   - [x] Audit and update remaining recipe files for consistency
 
 ### Phase 5: Testing & Validation

@@ -82,6 +82,8 @@ def create_parser() -> argparse.ArgumentParser:
   {Colors.GREEN}claudia vault --create{Colors.NC}             Create new encrypted vault
   {Colors.GREEN}claudia vault --edit{Colors.NC}               Edit existing vault file
   {Colors.GREEN}claudia vault --view{Colors.NC}               View vault contents
+  {Colors.GREEN}claudia vault --encrypt --all{Colors.NC}      Encrypt all vault files
+  {Colors.GREEN}claudia vault --decrypt --all{Colors.NC}      Decrypt all vault files
   {Colors.GREEN}claudia redis --install --memory 512{Colors.NC}  Install Redis with 512MB memory
   {Colors.GREEN}claudia --list-services{Colors.NC}            Show all available services
   
