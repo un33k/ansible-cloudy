@@ -1,6 +1,6 @@
 # Simple Authentication Flow Test
 # Test the simplified security setup without external dependencies
-# Usage: ansible-playbook -i inventory/test.yml dev/test-auth.yml --check
+# Usage: ansible-playbook -i inventory/dev.yml dev/test-auth.yml --check
 
 ---
 - name: Test Authentication Setup

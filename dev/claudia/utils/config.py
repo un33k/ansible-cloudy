@@ -93,7 +93,7 @@ class InventoryManager:
         if production:
             inventory_file = self.config.inventory_dir / "prod.yml"
         else:
-            inventory_file = self.config.inventory_dir / "test.yml"
+            inventory_file = self.config.inventory_dir / "dev.yml"
 
         if not inventory_file.exists():
             error(f"Inventory file not found: {inventory_file}")

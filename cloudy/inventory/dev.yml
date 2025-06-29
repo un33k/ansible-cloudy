@@ -1,7 +1,7 @@
 # Test Inventory for All Simplified Workflows
-# Step 1: ansible-playbook -i inventory/test.yml playbooks/recipes/core/security.yml 
-# Step 2: ansible-playbook -i inventory/test.yml playbooks/recipes/core/base.yml
-# Step 3: ansible-playbook -i inventory/test.yml playbooks/recipes/[category]/[service].yml
+# Step 1: ansible-playbook -i inventory/dev.yml playbooks/recipes/core/security.yml 
+# Step 2: ansible-playbook -i inventory/dev.yml playbooks/recipes/core/base.yml
+# Step 3: ansible-playbook -i inventory/dev.yml playbooks/recipes/[category]/[service].yml
 #
 # NOTE: Vault variables are loaded via group_vars/all/vault.yml (symlinked to .secrets/dev.yml)
 

@@ -266,7 +266,7 @@ class CloudyValidator:
                     return False
             
             # Check inventory files
-            inventory_files = ["cloudy/inventory/test.yml", "cloudy/inventory/prod.yml"]
+            inventory_files = ["cloudy/inventory/dev.yml", "cloudy/inventory/prod.yml"]
             for inv_file in inventory_files:
                 if not os.path.exists(inv_file):
                     print(f"  {Colors.RED}❌ Missing inventory file: {inv_file}{Colors.NC}")

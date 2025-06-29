@@ -90,7 +90,7 @@ cloudy/
 ## Configuration
 
 ### Inventory Setup
-Configure servers in `cloudy/inventory/test.yml`:
+Configure servers in `cloudy/inventory/dev.yml`:
 ```yaml
 all:
   vars:

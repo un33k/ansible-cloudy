@@ -2,6 +2,69 @@
 
 This directory contains Ansible Vault files with sensitive credentials and configuration.
 
+## Vault Access Control Strategy
+
+**Different teams get different vault passwords for security isolation:**
+
+### Environment-Specific Access
+
+1. **Development Team** → Only has `dev.yml` vault password
+   - Can decrypt/edit development secrets
+   - Cannot access CI/staging or production vaults
+   - Used for local development and testing
+
+2. **CI/CD System** → Only has `ci.yml` vault password  
+   - Automated deployments to CI/staging environment
+   - Stored in CI/CD secrets management (GitHub Actions, Jenkins, etc.)
+   - Cannot access production secrets
+
+3. **DevOps/SRE Team** → Has `prod.yml` vault password
+   - Production deployments and emergency access
+   - Highly restricted, audit-logged access
+   - Separate from development credentials
+
+### Access Pattern Examples
+
+**For Developers:**
+```bash
+# Set dev vault password
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-dev
+
+# They can work with dev environment
+./claudia django --install  # Uses dev.yml vault
+
+# But cannot access production (fails - no prod vault password)
+./claudia django --install --prod  # ❌ Access denied
+```
+
+**For CI/CD System:**
+```bash
+# CI server has ci vault password in secure environment
+export ANSIBLE_VAULT_PASSWORD_FILE=/secure/ci-vault-pass
+
+# CI can deploy to staging
+./claudia django --install --ci  # Uses ci.yml vault
+
+# But cannot deploy to production
+./claudia django --install --prod  # ❌ Access denied
+```
+
+**For Production Deployments:**
+```bash
+# Only DevOps team has this password
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass-prod  
+
+# Production deployments
+./claudia django --install --prod  # Uses prod.yml vault
+```
+
+### Security Benefits
+
+- **Separation of Concerns**: Each team/system only has access to appropriate environments
+- **Least Privilege Access**: No one has more access than needed
+- **Audit Trail**: Production vault access is limited and tracked
+- **Breach Containment**: Compromise of dev credentials doesn't affect production
+
 ## File Structure
 
 ```
@@ -9,10 +72,8 @@ This directory contains Ansible Vault files with sensitive credentials and confi
 ├── README.md                    # This file
 ├── vault.yml.template           # Template for creating new vault files
 ├── dev.yml                     # Development environment vault (encrypted)
-├── staging.yml                 # Staging environment vault (encrypted)
-├── staging.yml.template        # Staging vault template
-├── production.yml              # Production environment vault (encrypted)
-└── production.yml.template     # Production vault template
+├── ci.yml                      # CI/CD environment vault (encrypted)
+└── prod.yml                    # Production environment vault (encrypted)
 ```
 
 ## How Vault Loading Works
@@ -37,43 +98,43 @@ vim .secrets/dev.yml
 ansible-vault encrypt .secrets/dev.yml
 
 # 4. Vault is automatically loaded via symlink
-ansible-playbook -i cloudy/inventory/test.yml [your-playbook] --ask-vault-pass
+ansible-playbook -i cloudy/inventory/dev.yml [your-playbook] --ask-vault-pass
 ```
 
-### Staging Environment
+### CI/CD Environment
 ```bash
-# 1. Create your staging vault from template
-cp .secrets/staging.yml.template .secrets/staging.yml
+# 1. Create your CI vault from template
+cp .secrets/vault.yml.template .secrets/ci.yml
 
-# 2. Edit with your staging credentials
-vim .secrets/staging.yml
+# 2. Edit with your CI credentials
+vim .secrets/ci.yml
 
 # 3. Encrypt the vault file
-ansible-vault encrypt .secrets/staging.yml
+ansible-vault encrypt .secrets/ci.yml
 
-# 4. Create symlink for staging inventory
-ln -s ../../../../.secrets/staging.yml cloudy/inventory/group_vars/all/vault_staging.yml
+# 4. Create symlink for CI inventory
+ln -s ../../../../.secrets/ci.yml cloudy/inventory/group_vars/all/vault_ci.yml
 
-# 5. Use staging inventory
-ansible-playbook -i cloudy/inventory/staging.yml [your-playbook] --ask-vault-pass
+# 5. Use CI inventory
+ansible-playbook -i cloudy/inventory/ci.yml [your-playbook] --ask-vault-pass
 ```
 
 ### Production Environment
 ```bash
 # 1. Create your production vault from template
-cp .secrets/production.yml.template .secrets/production.yml
+cp .secrets/vault.yml.template .secrets/prod.yml
 
 # 2. Edit with your production credentials (use strong passwords!)
-vim .secrets/production.yml
+vim .secrets/prod.yml
 
 # 3. Encrypt the vault file
-ansible-vault encrypt .secrets/production.yml
+ansible-vault encrypt .secrets/prod.yml
 
 # 4. Create symlink for production inventory
-ln -s ../../../../.secrets/production.yml cloudy/inventory/group_vars/all/vault_prod.yml
+ln -s ../../../../.secrets/prod.yml cloudy/inventory/group_vars/all/vault_prod.yml
 
 # 5. Use production inventory
-ansible-playbook -i cloudy/inventory/production.yml [your-playbook] --ask-vault-pass
+ansible-playbook -i cloudy/inventory/prod.yml [your-playbook] --ask-vault-pass
 ```
 
 ## Vault Variables

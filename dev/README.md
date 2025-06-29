@@ -15,7 +15,7 @@ cd ansible-cloudy/
 ./dev/syntax-check.sh
 
 # Test authentication flow
-ansible-playbook -i cloudy/inventory/test.yml dev/test-auth.yml --check
+ansible-playbook -i cloudy/inventory/dev.yml dev/test-auth.yml --check
 ```
 
 ## Tools Overview
@@ -96,10 +96,10 @@ Checking cache recipe: playbooks/recipes/cache/redis.yml... ✅ PASS
 **Usage:**
 ```bash
 # Dry run test (recommended)
-ansible-playbook -i cloudy/inventory/test.yml dev/test-auth.yml --check
+ansible-playbook -i cloudy/inventory/dev.yml dev/test-auth.yml --check
 
 # Actual test (careful!)  
-ansible-playbook -i cloudy/inventory/test.yml dev/test-auth.yml
+ansible-playbook -i cloudy/inventory/dev.yml dev/test-auth.yml
 ```
 
 ## When to Use Each Tool
@@ -116,7 +116,7 @@ ansible-playbook -i cloudy/inventory/test.yml dev/test-auth.yml
 
 ### Testing Security Setup
 ```bash
-ansible-playbook -i cloudy/inventory/test.yml dev/test-auth.yml --check
+ansible-playbook -i cloudy/inventory/dev.yml dev/test-auth.yml --check
 ```
 
 ### CI/CD Integration
