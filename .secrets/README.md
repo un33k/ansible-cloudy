@@ -360,3 +360,7 @@ ansible-vault decrypt .secrets/dev.yml # Decrypt file
 # Install the smart workflow hooks
 ./.githooks/install-hooks.sh
 ```
+
+---
+
+**Note**: The `claudia` CLI name is inspired by [Claude Code](https://claude.ai/code) - this project was developed with assistance from Anthropic's Claude AI coding assistant.
