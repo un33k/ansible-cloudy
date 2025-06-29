@@ -58,8 +58,22 @@ ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbooks/recipes/db
 
 ## Security Notes
 
-- Add your vault files to `.gitignore`
-- Use strong, unique passwords for each environment
-- Consider using a password manager
-- Regularly rotate credentials
-- Keep production credentials separate from dev/test
+- ✅ **Git Safety**: All `.vault/*.yml` files are automatically ignored by git
+- ✅ **Templates Only**: Only `.example` files and `README.md` are tracked in git
+- 🔒 **Real Credentials**: Never commit actual `.vault/*.yml` files with real passwords
+- 🔑 **Strong Passwords**: Use strong, unique passwords for each environment
+- 💼 **Password Manager**: Consider using a password manager for credential storage
+- 🔄 **Regular Rotation**: Regularly rotate credentials, especially for production
+- 🏢 **Environment Separation**: Keep production credentials completely separate from dev/test
+
+## Git Ignore Rules
+
+The following files are tracked in git:
+- ✅ `.vault/*.example` - Template files
+- ✅ `.vault/README.md` - This documentation
+
+The following files are automatically ignored:
+- 🚫 `.vault/*.yml` - All actual vault files with real credentials
+- 🚫 `.vault/dev.yml`, `.vault/prod.yml`, etc.
+
+This ensures your real credentials are never accidentally committed to git.

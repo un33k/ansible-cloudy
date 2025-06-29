@@ -4,7 +4,7 @@
 
 ---
 - name: Test Authentication Setup
-  hosts: all
+  hosts: security_targets
   gather_facts: true
   become: true
   
@@ -123,18 +123,24 @@
       command: whoami
       register: sudo_test
       changed_when: false
+      check_mode: false
       
-    - name: Display final test results
-      debug:
-        msg: |
-          🎉 ✅ AUTHENTICATION SETUP TEST COMPLETED!
-          
-          📋 Test Results:
-          ├── Current user: {{ ansible_user }}
-          ├── Target host: {{ ansible_host }}:{{ ansible_port | default(22) }}
-          ├── Admin user: {{ admin_user }}
-          ├── Sudo test: {{ 'PASSED' if sudo_test.stdout == admin_user else 'FAILED' }}
-          └── SSH security: {{ 'CONFIGURED' if ssh_port_config is defined else 'NEEDS SETUP' }}
-          
-          ⚠️  Note: This is a validation test only.
-          ⚠️  Run playbooks/recipes/core/security.yml for actual setup.
+    - name: Save test results for CLI processing
+      set_fact:
+        test_results:
+          connection:
+            host: "{{ ansible_host }}"
+            user: "{{ ansible_user }}"
+            port: "{{ ansible_port | default(22) }}"
+            auth_method: "{{ 'SSH Keys' if ansible_ssh_private_key_file is defined else 'Password' }}"
+          admin_user:
+            name: "{{ admin_user }}"
+            home_exists: "{{ admin_home_check.stat.exists }}"
+            ssh_dir_exists: "{{ ssh_dir_check.stat.exists }}"
+            sudo_test_passed: "{{ sudo_test.stdout == admin_user }}"
+            groups: "{{ admin_groups }}"
+          security:
+            ssh_port_configured: "{{ ssh_port }}"
+            ssh_port_changed: "{{ ssh_port_config.changed | default(false) }}"
+            firewall_rule_added: "{{ ufw_port_added.changed | default(false) }}"
+            admin_user_exists: "{{ admin_user_info.ansible_facts.getent_passwd is defined }}"

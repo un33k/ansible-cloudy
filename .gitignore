@@ -84,5 +84,10 @@ cloudy-old/
 .secrets/ci.yml
 .secrets/prod.yml
 
+# Simple vault files (new system - examples are safe to commit)
+.vault/*.yml
+!.vault/*.example
+!.vault/README.md
+
 # Unencrypted secrets (if any)
 .secrets/**/unencrypted_*

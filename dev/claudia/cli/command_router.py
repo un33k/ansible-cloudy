@@ -41,8 +41,15 @@ class CommandRouter:
         """Handle service-specific help requests before main parsing"""
         # Check for dev subcommand help
         if len(claudia_args) >= 3 and claudia_args[0] == "dev" and claudia_args[2] in ["--help", "-h"]:
-            if claudia_args[1] == "validate":
+            subcommand = claudia_args[1]
+            if subcommand == "validate":
                 show_validate_help()
+                return True
+            elif subcommand == "test":
+                self._show_dev_test_help()
+                return True
+            elif subcommand in ["syntax", "lint", "yamlint", "flake8", "spell", "comprehensive"]:
+                self._show_dev_command_help(subcommand)
                 return True
         
         # Check for service-specific help
@@ -78,6 +85,120 @@ class CommandRouter:
                 error(f"Configuration error: {e}")
         
         return False
+    
+    def _show_dev_test_help(self):
+        """Show help for dev test command"""
+        from utils.colors import Colors
+        
+        print(f"""
+{Colors.CYAN}claudia dev test{Colors.NC} - Authentication Flow Testing
+
+{Colors.YELLOW}DESCRIPTION:{Colors.NC}
+    Tests the authentication setup process to validate server configuration.
+    Verifies admin user creation, SSH keys, firewall, and sudo access.
+
+{Colors.YELLOW}USAGE:{Colors.NC}
+    claudia dev test [OPTIONS] [-- ANSIBLE_ARGS]
+
+{Colors.YELLOW}OPTIONS:{Colors.NC}
+    --check, --dry-run    Run in check mode (don't make changes)
+    --verbose, -v         Show detailed Ansible task output
+    -h, --help           Show this help message
+
+{Colors.YELLOW}EXAMPLES:{Colors.NC}
+    claudia dev test                           # Run authentication test
+    claudia dev test --check                   # Dry run test
+    claudia dev test --verbose                 # Show detailed output
+    claudia dev test -- -e "vault_ssh_port=22" # Override SSH port
+
+{Colors.YELLOW}CONFIGURABLE VARIABLES:{Colors.NC}
+    Override test parameters using Ansible variable syntax:
+
+    {Colors.GREEN}Connection Settings:{Colors.NC}
+    • vault_root_password="newpass"     Root password for initial connection
+    • vault_ssh_port=22                 SSH port (default: 22022)
+    • ansible_host="10.10.10.199"       Target server IP address
+
+    {Colors.GREEN}Admin User Configuration:{Colors.NC}
+    • vault_admin_user="myuser"         Admin username (default: admin)
+    • vault_admin_password="secret"     Admin user password
+    • admin_groups="admin,sudo"         User groups (default: admin,www-data)
+
+    {Colors.GREEN}SSH & Security:{Colors.NC}
+    • ssh_port=2222                     SSH port configuration
+    • admin_user="myuser"               Admin username for test
+    • admin_password="secure123"        Admin password for test
+
+{Colors.YELLOW}VARIABLE OVERRIDE EXAMPLES:{Colors.NC}
+    # Test with standard SSH port
+    claudia dev test -- -e "vault_ssh_port=22"
+    
+    # Test with different admin user
+    claudia dev test -- -e "vault_admin_user=deploy" -e "admin_user=deploy"
+    
+    # Test with custom server
+    claudia dev test -- -e "ansible_host=192.168.1.100" -e "vault_ssh_port=22"
+    
+    # Multiple overrides
+    claudia dev test -- -e "vault_root_password=mypass" -e "vault_ssh_port=22" -e "admin_user=myuser"
+
+{Colors.YELLOW}WHAT IT TESTS:{Colors.NC}
+    • Server connectivity and authentication
+    • Admin user creation and configuration
+    • SSH key installation and validation
+    • Firewall configuration
+    • Sudo access verification
+    • Security configuration validation
+
+{Colors.YELLOW}AUTHENTICATION:{Colors.NC}
+    • Uses root credentials from .vault/dev.yml for initial connection
+    • Tests admin user setup and SSH key authentication
+    • Validates two-phase authentication model
+
+{Colors.YELLOW}VAULT CONFIGURATION:{Colors.NC}
+    Automatically loads credentials from .vault/dev.yml if present.
+    Common vault variables:
+    • vault_root_password: Root password for initial connection
+    • vault_admin_password: Admin user password
+    • vault_admin_user: Admin username
+    • vault_ssh_port: SSH port configuration
+
+{Colors.YELLOW}INVENTORY TARGETS:{Colors.NC}
+    Test runs against 'security_targets' group in inventory/dev.yml
+    • Uses root user with password authentication
+    • Configures admin user with SSH keys
+    • Tests firewall and security settings
+""")
+    
+    def _show_dev_command_help(self, command):
+        """Show help for specific dev commands"""
+        from utils.colors import Colors
+        
+        descriptions = {
+            "syntax": "Quick syntax checking of Ansible playbooks",
+            "lint": "Ansible linting with project configuration",
+            "yamlint": "YAML linting with project configuration", 
+            "flake8": "Python code linting with flake8",
+            "spell": "Spell checking with cspell configuration",
+            "comprehensive": "Comprehensive validation using validate.py script"
+        }
+        
+        desc = descriptions.get(command, f"Development command: {command}")
+        
+        print(f"""
+{Colors.CYAN}claudia dev {command}{Colors.NC} - {desc}
+
+{Colors.YELLOW}USAGE:{Colors.NC}
+    claudia dev {command} [OPTIONS]
+
+{Colors.YELLOW}OPTIONS:{Colors.NC}
+    --verbose, -v         Show detailed output
+    -h, --help           Show this help message
+
+{Colors.YELLOW}EXAMPLES:{Colors.NC}
+    claudia dev {command}                      # Run {command} check
+    claudia dev {command} --verbose            # Show detailed output
+""")
     
     def handle_list_services(self):
         """Handle --list-services command"""
