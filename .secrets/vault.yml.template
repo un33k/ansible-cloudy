@@ -31,8 +31,8 @@ vault_admin_password: "REPLACE_WITH_SECURE_ADMIN_PASSWORD"
 # Admin user account name (default: admin)
 vault_admin_user: "admin"
 
-# Secure SSH port (default: 22022)  
-vault_ssh_port: 22022
+# Secure SSH port (default: 222)  
+vault_ssh_port: 222
 
 # === GLOBAL SERVER CONFIGURATION ===
 

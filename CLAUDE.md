@@ -484,11 +484,11 @@ Claudia manages vault files in the `.secrets/` directory:
 ./claudia psql --install --prod --ask-vault-pass
 
 # Set vault password file (for automation)
-export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass
 ./claudia psql --install --prod
 
 # Pass vault password via file
-./claudia redis --install --vault-password-file ~/.vault_pass
+./claudia redis --install --vault-password-file ~/.ansible-vault-pass
 ```
 
 ### 🔧 Vault vs .env.local Comparison

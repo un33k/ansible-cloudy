@@ -1,11 +1,11 @@
-# Staging Vault Template - ENCRYPT BEFORE USE!
+# Production Vault Template - ENCRYPT BEFORE USE!
 # 
-# To create your staging vault:
-# 1. Copy this file to staging.yml
-# 2. Replace all template values with staging credentials
-# 3. Encrypt: ansible-vault encrypt .secrets/staging.yml
+# To create your production vault:
+# 1. Copy this file to production.yml
+# 2. Replace all template values with real production credentials
+# 3. Encrypt: ansible-vault encrypt .secrets/production.yml
 #
-# NOTE: Use production-like security but with staging-specific values
+# CRITICAL: Use strong, unique passwords for production!
 
 # === AUTHENTICATION CREDENTIALS ===
 
@@ -20,14 +20,14 @@ vault_admin_password: "REPLACE_WITH_SECURE_ADMIN_PASSWORD"
 # Admin user account name (standard: admin)
 vault_admin_user: "admin"
 
-# Secure SSH port (standard: 22022)
-vault_ssh_port: 22022
+# Secure SSH port (standard: 222)
+vault_ssh_port: 222
 
 # === GLOBAL SERVER CONFIGURATION ===
 
 # Git configuration for server operations
-vault_git_user_full_name: "Staging Admin"
-vault_git_user_email: "staging@yourcompany.com"
+vault_git_user_full_name: "Production Admin"
+vault_git_user_email: "admin@yourcompany.com"
 
 # Server locale and timezone settings
 vault_timezone: "America/New_York"

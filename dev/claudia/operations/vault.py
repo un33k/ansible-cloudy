@@ -252,7 +252,7 @@ class VaultOperations:
         
         print(f"{Colors.BLUE}Usage with Playbooks:{Colors.NC}")
         print(f"  {Colors.GREEN}claudia psql --install --prod --ask-vault-pass{Colors.NC}")
-        print(f"  {Colors.GREEN}export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass{Colors.NC}")
+        print(f"  {Colors.GREEN}export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass{Colors.NC}")
         print(f"  {Colors.GREEN}claudia redis --install --prod{Colors.NC}")
         print()
         
