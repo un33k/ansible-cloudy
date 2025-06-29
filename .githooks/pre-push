@@ -169,6 +169,25 @@ check_security_violations() {
     return 0
 }
 
+# Check if there are any commits to push
+if git rev-parse --verify @{upstream} >/dev/null 2>&1; then
+    # We have an upstream branch, check for commits to push
+    commits_to_push=$(git rev-list --count @{upstream}..HEAD 2>/dev/null || echo "0")
+    if [[ "$commits_to_push" == "0" ]]; then
+        echo -e "${GREEN}📭 No commits to push - skipping vault operations${NC}"
+        exit 0
+    fi
+    echo -e "${BLUE}📤 Found $commits_to_push commit(s) to push${NC}"
+else
+    # No upstream branch (new branch), check if we have any commits
+    commit_count=$(git rev-list --count HEAD 2>/dev/null || echo "0")
+    if [[ "$commit_count" == "0" ]]; then
+        echo -e "${GREEN}📭 No commits in branch - skipping vault operations${NC}"
+        exit 0
+    fi
+    echo -e "${BLUE}📤 Pushing new branch with $commit_count commit(s)${NC}"
+fi
+
 # Main execution
 echo -e "${BLUE}🔍 Checking for security violations...${NC}"
 
