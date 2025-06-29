@@ -1,6 +1,11 @@
 {
   "python.defaultInterpreterPath": "python",
   "python.analysis.typeCheckingMode": "basic",
+  "flake8.args": [
+    "--max-line-length=100",
+    "--exclude=ali_old.py",
+    "--ignore=E203,E501,E722,F541,F401,W291,W293,W503"
+  ],
   "ansible.python.interpreterPath": "python",
   "ansible.validation.enabled": true,
   "ansible.validation.lint.enabled": true,
