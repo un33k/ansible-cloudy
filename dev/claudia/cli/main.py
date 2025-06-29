@@ -144,6 +144,52 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _show_validate_help():
+    """Show detailed help for the validate command"""
+    print(f"{Colors.CYAN}Claudia Development - Pre-Commit Validation{Colors.NC}")
+    print(f"{Colors.YELLOW}Essential validation suite to run before every commit{Colors.NC}\n")
+    
+    print(f"{Colors.BLUE}Usage:{Colors.NC}")
+    print(f"  {Colors.GREEN}./claudia dev validate{Colors.NC}                # Run pre-commit validation suite")
+    print(f"  {Colors.GREEN}./claudia dev validate --help{Colors.NC}        # Show this help\n")
+    
+    print(f"{Colors.BLUE}What it runs:{Colors.NC}")
+    print(f"  1. {Colors.GREEN}Syntax Check{Colors.NC}     - Validates all Ansible YAML files")
+    print(f"  2. {Colors.GREEN}Ansible Linting{Colors.NC}  - Code quality and best practices")
+    print(f"  3. {Colors.GREEN}YAML Formatting{Colors.NC} - Consistent formatting validation\n")
+    
+    print(f"{Colors.BLUE}📊 Command Priority Reference:{Colors.NC}")
+    print(f"┌─────────────┬──────────────────┬─────────────────────────────────────┬─────────────────────┐")
+    print(f"│ {Colors.BLUE}Priority{Colors.NC}     │ {Colors.BLUE}Command{Colors.NC}           │ {Colors.BLUE}Purpose{Colors.NC}                              │ {Colors.BLUE}Required?{Colors.NC}           │")
+    print(f"├─────────────┼──────────────────┼─────────────────────────────────────┼─────────────────────┤")
+    print(f"│ 🔴 Critical  │ dev validate     │ Pre-commit validation suite         │ ✅ Yes               │")
+    print(f"│ 🟡 Important │ dev comprehensive│ Full structure validation           │ 📋 Before releases   │")
+    print(f"│ 🟡 Important │ dev yamlint      │ YAML formatting                     │ 📋 Recommended       │")
+    print(f"│ 🟢 Optional  │ dev flake8       │ Python code quality                 │ 📋 If CLI changes    │")
+    print(f"│ 🟢 Optional  │ dev spell        │ Documentation spelling              │ 📋 If docs changes   │")
+    print(f"│ 🔵 Testing   │ dev test         │ Authentication testing              │ ❓ If server available│")
+    print(f"└─────────────┴──────────────────┴─────────────────────────────────────┴─────────────────────┘\n")
+    
+    print(f"{Colors.BLUE}💡 Recommendations:{Colors.NC}")
+    print(f"  {Colors.GREEN}Before every commit:{Colors.NC}")
+    print(f"    ./claudia dev validate")
+    print(f"")
+    print(f"  {Colors.GREEN}Before testing deployment:{Colors.NC}")
+    print(f"    ./claudia dev test         # Test authentication flow")
+    print(f"")
+    print(f"  {Colors.GREEN}For comprehensive validation:{Colors.NC}")
+    print(f"    ./claudia dev comprehensive")
+    print(f"    ./claudia dev yamlint")
+    print(f"    ./claudia dev flake8       # If you modified CLI code")
+    print(f"    ./claudia dev spell        # If you modified documentation\n")
+    
+    print(f"{Colors.BLUE}⚡ Pro Tips:{Colors.NC}")
+    print(f"  • {Colors.CYAN}./claudia dev validate{Colors.NC} is designed to be fast for frequent use")
+    print(f"  • Run {Colors.CYAN}./claudia dev test{Colors.NC} separately when you have server access")
+    print(f"  • Use {Colors.CYAN}./claudia dev comprehensive{Colors.NC} for thorough validation before releases")
+    print(f"  • All commands respect obsolete vault environment variable detection")
+
+
 def main() -> None:
     """Main entry point for Claudia CLI"""
 
@@ -157,7 +203,12 @@ def main() -> None:
         ansible_args = []
 
     # Check for service-specific help before parsing
-    if len(claudia_args) >= 2 and claudia_args[1] in ["--help", "-h"] and claudia_args[0] not in ["dev"]:
+    if len(claudia_args) >= 3 and claudia_args[0] == "dev" and claudia_args[2] in ["--help", "-h"]:
+        # Handle dev subcommand help
+        if claudia_args[1] == "validate":
+            _show_validate_help()
+            return
+    elif len(claudia_args) >= 2 and claudia_args[1] in ["--help", "-h"] and claudia_args[0] not in ["dev"]:
         service_name = claudia_args[0]
         try:
             config = ClaudiaConfig()
@@ -226,6 +277,8 @@ def main() -> None:
             print(f"  {Colors.GREEN}claudia dev yamlint{Colors.NC}    YAML linting")
             print(f"  {Colors.GREEN}claudia dev flake8{Colors.NC}     Python code linting")
             print(f"  {Colors.GREEN}claudia dev spell{Colors.NC}      Spell checking")
+            print(f"")
+            print(f"{Colors.YELLOW}💡 Use {Colors.GREEN}./claudia dev validate --help{Colors.NC} for detailed guidance{Colors.NC}")
             return
 
         # Import dev tools
@@ -275,7 +328,6 @@ def main() -> None:
         nginx_ops = NginxOperations(config)
         exit_code = nginx_ops.handle_operation(args, ansible_args)
         sys.exit(exit_code)
-
 
     # For other services, fall back to recipe finder for now
     finder = RecipeFinder(config)

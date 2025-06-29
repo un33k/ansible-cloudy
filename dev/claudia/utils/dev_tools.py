@@ -27,7 +27,9 @@ class DevTools:
         checks = [
             ("Syntax Check", self.syntax),
             ("Ansible Linting", self.lint),
-            ("YAML Formatting", self.yamlint)
+            ("YAML Formatting", self.yamlint),
+            ("Python Code Quality", self.flake8),
+            ("Spell Check", self.spell)
         ]
         
         failed_checks = []
