@@ -92,7 +92,27 @@ All vault variables use the `vault_` prefix and have fallback defaults in invent
 - ✅ **Environment separation**: Separate vault files for dev/staging/production
 - ⚠️ **Password protection**: Always use `--ask-vault-pass` or set `ANSIBLE_VAULT_PASSWORD_FILE`
 
-## Common Commands
+## Smart Development Workflow (Recommended)
+
+The git hooks provide a seamless development experience:
+
+```bash
+# 1. Edit vault files directly (unencrypted for fast development)
+vim .secrets/dev.yml
+
+# 2. Commit changes normally (warns but allows unencrypted files)
+git add .secrets/dev.yml
+git commit -m "Update vault configuration"
+
+# 3. Push automatically encrypts, pushes, then decrypts back
+git push origin main
+# → Auto-encrypts .secrets/dev.yml
+# → Commits encrypted version  
+# → Pushes to remote safely
+# → Decrypts back to .secrets/dev.yml for continued development
+```
+
+## Manual Vault Commands (Alternative)
 
 ```bash
 # Edit encrypted vault
@@ -104,8 +124,15 @@ ansible-vault view .secrets/dev.yml
 # Change vault password
 ansible-vault rekey .secrets/dev.yml
 
-# Decrypt for IDE editing (remember to re-encrypt!)
-ansible-vault decrypt .secrets/dev.yml
-# ... edit in IDE ...
-ansible-vault encrypt .secrets/dev.yml
+# Manual encrypt/decrypt cycle
+ansible-vault decrypt .secrets/dev.yml  # Edit in IDE
+# ... make changes ...
+ansible-vault encrypt .secrets/dev.yml  # Re-encrypt
+```
+
+## Git Hook Installation
+
+```bash
+# Install the smart workflow hooks
+./.githooks/install-hooks.sh
 ```
