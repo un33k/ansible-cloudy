@@ -47,7 +47,6 @@ source .venv/bin/activate
 - **`postgresql.py`**: PostgreSQL operations with 17+ granular commands
 - **`redis.py`**: Redis configuration with memory, port, password management
 - **`nginx.py`**: Nginx load balancer with domain and SSL management
-- **`vault.py`**: Ansible Vault operations for credential management
 - **`recipes.py`**: Recipe discovery and execution management
 
 #### **`claudia/discovery/service_scanner.py`** - Auto-Discovery

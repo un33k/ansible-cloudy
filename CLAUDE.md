@@ -79,7 +79,7 @@ cd ansible-cloudy/
 #### Development Tools
 - **Bootstrap**: `./bootstrap.sh` - Sets up .venv with all development tools
 - **Claudia CLI**: `./claudia security --install` - Intelligent infrastructure management
-- **Claudia Dev Commands**: `./claudia dev syntax`, `./claudia dev validate`, `./claudia dev lint`, `./claudia dev test`
+- **Claudia Dev Commands**: `./claudia dev validate` (pre-commit suite), `./claudia dev syntax`, `./claudia dev comprehensive`, `./claudia dev lint`, `./claudia dev test`
 - **Authentication test**: `./claudia dev test` - Test server authentication flow
 - **Service discovery**: `./claudia --list-services` - Show all auto-discovered services
 - **Clean output**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
@@ -242,7 +242,8 @@ generic_servers:
 # NEW: ./claudia redis --install --port 6380 --memory 512
 
 # Development and validation
-./claudia dev validate                  # Comprehensive validation (with fallback)
+./claudia dev validate                  # Pre-commit validation suite (recommended)
+./claudia dev comprehensive             # Comprehensive validation (includes structure)
 ./claudia dev syntax                    # Quick syntax check
 ./claudia dev test                      # Authentication flow test
 ./claudia dev lint                      # Ansible linting

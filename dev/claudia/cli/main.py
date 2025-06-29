@@ -218,7 +218,8 @@ def main() -> None:
     if args.service == "dev":
         if not args.subcommand:
             print(f"{Colors.CYAN}Claudia Development Commands{Colors.NC}")
-            print(f"  {Colors.GREEN}claudia dev validate{Colors.NC}    Comprehensive validation")
+            print(f"  {Colors.GREEN}claudia dev validate{Colors.NC}    Pre-commit validation suite (recommended)")
+            print(f"  {Colors.GREEN}claudia dev comprehensive{Colors.NC} Comprehensive validation (includes structure)")
             print(f"  {Colors.GREEN}claudia dev syntax{Colors.NC}     Quick syntax checking")
             print(f"  {Colors.GREEN}claudia dev test{Colors.NC}       Authentication testing")
             print(f"  {Colors.GREEN}claudia dev lint{Colors.NC}       Ansible linting")
@@ -232,6 +233,8 @@ def main() -> None:
         dev_tools = DevTools(config)
 
         if args.subcommand == "validate":
+            exit_code = dev_tools.validate_precommit()
+        elif args.subcommand == "comprehensive":
             exit_code = dev_tools.validate()
         elif args.subcommand == "syntax":
             exit_code = dev_tools.syntax()

@@ -123,9 +123,8 @@ Available with any service command:
 --prod, --production    # Use production inventory (default: dev/test)
 --verbose, -v           # Enable verbose Ansible output
 
-# Vault Integration  
---ask-vault-pass        # Prompt for vault password
---vault-password-file   # Specify vault password file
+# Legacy Ansible Support
+-- [ansible-args]       # Pass additional arguments to ansible-playbook
 
 # Help and Discovery
 --help, -h              # Show service-specific help and parameters

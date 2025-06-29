@@ -158,8 +158,7 @@ ansible-cloudy/
     ├── CONTRIBUTING.md      # Development guidelines
     ├── USAGE.md            # Complete usage guide
     ├── IMPLEMENTATION_PLAN.md  # Technical implementation details
-    ├── DEVELOPMENT.md      # Development tools and CLI implementation guide
-    └── SECRETS.md          # Ansible Vault configuration and credential management
+    └── DEVELOPMENT.md      # Development tools and CLI implementation guide
 ```
 
 ### Key Architecture Principles

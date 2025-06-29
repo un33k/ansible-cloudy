@@ -5,6 +5,7 @@ Integrates with existing validation scripts and linting configurations
 
 import subprocess
 import sys
+import os
 from pathlib import Path
 from .colors import Colors, error, info
 
@@ -16,6 +17,51 @@ class DevTools:
         self.config = config
         self.dev_dir = config.project_root / "dev"
         self.claudia_dir = self.dev_dir / "claudia"
+        self._check_obsolete_vault_env()
+    
+    def validate_precommit(self) -> int:
+        """Run essential pre-commit validation suite"""
+        print(f"\n{Colors.CYAN}🚀 Pre-Commit Validation Suite{Colors.NC}")
+        print(f"{Colors.YELLOW}Running essential checks before commit...{Colors.NC}\n")
+        
+        checks = [
+            ("Syntax Check", self.syntax),
+            ("Ansible Linting", self.lint),
+            ("YAML Formatting", self.yamlint)
+        ]
+        
+        failed_checks = []
+        total_checks = len(checks)
+        
+        for i, (check_name, check_func) in enumerate(checks, 1):
+            print(f"{Colors.BLUE}[{i}/{total_checks}] {check_name}...{Colors.NC}")
+            
+            try:
+                result = check_func()
+                if result == 0:
+                    print(f"{Colors.GREEN}✅ {check_name} PASSED{Colors.NC}\n")
+                else:
+                    print(f"{Colors.RED}❌ {check_name} FAILED{Colors.NC}\n")
+                    failed_checks.append(check_name)
+            except Exception as e:
+                print(f"{Colors.RED}❌ {check_name} ERROR: {e}{Colors.NC}\n")
+                failed_checks.append(check_name)
+        
+        # Summary
+        print("=" * 50)
+        print(f"{Colors.CYAN}📊 Pre-Commit Check Summary:{Colors.NC}")
+        
+        if not failed_checks:
+            print(f"   {Colors.GREEN}✅ All checks passed! Ready to commit.{Colors.NC}")
+            print(f"   Total: {total_checks}/{total_checks} passed")
+            return 0
+        else:
+            print(f"   {Colors.RED}❌ {len(failed_checks)} check(s) failed:{Colors.NC}")
+            for check in failed_checks:
+                print(f"     - {check}")
+            print(f"   Total: {total_checks - len(failed_checks)}/{total_checks} passed")
+            print(f"\n{Colors.YELLOW}💡 Fix the issues above before committing.{Colors.NC}")
+            return 1
     
     def validate(self) -> int:
         """Run comprehensive validation using the existing validate.py script"""
@@ -229,3 +275,38 @@ class DevTools:
         except Exception as e:
             error(f"Failed to run yamllint: {e}")
             return 1
+    
+    def _check_obsolete_vault_env(self):
+        """Check for obsolete vault environment variables and warn user"""
+        vault_env_vars = [
+            'ANSIBLE_VAULT_PASSWORD_FILE',
+            'ANSIBLE_VAULT_PASSWORD_FILE_DEV',
+            'ANSIBLE_VAULT_PASSWORD_FILE_CI', 
+            'ANSIBLE_VAULT_PASSWORD_FILE_PROD'
+        ]
+        
+        found_vars = []
+        for var in vault_env_vars:
+            if var in os.environ:
+                found_vars.append(var)
+        
+        if found_vars:
+            print(f"\n{Colors.YELLOW}⚠️  OBSOLETE VAULT ENVIRONMENT VARIABLES DETECTED{Colors.NC}")
+            print(f"{Colors.YELLOW}Ansible Cloudy now uses simple .vault/ files instead of encrypted vaults.{Colors.NC}")
+            print(f"{Colors.YELLOW}The following environment variables are no longer needed:{Colors.NC}\n")
+            
+            for var in found_vars:
+                value = os.environ[var]
+                print(f"  {Colors.RED}${var}{Colors.NC} = {value}")
+            
+            print(f"\n{Colors.CYAN}To fix this:{Colors.NC}")
+            print(f"  1. Remove these lines from your shell profile (~/.bashrc, ~/.zshrc):")
+            for var in found_vars:
+                print(f"     {Colors.RED}export {var}=...{Colors.NC}")
+            print(f"  2. Restart your terminal or run: {Colors.GREEN}unset {' '.join(found_vars)}{Colors.NC}")
+            print(f"  3. Use simple vault files: {Colors.GREEN}./claudia psql --install -- -e @.vault/my-dev.yml{Colors.NC}\n")
+            
+            print(f"{Colors.YELLOW}For now, temporarily unsetting these variables...{Colors.NC}")
+            for var in found_vars:
+                os.environ.pop(var, None)
+            print(f"{Colors.GREEN}✅ Variables unset for this session.{Colors.NC}\n")

@@ -86,7 +86,7 @@ Utils Layer                   → Configuration, colors, dev tools
   - [x] PostgreSQL operations with 17+ granular operations
   - [x] Redis operations with memory, port, password management
   - [x] Nginx operations with domain and SSL management
-  - [x] Vault operations for credential management
+  - [x] Recipe discovery and execution management
 
 - [x] **CLI Intelligence**
   - [x] Auto-discovery of services from filesystem structure
@@ -159,8 +159,7 @@ ansible-cloudy/
     ├── CONTRIBUTING.md      # Development guidelines
     ├── USAGE.md            # Complete usage guide
     ├── IMPLEMENTATION_PLAN.md  # Technical implementation details
-    ├── DEVELOPMENT.md      # Development tools and CLI implementation guide
-    └── SECRETS.md          # Ansible Vault configuration and credential management
+    └── DEVELOPMENT.md      # Development tools and CLI implementation guide
 ```
 
 ### Service Operation Architecture
