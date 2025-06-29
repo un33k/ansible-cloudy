@@ -85,19 +85,16 @@ Complete reference for the **Claudia CLI** - an intelligent command-line interfa
 ./claudia openvpn --install                            # Deploy OpenVPN server
 ```
 
-#### Ansible Vault Operations
+#### Simple Vault Configuration
 ```bash
-# Secure credential management
-./claudia vault --create                        # Create new encrypted vault
-./claudia vault --edit                          # Edit existing vault
-./claudia vault --view                          # View vault contents
-./claudia vault --encrypt                       # Encrypt plaintext file
-./claudia vault --decrypt                       # Decrypt vault file
-./claudia vault --rekey                         # Change vault password
+# Copy vault template for your environment
+cp .vault/dev.yml.example .vault/my-dev.yml
 
-# Environment-specific vaults
-./claudia vault --create --file .secrets/dev.yml    # Development vault
-./claudia vault --edit --file .secrets/prod.yml     # Production vault
+# Edit with your real credentials
+vim .vault/my-dev.yml
+
+# Use with Claudia commands
+./claudia psql --install -- -e @.vault/my-dev.yml
 ```
 
 ### 🛠️ Development & Validation Commands
@@ -298,16 +295,16 @@ all:
           hostname: my-server.example.com
 ```
 
-### 3. Ansible Vault Setup (Recommended for Production)
+### 3. Simple Vault Setup (Recommended for Production)
 
-For production deployments, use Ansible Vault to encrypt sensitive credentials:
+For production deployments, use simple vault files for sensitive credentials:
 
 ```bash
-# Create new encrypted vault
-./claudia vault --create
+# Copy vault template for your environment
+cp .vault/prod.yml.example .vault/my-prod.yml
 
-# Edit vault with your credentials
-./claudia vault --edit
+# Edit with your real credentials
+vim .vault/my-prod.yml
 ```
 
 Example vault content:
@@ -350,7 +347,7 @@ all:
 ansible -i cloudy/inventory/dev.yml my-server -m ping
 
 # Test authentication flow with vault
-./claudia security --install --ask-vault-pass
+./claudia security --install -- -e @.vault/my-dev.yml
 ```
 
 ## Server Deployment Workflows

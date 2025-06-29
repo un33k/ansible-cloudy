@@ -418,108 +418,66 @@ This shows only:
 - ❌ **FAILED** tasks (what went wrong)  
 - ⏭️ **UNREACHABLE** hosts (connection issues)
 
-## 🔒 Ansible Vault Management
+## 🔒 Simple Vault Configuration
 
-Claudia provides integrated Ansible Vault support for secure credential management.
+Claudia uses a simple vault system for credential management without encryption complexity.
 
-### Vault Commands
+### Vault Directory Structure
+
+```
+.vault/
+├── dev.yml.example       # Development environment template
+├── prod.yml.example      # Production environment template
+├── ci.yml.example        # CI/CD environment template
+└── README.md            # Usage instructions
+```
+
+### Quick Start
 
 ```bash
-# Create new encrypted vault
-./claudia vault --create
+# Copy template for your environment
+cp .vault/dev.yml.example .vault/my-dev.yml
 
-# Edit existing vault (prompts for password)
-./claudia vault --edit
+# Edit with your real credentials
+vim .vault/my-dev.yml
 
-# View vault contents without editing
-./claudia vault --view
-
-# Encrypt existing plaintext file
-./claudia vault --encrypt
-
-# Decrypt vault file (⚠️ security risk)
-./claudia vault --decrypt
-
-# Change vault password
-./claudia vault --rekey
-
-# Work with environment-specific vault files
-./claudia vault --create --file .secrets/dev.yml
-./claudia vault --edit --file .secrets/prod.yml
-./claudia vault --view --file .secrets/ci.yml
-
-# Create vault from template
-cp .secrets/vault.yml.template .secrets/dev.yml
-# Edit with real credentials, then encrypt
-./claudia vault --encrypt --file .secrets/dev.yml
+# Use with Claudia commands
+./claudia psql --install -- -e @.vault/my-dev.yml
 ```
 
-### Vault File Structure
-
-Claudia manages vault files in the `.secrets/` directory:
-```
-.secrets/
-├── vault.yml.template     # Template showing required variables
-├── dev.yml               # Development environment vault
-├── prod.yml              # Production environment vault  
-└── ci.yml                # CI/CD environment vault
-```
-
-**Vault Configuration Benefits:**
-- 🔒 **Encrypted Storage** - All sensitive data encrypted at rest
-- 🌍 **Environment-Specific** - Different configs per environment (dev/prod/staging)
-- 🎛️ **Centralized Config** - Git info, timezone, SSH port, admin user in one place
+**Simple Configuration Benefits:**
+- 🎛️ **Centralized Config** - All credentials in one place per environment
 - 📋 **Fallback Defaults** - Safe defaults if vault variables not set
-- 🛡️ **Security Separation** - Credentials separate from code
+- 🛡️ **Clear Organization** - vault_* prefix for all sensitive variables
+- 📝 **No Encryption Overhead** - Simple YAML files for open source projects
 
-**Security Best Practices:**
-- `.secrets/` directory - Hidden, environment-separated, restrictive permissions
-- Template file - Shows structure without real credentials
-- Environment-specific vaults - Separate credentials per environment
-
-### Vault Integration with Playbooks
+### Usage with Playbooks
 
 ```bash
 # Use vault with Claudia commands
-./claudia psql --install --prod --ask-vault-pass
+./claudia psql --install -- -e @.vault/my-dev.yml
 
-# Set vault password file (for automation)
-export ANSIBLE_VAULT_PASSWORD_FILE=~/.ansible-vault-pass
-./claudia psql --install --prod
+# Production deployment
+./claudia psql --install --prod -- -e @.vault/my-prod.yml
 
-# Pass vault password via file
-./claudia redis --install --vault-password-file ~/.ansible-vault-pass
+# Direct Ansible usage
+ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbooks/recipes/db/psql.yml
 ```
 
-### 🔧 Vault vs .env.local Comparison
+### Security Best Practices
 
-| Feature             | Ansible Vault      | .env.local             |
-|---------------------|--------------------|------------------------|
-| Encryption          | ✅ AES256           | ❌ Plaintext            |
-| Git Safety          | ✅ Safe to commit   | ⚠️ Must be gitignored  |
-| Ansible Integration | ✅ Native           | ⚠️ Manual loading      |
-| Multi-environment   | ✅ Multiple vaults  | ⚠️ Multiple files      |
-| Security            | ✅ Enterprise-grade | ❌ Filesystem dependent |
-
-**Recommendation**: Use Ansible Vault for production deployments and sensitive credentials.
-
-### Vault Security Features
-
-- 🔒 **AES256 Encryption** - Military-grade encryption at rest
-- 🛡️ **Git-Safe Storage** - Encrypted files can be safely committed
-- 🔑 **Password Protection** - Vault password required for access
-- 📋 **Ansible Integration** - Native support in all playbooks
-- 🔄 **Multi-Environment** - Different vaults for test/prod environments
-- 📝 **Audit Trail** - Encrypted changes tracked in git history
+- 🔒 **Add to .gitignore** - Never commit your vault files
+- 🔑 **Use strong passwords** - Generate secure credentials
+- 🛡️ **Environment separation** - Different files for dev/prod
+- 📋 **Regular rotation** - Update credentials periodically
 
 ### Example Vault Content
 
 ```yaml
-# After running: ./claudia vault --edit
 ---
 # === AUTHENTICATION CREDENTIALS ===
-vault_root_password: "secure_root_password_123"
-vault_admin_password: "secure_admin_password_456"
+vault_root_password: "your_root_password_here"
+vault_admin_password: "your_admin_password_here"
 
 # === CONNECTION CONFIGURATION ===
 vault_admin_user: "admin"
@@ -532,15 +490,15 @@ vault_timezone: "America/New_York"
 vault_locale: "en_US.UTF-8"
 
 # === SERVICE CREDENTIALS ===
-vault_postgres_password: "database_password_789" 
-vault_mysql_root_password: "mysql_root_password_abc"
-vault_redis_password: "redis_password_def"
-vault_vpn_passphrase: "vpn_passphrase_ghi"
+vault_postgres_password: "your_postgres_password"
+vault_mysql_root_password: "your_mysql_root_password"
+vault_redis_password: "your_redis_password"
+vault_vpn_passphrase: "your_vpn_passphrase"
 ```
 
-### **📋 Configuration Fallback System**
+### Configuration Fallback System
 
-All vault variables have safe defaults if not set:
+All vault variables have safe defaults:
 
 ```yaml
 # Inventory files use vault variables with fallbacks
@@ -555,8 +513,7 @@ ansible_port: "{{ vault_ssh_port | default(22) }}"
 **Benefits:**
 - ✅ **Works without vault** - Safe defaults for testing
 - ✅ **Environment-specific** - Override defaults per environment
-- ✅ **Gradual adoption** - Can migrate to vault variables incrementally
-- ✅ **No breaking changes** - Existing setups continue working
+- ✅ **Simple workflow** - Copy template → edit → use
 
 ### 🔒 Authentication Flow & Security Model
 
@@ -611,11 +568,9 @@ Every service recipe automatically validates:
 
 ### Security Best Practices
 
-1. **Never commit plaintext credentials** - Always use vault references
-2. **Use strong vault passwords** - Consider password managers
-3. **Rotate credentials regularly** - Update vault and server passwords
-4. **Environment separation** - Different vaults for test/prod
-5. **Access control** - Limit who has vault passwords
-6. **Backup vault passwords** - Store securely outside the repository
-7. **Follow authentication flow** - Always run security setup first
-8. **Use SSH keys** - Admin passwords only for manual access
+1. **Never commit credentials** - Add vault files to .gitignore
+2. **Use strong passwords** - Generate secure credentials
+3. **Environment separation** - Different vault files for dev/prod
+4. **Regular rotation** - Update credentials periodically
+5. **Follow authentication flow** - Always run security setup first
+6. **Use SSH keys** - Admin passwords only for manual access

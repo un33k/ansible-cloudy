@@ -8,7 +8,7 @@ all:
     # === CONNECTION CONFIGURATIONS ===
     
     # Default connection (admin user with SSH keys - post-security)
-    ansible_user: "{{ vault_admin_user }}"
+    ansible_user: "{{ vault_admin_user | default('admin') }}"
     ansible_port: "{{ vault_ssh_port | default(22) }}"
     ansible_host_key_checking: false
     ansible_ssh_private_key_file: ~/.ssh/id_rsa
@@ -28,7 +28,7 @@ all:
       vars:
         ansible_user: root
         ansible_port: 22
-        ansible_ssh_pass: "{{ vault_root_password }}"
+        ansible_ssh_pass: "{{ vault_root_password | default('changeme') }}"
         ansible_host_key_checking: false
         ansible_ssh_private_key_file: ~/.ssh/id_rsa
         ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
@@ -47,7 +47,7 @@ all:
     # Post-security group - uses admin with SSH keys for all operations  
     service_targets:
       vars:
-        ansible_user: "{{ vault_admin_user }}"
+        ansible_user: "{{ vault_admin_user | default('admin') }}"
         ansible_port: "{{ vault_ssh_port | default(22) }}"
         ansible_host_key_checking: false
         ansible_ssh_private_key_file: ~/.ssh/id_rsa
@@ -69,8 +69,8 @@ all:
     # Generic Foundation Servers
     generic_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"
+        admin_user: "{{ vault_admin_user | default('admin') }}"
+        admin_password: "{{ vault_admin_password | default('changeme') }}"
         admin_groups: "admin,www-data"
         ssh_disable_root: true
         ssh_enable_password_auth: false
@@ -88,8 +88,8 @@ all:
     # Web Application Servers
     web_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"
+        admin_user: "{{ vault_admin_user | default('admin') }}"
+        admin_password: "{{ vault_admin_password | default('changeme') }}"
         admin_groups: "admin,www-data"
         webserver: gunicorn
         webserver_port: 8181
@@ -110,8 +110,8 @@ all:
     # Database Servers
     database_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"
+        admin_user: "{{ vault_admin_user | default('admin') }}"
+        admin_password: "{{ vault_admin_password | default('changeme') }}"
         admin_groups: "admin,www-data"
         postgresql_version: "15"
         postgis_version: "3.3"
@@ -123,7 +123,7 @@ all:
           ansible_host: 10.0.3.10
           hostname: db-master.example.com
           database_port: 5432
-          postgres_password: "{{ vault_postgres_password }}"
+          postgres_password: "{{ vault_postgres_password | default('changeme') }}"
           
         db-replica:
           ansible_host: 10.0.3.11
@@ -133,8 +133,8 @@ all:
     # Cache Servers  
     cache_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"
+        admin_user: "{{ vault_admin_user | default('admin') }}"
+        admin_password: "{{ vault_admin_password | default('changeme') }}"
         admin_groups: "admin,www-data"
         redis_memory: 512  # MB
         redis_interface: "0.0.0.0"
@@ -144,13 +144,13 @@ all:
           ansible_host: 10.0.4.10
           hostname: cache-prod.example.com
           port: 6379
-          password: "{{ vault_redis_password }}"
+          password: "{{ vault_redis_password | default('changeme') }}"
 
     # VPN Servers
     vpn_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"
+        admin_user: "{{ vault_admin_user | default('admin') }}"
+        admin_password: "{{ vault_admin_password | default('changeme') }}"
         admin_groups: "admin,www-data,docker"
         
       hosts:
@@ -158,7 +158,7 @@ all:
           ansible_host: 10.0.5.10
           hostname: vpn.example.com
           domain: vpn.example.com
-          vpn_passphrase: "{{ vault_vpn_passphrase }}"
+          vpn_passphrase: "{{ vault_vpn_passphrase | default('changeme') }}"
           # Primary VPN (UDP, faster)
           primary_port: 1194
           primary_proto: udp
@@ -169,8 +169,8 @@ all:
     # Load Balancers
     load_balancers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"
+        admin_user: "{{ vault_admin_user | default('admin') }}"
+        admin_password: "{{ vault_admin_password | default('changeme') }}"
         admin_groups: "admin,www-data"
         
       hosts:

@@ -1,0 +1,33 @@
+---
+# Production Environment Configuration
+# Copy this file to your own vault file and edit the values
+
+# === AUTHENTICATION CREDENTIALS ===
+vault_root_password: "secure_root_password_for_production"
+vault_admin_password: "secure_admin_password_for_production"
+
+# === CONNECTION CONFIGURATION ===
+vault_admin_user: "admin"
+vault_ssh_port: 22022
+
+# === GLOBAL SERVER CONFIGURATION ===
+vault_git_user_full_name: "Production Deploy User"
+vault_git_user_email: "deploy@yourcompany.com"
+vault_timezone: "UTC"
+vault_locale: "en_US.UTF-8"
+
+# === SERVICE CREDENTIALS ===
+vault_postgres_password: "secure_production_postgres_password"
+vault_mysql_root_password: "secure_production_mysql_password"
+vault_redis_password: "secure_production_redis_password"
+vault_vpn_passphrase: "secure_production_vpn_passphrase"
+
+# === PRODUCTION SPECIFIC ===
+# Use strong, unique passwords for production
+# Consider using a password manager for generation
+# Regularly rotate these credentials
+
+# === USAGE INSTRUCTIONS ===
+# 1. Copy this file: cp .vault/prod.yml.example .vault/my-prod.yml
+# 2. Edit with your real credentials: vim .vault/my-prod.yml
+# 3. Use in playbooks: ansible-playbook -i inventory/prod.yml -e @.vault/my-prod.yml playbook.yml

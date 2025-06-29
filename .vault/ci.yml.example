@@ -1,0 +1,33 @@
+---
+# CI/CD Environment Configuration
+# Copy this file to your own vault file and edit the values
+
+# === AUTHENTICATION CREDENTIALS ===
+vault_root_password: "ci_root_password"
+vault_admin_password: "ci_admin_password"
+
+# === CONNECTION CONFIGURATION ===
+vault_admin_user: "admin"
+vault_ssh_port: 22
+
+# === GLOBAL SERVER CONFIGURATION ===
+vault_git_user_full_name: "CI/CD Bot"
+vault_git_user_email: "ci@yourcompany.com"
+vault_timezone: "UTC"
+vault_locale: "en_US.UTF-8"
+
+# === SERVICE CREDENTIALS ===
+vault_postgres_password: "ci_postgres_password"
+vault_mysql_root_password: "ci_mysql_password"
+vault_redis_password: "ci_redis_password"
+vault_vpn_passphrase: "ci_vpn_passphrase"
+
+# === CI/CD SPECIFIC ===
+# These credentials are for automated testing
+# Keep them simple but secure for CI environments
+# Use different credentials than dev/prod
+
+# === USAGE INSTRUCTIONS ===
+# 1. Copy this file: cp .vault/ci.yml.example .vault/my-ci.yml
+# 2. Edit with your real credentials: vim .vault/my-ci.yml
+# 3. Use in CI: ansible-playbook -i inventory/ci.yml -e @.vault/my-ci.yml playbook.yml

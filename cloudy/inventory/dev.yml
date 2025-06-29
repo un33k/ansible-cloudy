@@ -3,7 +3,7 @@
 # Step 2: ansible-playbook -i inventory/dev.yml playbooks/recipes/core/base.yml
 # Step 3: ansible-playbook -i inventory/dev.yml playbooks/recipes/[category]/[service].yml
 #
-# NOTE: Vault variables are loaded via group_vars/all/vault.yml (symlinked to .secrets/dev.yml)
+# NOTE: Vault variables can be loaded via: -e @.vault/my-dev.yml
 
 ---
 all:
@@ -17,7 +17,7 @@ all:
     # === CONNECTION CONFIGURATIONS ===
     
     # Default connection (admin user with SSH keys - post-security)
-    ansible_user: "{{ vault_admin_user }}"
+    ansible_user: "{{ vault_admin_user | default('admin') }}"
     ansible_port: "{{ vault_ssh_port | default(22) }}"
     ansible_host_key_checking: false
     ansible_ssh_private_key_file: ~/.ssh/id_rsa
@@ -26,8 +26,8 @@ all:
     # Security Configuration - Admin User Section
     # All operations and services shall be run under this user
     # Cronjobs will also be run under this user
-    admin_user: "{{ vault_admin_user }}"
-    admin_password: "{{ vault_admin_password }}"  # For account creation only, not SSH
+    admin_user: "{{ vault_admin_user | default('admin') }}"
+    admin_password: "{{ vault_admin_password | default('changeme') }}"  # For account creation only, not SSH
     admin_groups: "admin,www-data"
     admin_ssh_private_key_file: ~/.ssh/id_rsa
     
@@ -38,7 +38,7 @@ all:
       vars:
         ansible_user: root
         ansible_port: 22
-        ansible_ssh_pass: "{{ vault_root_password }}"
+        ansible_ssh_pass: "{{ vault_root_password | default('changeme') }}"
         ansible_host_key_checking: false
         ansible_ssh_private_key_file: ~/.ssh/id_rsa
         ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
@@ -48,7 +48,7 @@ all:
     # Post-security group - uses admin with SSH keys for all operations
     service_targets:
       vars:
-        ansible_user: "{{ vault_admin_user }}"
+        ansible_user: "{{ vault_admin_user | default('admin') }}"
         ansible_port: "{{ vault_ssh_port | default(22) }}"
         ansible_host_key_checking: false
         ansible_ssh_private_key_file: ~/.ssh/id_rsa

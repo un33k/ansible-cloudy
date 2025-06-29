@@ -70,7 +70,7 @@ class DevTools:
             return 1
         
         # Use ansible-playbook directly for the auth test
-        inventory_path = self.config.inventory_dir / "test.yml"
+        inventory_path = self.config.inventory_dir / "dev.yml"
         
         cmd = [
             "ansible-playbook",
