@@ -403,10 +403,43 @@ class PostgreSQLOperations:
         print(f"  {Colors.GREEN}claudia psql --install-client{Colors.NC}                    Install PostgreSQL client tools")
         print()
         
+        print(f"{Colors.BLUE}Configuration Variables:{Colors.NC}")
+        print(f"  {Colors.CYAN}postgresql_version{Colors.NC}     PostgreSQL version (default: 17)")
+        print(f"  {Colors.CYAN}postgis_version{Colors.NC}        PostGIS version (default: 3)")
+        print(f"  {Colors.CYAN}database_port{Colors.NC}          PostgreSQL port (default: 5432)")
+        print(f"  {Colors.CYAN}setup_postgis{Colors.NC}          Enable PostGIS extension")
+        print(f"  {Colors.CYAN}pg_databases{Colors.NC}           List of databases to create")
+        print(f"  {Colors.CYAN}pg_users{Colors.NC}               List of users to create")
+        print()
+        
         print(f"{Colors.BLUE}Options:{Colors.NC}")
         print(f"  {Colors.CYAN}--prod{Colors.NC}                 Use production inventory")
         print(f"  {Colors.CYAN}--check{Colors.NC}                Dry run (no changes)")
         print(f"  {Colors.CYAN}--verbose{Colors.NC}              Verbose output")
+        print()
+        
+        print(f"{Colors.BLUE}Example Inventory Configuration:{Colors.NC}")
+        print(f"""  {Colors.GREEN}test-server:{Colors.NC}
+    {Colors.CYAN}postgresql_version:{Colors.NC} "17"
+    {Colors.CYAN}postgis_version:{Colors.NC} "3"
+    {Colors.CYAN}database_port:{Colors.NC} 5433
+    {Colors.CYAN}setup_postgis:{Colors.NC} true
+    {Colors.CYAN}pg_databases:{Colors.NC}
+      - name: myapp_db
+        owner: myapp_user
+        encoding: UTF8
+      - name: gis_db
+        owner: gis_user
+        encoding: UTF8
+    {Colors.CYAN}pg_users:{Colors.NC}
+      - name: myapp_user
+        password: "{{{{ vault_postgres_password }}}}"
+        database: myapp_db
+        privileges: ALL
+      - name: gis_user
+        password: "{{{{ vault_postgres_password }}}}"
+        database: gis_db
+        privileges: ALL""")
         print()
         
         # Show discovered operations

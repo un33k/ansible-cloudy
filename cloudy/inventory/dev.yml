@@ -65,9 +65,38 @@ all:
       
       # Service-specific configs (when testing individual services)
       domain_name: test-server.example.com
-      postgresql_version: "15"
-      postgis_version: "3.3"
-      database_port: 5433
+      
+      # PostgreSQL Configuration
+      postgresql_version: "17"
+      postgis_version: "3"
+      database_port: 2345
+      setup_postgis: true
+      
+      # PostgreSQL Databases to Create
+      pg_databases:
+        - name: myapp_db
+          owner: myapp_user
+          encoding: UTF8
+          locale: en_US.UTF-8
+        - name: gis_db
+          owner: gis_user
+          encoding: UTF8
+          locale: en_US.UTF-8
+      
+      # PostgreSQL Users to Create
+      pg_users:
+        - name: myapp_user
+          password: "{{ vault_postgres_password | default('changeme') }}"
+          database: myapp_db
+          privileges: ALL
+        - name: gis_user
+          password: "{{ vault_postgres_password | default('changeme') }}"
+          database: gis_db
+          privileges: ALL
+        - name: readonly_user
+          password: "{{ vault_postgres_password | default('changeme') }}"
+      
+      # Other Services
       redis_memory_mb: 512
       redis_port: 6379
       webserver: gunicorn
