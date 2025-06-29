@@ -4,7 +4,7 @@
 
 ---
 - name: PostgreSQL + PostGIS Database Server Setup Recipe
-  hosts: database_servers
+  hosts: service_targets
   gather_facts: true
   become: true
   
@@ -21,6 +21,10 @@
     setup_firewall: true
     
   pre_tasks:
+    # Ensure proper admin connection
+    - name: Validate admin connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-admin-connection.yml"
+    
     - name: Display database server setup information
       debug:
         msg: |

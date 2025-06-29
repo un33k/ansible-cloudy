@@ -1,0 +1,6 @@
+# This is a test file to demonstrate the git hook
+# This should be blocked from commit because it's unencrypted
+
+vault_admin_user: "admin"
+vault_admin_password: "secretpassword123"
+vault_root_password: "rootpassword456"

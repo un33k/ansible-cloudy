@@ -46,10 +46,23 @@ cd ansible-cloudy/
 ### Core Development Commands
 
 #### Simplified Server Setup (Recommended) - Using Claudia CLI
-- **Help First**: `./claudia security`, `./claudia base`, `./claudia psql` (shows help, configuration, and usage)
-- **Step 1 - Security**: `./claudia security --install` (root SSH keys + admin user, firewall, port change)
-- **Step 2 - Core**: `./claudia base --install` (hostname, git, timezone, swap, etc.)
-- **Step 3 - Services**: `./claudia django --install`, `./claudia redis --install --port 6380 --memory 512`, `./claudia nginx --install --domain example.com --ssl` (deploy specific services with parameters)
+
+**🔒 Two-Phase Authentication Model:**
+
+**Phase 1: Initial Security Setup** (Root + Password)
+- **Connection**: `root` user with `vault_root_password` 
+- **Purpose**: Install SSH keys, create admin user, secure server
+- **Command**: `./claudia security --install`
+
+**Phase 2: All Service Operations** (Admin + SSH Keys)  
+- **Connection**: `admin` user with SSH keys only (no passwords)
+- **Purpose**: All service installations and configurations
+- **Commands**: `./claudia base --install`, `./claudia psql --install`, etc.
+
+**🚀 Workflow:**
+- **Step 1 - Security**: `./claudia security --install` (root → admin transition)
+- **Step 2 - Core**: `./claudia base --install` (basic server config)
+- **Step 3 - Services**: `./claudia psql --install`, `./claudia redis --install --port 6380 --memory 512`, `./claudia nginx --install --domain example.com --ssl` (deploy services with parameters)
 
 #### Production Setup
 - **Claudia CLI**: `./claudia security --install --prod`, `./claudia django --install --prod`, `./claudia redis --install --prod`
@@ -434,18 +447,35 @@ Claudia provides integrated Ansible Vault support for secure credential manageme
 ./claudia vault --create --file .secrets/dev.yml
 ./claudia vault --edit --file .secrets/prod.yml
 ./claudia vault --view --file .secrets/staging.yml
+
+# Create vault from template
+cp .secrets/vault.yml.template .secrets/dev.yml
+# Edit with real credentials, then encrypt
+./claudia vault --encrypt --file .secrets/dev.yml
 ```
 
-### Default Vault Location
+### Vault File Structure
 
-Claudia automatically manages credentials in:
+Claudia manages vault files in the `.secrets/` directory:
 ```
-.secrets/vault.yml
+.secrets/
+├── vault.yml.template     # Template showing required variables
+├── dev.yml               # Development environment vault
+├── prod.yml              # Production environment vault  
+└── staging.yml           # Staging environment vault
 ```
+
+**Vault Configuration Benefits:**
+- 🔒 **Encrypted Storage** - All sensitive data encrypted at rest
+- 🌍 **Environment-Specific** - Different configs per environment (dev/prod/staging)
+- 🎛️ **Centralized Config** - Git info, timezone, SSH port, admin user in one place
+- 📋 **Fallback Defaults** - Safe defaults if vault variables not set
+- 🛡️ **Security Separation** - Credentials separate from code
 
 **Security Best Practices:**
 - `.secrets/` directory - Hidden, environment-separated, restrictive permissions
-- Alternative locations: `.secrets/dev.yml`, `.secrets/prod.yml`, `.secrets/staging.yml`
+- Template file - Shows structure without real credentials
+- Environment-specific vaults - Separate credentials per environment
 
 ### Vault Integration with Playbooks
 
@@ -487,22 +517,97 @@ export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass
 ```yaml
 # After running: ./claudia vault --edit
 ---
-# Root User Credentials (for initial server setup before SSH keys)
+# === AUTHENTICATION CREDENTIALS ===
 vault_root_password: "secure_root_password_123"
-
-# Admin User Credentials (for ongoing admin operations)
 vault_admin_password: "secure_admin_password_456"
 
-# Database Credentials
+# === CONNECTION CONFIGURATION ===
+vault_admin_user: "admin"
+vault_ssh_port: 22022
+
+# === GLOBAL SERVER CONFIGURATION ===
+vault_git_user_full_name: "Your Full Name"
+vault_git_user_email: "your.email@example.com"
+vault_timezone: "America/New_York"
+vault_locale: "en_US.UTF-8"
+
+# === SERVICE CREDENTIALS ===
 vault_postgres_password: "database_password_789" 
 vault_mysql_root_password: "mysql_root_password_abc"
-
-# Cache Credentials
 vault_redis_password: "redis_password_def"
-
-# VPN Credentials  
 vault_vpn_passphrase: "vpn_passphrase_ghi"
 ```
+
+### **📋 Configuration Fallback System**
+
+All vault variables have safe defaults if not set:
+
+```yaml
+# Inventory files use vault variables with fallbacks
+git_user_full_name: "{{ vault_git_user_full_name | default('John Doe') }}"
+git_user_email: "{{ vault_git_user_email | default('jdoe@example.com') }}"
+timezone: "{{ vault_timezone | default('America/New_York') }}"
+locale: "{{ vault_locale | default('en_US.UTF-8') }}"
+ansible_user: "{{ vault_admin_user | default('admin') }}"
+ansible_port: "{{ vault_ssh_port | default(22) }}"
+```
+
+**Benefits:**
+- ✅ **Works without vault** - Safe defaults for testing
+- ✅ **Environment-specific** - Override defaults per environment
+- ✅ **Gradual adoption** - Can migrate to vault variables incrementally
+- ✅ **No breaking changes** - Existing setups continue working
+
+### 🔒 Authentication Flow & Security Model
+
+#### **Two-Phase Authentication Architecture**
+
+**🎯 Design Goal**: Admin passwords are NEVER used for automation - only SSH keys after initial setup.
+
+#### **Phase 1: Initial Security Setup**
+```bash
+# Connection: root user with password
+# Purpose: Bootstrap SSH keys and secure server
+./claudia security --install
+
+# What happens:
+# 1. Connects as root with vault_root_password
+# 2. Installs SSH keys for root and admin users  
+# 3. Creates admin user with vault_admin_password
+# 4. Configures firewall and secure SSH port
+# 5. Disables root password authentication
+```
+
+#### **Phase 2: All Service Operations**
+```bash
+# Connection: admin user with SSH keys ONLY
+# Purpose: All service installations and management
+./claudia base --install
+./claudia psql --install
+./claudia redis --install
+
+# What happens:
+# 1. Connects as admin user with SSH keys
+# 2. Uses sudo for privileged operations (NOPASSWD)
+# 3. Never uses passwords for authentication
+# 4. All automation runs under admin user context
+```
+
+#### **Connection Validation**
+Every service recipe automatically validates:
+- ✅ Connected as admin user (not root)
+- ✅ Using SSH keys (no passwords)
+- ✅ Secure SSH port (not 22)
+- ✅ Sudo access works without password
+- ❌ Fails with clear error messages if wrong connection type
+
+#### **Security Features**
+- 🔐 **Root Access**: Only during initial setup, then disabled
+- 🔑 **SSH Keys**: All automation uses keys after setup
+- 🛡️ **Admin Passwords**: Only for account creation and manual access
+- 🚫 **No Password Automation**: Zero passwords in service configurations
+- 📋 **Consistent Context**: All services run under admin user
+- 🔍 **Connection Validation**: Automatic verification before operations
 
 ### Security Best Practices
 
@@ -512,3 +617,5 @@ vault_vpn_passphrase: "vpn_passphrase_ghi"
 4. **Environment separation** - Different vaults for test/prod
 5. **Access control** - Limit who has vault passwords
 6. **Backup vault passwords** - Store securely outside the repository
+7. **Follow authentication flow** - Always run security setup first
+8. **Use SSH keys** - Admin passwords only for manual access

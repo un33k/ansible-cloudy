@@ -3,7 +3,7 @@
 
 ---
 - name: OpenVPN Server Setup Recipe
-  hosts: all
+  hosts: service_targets
   gather_facts: true
   become: true
   
@@ -22,6 +22,10 @@
     setup_firewall: true
     
   pre_tasks:
+    # Ensure proper admin connection
+    - name: Validate admin connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-admin-connection.yml"
+    
     - name: Display VPN server setup information
       debug:
         msg: |

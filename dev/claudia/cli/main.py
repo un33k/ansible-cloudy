@@ -72,12 +72,12 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=ColoredHelpFormatter,
         epilog=f"""
 {Colors.YELLOW}Examples:{Colors.NC}
-  {Colors.GREEN}claudia psql{Colors.NC}                       Show PostgreSQL operations and help
+  {Colors.GREEN}claudia security --install{Colors.NC}         Setup server security (run first!)
+  {Colors.GREEN}claudia base --install{Colors.NC}             Setup base configuration  
   {Colors.GREEN}claudia psql --install{Colors.NC}             Execute PostgreSQL installation
   {Colors.GREEN}claudia psql --install --port 5544{Colors.NC} Install PostgreSQL on custom port
   {Colors.GREEN}claudia psql --install --pgis{Colors.NC}      Install PostgreSQL with PostGIS
   {Colors.GREEN}claudia psql --adduser foo --password 1234{Colors.NC}  Create PostgreSQL user
-  {Colors.GREEN}claudia psql --list-users{Colors.NC}          List PostgreSQL users
   
   {Colors.GREEN}claudia vault --create{Colors.NC}             Create new encrypted vault
   {Colors.GREEN}claudia vault --edit{Colors.NC}               Edit existing vault file
@@ -94,6 +94,10 @@ def create_parser() -> argparse.ArgumentParser:
   {Colors.GREEN}claudia psql --install -- -e "admin_user=myuser"{Colors.NC}  Override variables
   {Colors.GREEN}claudia redis --install -- --skip-tags firewall{Colors.NC}  Skip specific tasks
   
+{Colors.BLUE}Authentication Flow:{Colors.NC}
+  1. {Colors.YELLOW}Security Setup{Colors.NC}: Uses root password, installs SSH keys
+  2. {Colors.YELLOW}All Other Operations{Colors.NC}: Uses admin user with SSH keys only
+
 {Colors.BLUE}Note:{Colors.NC} Use {Colors.CYAN}`--`{Colors.NC} to pass parameters directly to ansible-playbook
         """,
     )

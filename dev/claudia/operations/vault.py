@@ -237,8 +237,10 @@ class VaultOperations:
         print(f"  {Colors.GREEN}claudia vault --view --file .secrets/staging.yml{Colors.NC}   View staging vault")
         print()
         
-        print(f"{Colors.BLUE}Default Vault Location:{Colors.NC}")
-        print(f"  {Colors.YELLOW}{self.vault_file}{Colors.NC}")
+        print(f"{Colors.BLUE}Vault File Structure:{Colors.NC}")
+        print(f"  {Colors.YELLOW}Default vault:{Colors.NC} {self.vault_file}")
+        print(f"  {Colors.YELLOW}Template file:{Colors.NC} .secrets/vault.yml.template")
+        print(f"  {Colors.YELLOW}Environment vaults:{Colors.NC} .secrets/dev.yml, .secrets/prod.yml")
         print()
         
         print(f"{Colors.BLUE}Vault Security Features:{Colors.NC}")

@@ -5,7 +5,7 @@
 
 ---
 - name: Core Server Setup
-  hosts: all
+  hosts: service_targets
   gather_facts: true
   become: true
   
@@ -13,6 +13,11 @@
     task_paths: "../../../tasks"
     # Base system configuration (configurable via inventory)
     setup_swap: false
+          
+  pre_tasks:
+    # Ensure proper admin connection
+    - name: Validate admin connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-admin-connection.yml"
           
   tasks:
     # System Initialization

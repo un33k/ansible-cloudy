@@ -4,7 +4,7 @@
 
 ---
 - name: Rock-Solid Server Security Setup
-  hosts: all
+  hosts: security_targets
   gather_facts: true
   become: true
   
@@ -13,16 +13,33 @@
     emergency_user: "{{ admin_user | default('admin') }}"    # Configurable username from inventory
     
   pre_tasks:
+    - name: Validate root connection for security setup
+      fail:
+        msg: |
+          ❌ SECURITY SETUP ERROR: Must connect as root user!
+          
+          Security setup requires root access with password.
+          
+          Expected: ansible_user should be 'root'
+          Actual: ansible_user is '{{ ansible_user }}'
+          
+          🔧 Fix:
+          1. Target 'security_targets' group in inventory
+          2. Ensure vault_root_password is set
+          3. Use: ./claudia security --install
+      when: ansible_user != 'root'
+    
     - name: Display security setup information
       debug:
         msg: |
           🔐 Starting Rock-Solid Security Setup
           Target: {{ inventory_hostname }} ({{ ansible_host }})
+          Connection: {{ ansible_user }}@{{ ansible_host }}:{{ ansible_port }}
           
           Security Model:
           ├── Root User: SSH keys ONLY (automation access)
           ├── Admin User: {{ emergency_user }} (password + SSH keys)
-          ├── SSH Port: {{ ansible_port }}
+          ├── SSH Port: {{ ansible_port }} → 22022 (secure port)
           └── Firewall: UFW enabled with strict rules
           
   tasks:

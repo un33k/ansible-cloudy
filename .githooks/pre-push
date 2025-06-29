@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# Pre-push hook to prevent pushing unencrypted secrets
+# This provides a final safety check before code reaches remote repository
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}🔒 Running pre-push security scan...${NC}"
+
+# Function to check if a file is encrypted with ansible-vault
+is_vault_encrypted() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        if head -n 1 "$file" | grep -q '^\$ANSIBLE_VAULT'; then
+            return 0  # File is encrypted
+        else
+            return 1  # File is not encrypted
+        fi
+    fi
+    return 1  # File doesn't exist
+}
+
+# Function to scan for secrets in repository
+scan_for_secrets() {
+    local violations=()
+    
+    # Check all .secrets files (except templates)
+    for vault_file in .secrets/*.yml; do
+        if [[ -f "$vault_file" ]] && [[ "$vault_file" != *.template ]]; then
+            if ! is_vault_encrypted "$vault_file"; then
+                violations+=("❌ Unencrypted vault file: $vault_file")
+            fi
+        fi
+    done
+    
+    # Check for common secret patterns in tracked files
+    local secret_files=$(git ls-files | grep -E '\.(yml|yaml|json|env)$' | grep -v '\.template$')
+    
+    while IFS= read -r file; do
+        if [[ -n "$file" ]] && [[ -f "$file" ]]; then
+            # Skip encrypted vault files
+            if is_vault_encrypted "$file"; then
+                continue
+            fi
+            
+            # Look for potential secrets
+            if grep -P -i 'password.*:\s*["\'](?!.*REPLACE)(?!.*CHANGE)(?!.*TODO)[^"\']{3,}' "$file" >/dev/null 2>&1; then
+                violations+=("❌ Potential plain-text password in: $file")
+            fi
+            
+            if grep -P -i 'secret.*:\s*["\'](?!.*REPLACE)(?!.*CHANGE)(?!.*TODO)[^"\']{8,}' "$file" >/dev/null 2>&1; then
+                violations+=("❌ Potential plain-text secret in: $file")
+            fi
+            
+            if grep -P -i 'key.*:\s*["\'](?!.*REPLACE)(?!.*CHANGE)(?!.*TODO)[^"\']{16,}' "$file" >/dev/null 2>&1; then
+                violations+=("❌ Potential plain-text key in: $file")
+            fi
+        fi
+    done <<< "$secret_files"
+    
+    # Check for private keys
+    local private_keys=$(git ls-files | grep -E 'id_(rsa|dsa|ecdsa|ed25519)$' | grep -v '\.pub$')
+    while IFS= read -r key_file; do
+        if [[ -n "$key_file" ]]; then
+            violations+=("❌ Private SSH key in repository: $key_file")
+        fi
+    done <<< "$private_keys"
+    
+    if [[ ${#violations[@]} -gt 0 ]]; then
+        printf '%s\n' "${violations[@]}"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Run the security scan
+if ! scan_for_secrets; then
+    echo -e "\n${RED}🚨 PUSH BLOCKED: Security violations detected!${NC}"
+    echo -e "${YELLOW}Your push has been blocked to prevent exposing secrets.${NC}"
+    echo ""
+    echo -e "${YELLOW}To fix these issues:${NC}"
+    echo -e "  1. Encrypt vault files: ${GREEN}ansible-vault encrypt .secrets/*.yml${NC}"
+    echo -e "  2. Move secrets to encrypted vaults"
+    echo -e "  3. Remove private keys from repository"
+    echo -e "  4. Use ${GREEN}git rm --cached <file>${NC} to untrack sensitive files"
+    echo ""
+    echo -e "${YELLOW}Then add them to .gitignore if needed.${NC}"
+    exit 1
+else
+    echo -e "${GREEN}✅ Pre-push security scan passed!${NC}"
+    exit 0
+fi

@@ -1,0 +1,131 @@
+#!/bin/bash
+
+# Pre-commit hook to prevent unencrypted secrets from being committed
+# This hook checks for unencrypted vault files and plain-text secrets
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}🔒 Running security pre-commit checks...${NC}"
+
+# Function to check if a file is encrypted with ansible-vault
+is_vault_encrypted() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        # Check if file starts with $ANSIBLE_VAULT
+        if head -n 1 "$file" | grep -q '^\$ANSIBLE_VAULT'; then
+            return 0  # File is encrypted
+        else
+            return 1  # File is not encrypted
+        fi
+    fi
+    return 1  # File doesn't exist
+}
+
+# Function to check for plain-text passwords in files
+check_plaintext_secrets() {
+    local file="$1"
+    local violations=()
+    
+    # Skip if file is encrypted
+    if is_vault_encrypted "$file"; then
+        return 0
+    fi
+    
+    # Patterns that indicate plain-text secrets
+    local secret_patterns=(
+        "password.*:\s*[\"'](?!.*REPLACE)(?!.*CHANGE)(?!.*TODO)[^\"']{3,}"
+        "passwd.*:\s*[\"'](?!.*REPLACE)(?!.*CHANGE)(?!.*TODO)[^\"']{3,}"
+        "secret.*:\s*[\"'](?!.*REPLACE)(?!.*CHANGE)(?!.*TODO)[^\"']{3,}"
+        "key.*:\s*[\"'](?!.*REPLACE)(?!.*CHANGE)(?!.*TODO)[^\"']{8,}"
+        "token.*:\s*[\"'](?!.*REPLACE)(?!.*CHANGE)(?!.*TODO)[^\"']{8,}"
+    )
+    
+    for pattern in "${secret_patterns[@]}"; do
+        if grep -P -i "$pattern" "$file" >/dev/null 2>&1; then
+            violations+=("Found potential plain-text secret in $file")
+        fi
+    done
+    
+    if [[ ${#violations[@]} -gt 0 ]]; then
+        printf '%s\n' "${violations[@]}"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Get list of staged files
+staged_files=$(git diff --cached --name-only)
+
+# Track if we found any violations
+violations_found=false
+
+# Check each staged file
+while IFS= read -r file; do
+    if [[ -z "$file" ]]; then
+        continue
+    fi
+    
+    echo "Checking: $file"
+    
+    # Check vault files in .secrets directory
+    if [[ "$file" == .secrets/*.yml ]] && [[ "$file" != *.template ]]; then
+        if ! is_vault_encrypted "$file"; then
+            echo -e "${RED}❌ SECURITY VIOLATION: Unencrypted vault file: $file${NC}"
+            echo -e "${YELLOW}   Please encrypt with: ansible-vault encrypt $file${NC}"
+            violations_found=true
+        else
+            echo -e "${GREEN}✅ Vault file is encrypted: $file${NC}"
+        fi
+    fi
+    
+    # Check for plain-text secrets in configuration files
+    if [[ "$file" == *.yml ]] || [[ "$file" == *.yaml ]] || [[ "$file" == *.json ]]; then
+        if ! check_plaintext_secrets "$file"; then
+            echo -e "${RED}❌ SECURITY VIOLATION: Plain-text secrets detected in: $file${NC}"
+            echo -e "${YELLOW}   Please move secrets to encrypted vault files${NC}"
+            violations_found=true
+        fi
+    fi
+    
+    # Check for accidentally committed private keys
+    if [[ "$file" == *id_rsa ]] || [[ "$file" == *id_dsa ]] || [[ "$file" == *id_ecdsa ]] || [[ "$file" == *id_ed25519 ]]; then
+        if [[ "$file" != *.pub ]]; then
+            echo -e "${RED}❌ SECURITY VIOLATION: Private SSH key detected: $file${NC}"
+            echo -e "${YELLOW}   Private keys should never be committed to git${NC}"
+            violations_found=true
+        fi
+    fi
+    
+    # Check for environment files with secrets
+    if [[ "$file" == *.env ]] || [[ "$file" == .env.* ]]; then
+        if ! check_plaintext_secrets "$file"; then
+            echo -e "${RED}❌ SECURITY VIOLATION: Plain-text secrets in environment file: $file${NC}"
+            echo -e "${YELLOW}   Consider using encrypted vault files instead${NC}"
+            violations_found=true
+        fi
+    fi
+    
+done <<< "$staged_files"
+
+# Final result
+if [[ "$violations_found" == true ]]; then
+    echo -e "\n${RED}🚨 COMMIT BLOCKED: Security violations detected!${NC}"
+    echo -e "${YELLOW}Please fix the above issues before committing.${NC}"
+    echo ""
+    echo -e "${YELLOW}Common fixes:${NC}"
+    echo -e "  • Encrypt vault files: ${GREEN}ansible-vault encrypt .secrets/dev.yml${NC}"
+    echo -e "  • Move secrets to vault: ${GREEN}Edit vault with ansible-vault edit .secrets/dev.yml${NC}"
+    echo -e "  • Remove private keys: ${GREEN}git rm --cached private-key-file${NC}"
+    echo ""
+    exit 1
+else
+    echo -e "\n${GREEN}✅ All security checks passed!${NC}"
+    exit 0
+fi

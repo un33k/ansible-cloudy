@@ -1,0 +1,131 @@
+# Ensure Admin Connection - Connection Validation Task
+# Validates that the current connection is using admin user with SSH keys
+# This task should be included in all service recipes to ensure proper authentication
+
+---
+- name: Validate connection user
+  debug:
+    msg: |
+      🔍 Connection Validation:
+      Current user: {{ ansible_user }}
+      Current port: {{ ansible_port }}
+      Target: {{ ansible_host }}:{{ ansible_port }}
+
+- name: Fail if connecting as root user
+  fail:
+    msg: |
+      ❌ SECURITY ERROR: Connected as root user!
+      
+      This recipe requires admin user connection with SSH keys.
+      
+      Root access should only be used for initial security setup.
+      
+      Expected: ansible_user should be 'admin' or '{{ admin_user | default("admin") }}'
+      Actual: ansible_user is '{{ ansible_user }}'
+      
+      🔧 Fix:
+      1. Run security setup first: ./claudia security --install
+      2. Ensure you're targeting 'service_targets' group, not 'security_targets'
+  when: ansible_user == 'root'
+
+- name: Fail if using password authentication
+  fail:
+    msg: |
+      ❌ AUTHENTICATION ERROR: Password authentication detected!
+      
+      This recipe requires SSH key authentication only.
+      
+      Admin passwords should only be used for account creation and sudo.
+      
+      🔧 Fix:
+      1. Remove ansible_ssh_pass from inventory
+      2. Ensure SSH keys are installed: ./claudia security --install
+      3. Use SSH key authentication only
+  when: ansible_ssh_pass is defined
+
+- name: Fail if using default SSH port
+  fail:
+    msg: |
+      ❌ PORT ERROR: Using default SSH port 22!
+      
+      This recipe should connect to the secure SSH port.
+      
+      Expected: ansible_port should be 22022 (or custom secure port)
+      Actual: ansible_port is {{ ansible_port }}
+      
+      🔧 Fix:
+      1. Run security setup first: ./claudia security --install
+      2. Ensure inventory uses the secure SSH port (22022)
+  when: ansible_port == 22
+
+- name: Validate admin user
+  command: whoami
+  register: current_user
+  changed_when: false
+  become: false
+
+- name: Fail if not connecting as expected admin user
+  fail:
+    msg: |
+      ❌ USER ERROR: Not connecting as expected admin user!
+      
+      Expected: {{ admin_user | default('admin') }}
+      Actual: {{ current_user.stdout }}
+      
+      🔧 Fix:
+      1. Verify admin user exists on server
+      2. Check SSH key permissions
+      3. Run security setup: ./claudia security --install
+  when: current_user.stdout != (admin_user | default('admin'))
+
+- name: Test SSH key authentication
+  stat:
+    path: ~/.ssh/authorized_keys
+  register: ssh_keys
+  become: false
+
+- name: Fail if SSH keys not properly configured
+  fail:
+    msg: |
+      ❌ SSH KEY ERROR: SSH keys not properly configured!
+      
+      The authorized_keys file is missing or empty.
+      
+      🔧 Fix:
+      1. Run security setup: ./claudia security --install
+      2. Verify SSH key installation completed successfully
+  when: not ssh_keys.stat.exists
+
+- name: Test sudo access (NOPASSWD)
+  command: sudo -n whoami
+  register: sudo_test
+  changed_when: false
+  failed_when: false
+  become: false
+
+- name: Fail if sudo access not working
+  fail:
+    msg: |
+      ❌ SUDO ERROR: Admin user cannot sudo without password!
+      
+      Expected: NOPASSWD sudo access for admin user
+      Actual: sudo requires password or fails
+      
+      🔧 Fix:
+      1. Run security setup: ./claudia security --install
+      2. Verify sudoers configuration is correct
+  when: sudo_test.rc != 0 or sudo_test.stdout != 'root'
+
+- name: Display connection validation success
+  debug:
+    msg: |
+      ✅ CONNECTION VALIDATION PASSED
+      
+      🔐 Authentication Status: SECURE
+      ├── User: {{ current_user.stdout }} (admin)
+      ├── Port: {{ ansible_port }} (secure)
+      ├── Auth: SSH keys only
+      ├── Sudo: NOPASSWD access
+      └── Ready for service operations
+      
+      🚀 Proceeding with recipe execution...
