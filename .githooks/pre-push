@@ -47,8 +47,8 @@ if [[ ${#unencrypted_files[@]} -gt 0 ]]; then
     done
     
     echo -e "\n${YELLOW}To encrypt these files:${NC}"
-    echo -e "${GREEN}# Use Claudia CLI to encrypt vault files:${NC}"
-    echo -e "  ./claudia vault encrypt"
+    echo -e "${GREEN}# Encrypt all vault files in .secrets/:${NC}"
+    echo -e "  ./claudia vault encrypt --all"
     
     echo -e "\n${GREEN}# Or encrypt individual files:${NC}"
     for file in "${unencrypted_files[@]}"; do
@@ -57,10 +57,10 @@ if [[ ${#unencrypted_files[@]} -gt 0 ]]; then
     done
     
     echo -e "\n${BLUE}💡 Claudia vault commands:${NC}"
-    echo -e "  ./claudia vault create     # Create new vault file"
-    echo -e "  ./claudia vault edit       # Edit vault file"
-    echo -e "  ./claudia vault encrypt    # Encrypt vault files"
-    echo -e "  ./claudia vault decrypt    # Decrypt for editing"
+    echo -e "  ./claudia vault create       # Create new vault file"
+    echo -e "  ./claudia vault edit         # Edit vault file"
+    echo -e "  ./claudia vault encrypt --all # Encrypt all vault files"
+    echo -e "  ./claudia vault decrypt --all # Decrypt all for editing"
     
     echo -e "\n${YELLOW}After encrypting, commit and push again.${NC}"
     exit 1

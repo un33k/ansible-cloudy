@@ -49,7 +49,7 @@ echo -e "  • ${GREEN}pre-commit${NC}: Warns about unencrypted vault files (all
 echo -e "  • ${GREEN}pre-push${NC}: Blocks push if vault files are unencrypted (shows how to fix)"
 echo -e "\n${YELLOW}Simple Security Workflow:${NC}"
 echo -e "  1. ${GREEN}git commit${NC} - Warns about unencrypted files but allows commits"
-echo -e "  2. ${GREEN}./claudia vault encrypt${NC} - Encrypt vault files before pushing"
+echo -e "  2. ${GREEN}./claudia vault encrypt --all${NC} - Encrypt all vault files before pushing"
 echo -e "  3. ${GREEN}git add . && git commit -m 'Encrypt vault files'${NC} - Commit encrypted files"
 echo -e "  4. ${GREEN}git push${NC} - Push safely with encrypted secrets"
 echo -e "\n${BLUE}Note: These hooks protect your repository from accidental secret exposure!${NC}"

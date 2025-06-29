@@ -127,7 +127,7 @@ git add .secrets/dev.yml
 git commit -m "Update vault configuration"
 
 # 3. Encrypt before pushing (using Claudia CLI)
-./claudia vault encrypt
+./claudia vault encrypt --all
 
 # 4. Commit encrypted files and push safely
 git add .secrets/
@@ -145,16 +145,17 @@ git push origin main
 
 ```bash
 # Main vault operations
-./claudia vault create              # Create new vault file
-./claudia vault edit                # Edit vault file (decrypts, opens editor, re-encrypts)
-./claudia vault view                # View encrypted vault contents
-./claudia vault encrypt             # Encrypt all vault files
-./claudia vault decrypt             # Decrypt vault files for editing
-./claudia vault rekey               # Change vault password
+./claudia vault create                # Create new vault file
+./claudia vault edit                  # Edit vault file (decrypts, opens editor, re-encrypts)
+./claudia vault view                  # View encrypted vault contents
+./claudia vault encrypt --all         # Encrypt all vault files in .secrets/
+./claudia vault decrypt --all         # Decrypt all vault files for editing
+./claudia vault rekey                 # Change vault password
 
 # File-specific operations
-./claudia vault edit --file dev     # Edit specific vault file
-./claudia vault encrypt --file dev  # Encrypt specific vault file
+./claudia vault edit --file dev       # Edit specific vault file
+./claudia vault encrypt --file dev    # Encrypt specific vault file
+./claudia vault decrypt --file dev    # Decrypt specific vault file
 ```
 
 ## Manual Ansible Vault Commands (Alternative)
