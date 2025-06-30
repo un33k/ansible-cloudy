@@ -1,6 +1,6 @@
 # Recipe: PostgreSQL Database Server with PostGIS Support
 # Purpose: Orchestrates security, base setup, and PostgreSQL installation
-# Usage: ./claudia psql --install [--pgis] [--port 5433]
+# Usage: ./claudia psql --install [--pgis] [--port 5432]
 
 ---
 # PostgreSQL-specific setup (security and base should be run separately)
@@ -15,7 +15,7 @@
     setup_postgresql: true
     setup_postgis: false
     postgresql_version: "17"
-    database_port: 5432
+    database_port: "{{ vault_postgresql_port | default(5432) }}"
     postgis_version: "3"
     
   pre_tasks:

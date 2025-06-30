@@ -43,3 +43,25 @@ supervisor_programs: []
   #   user: www-data
   #   autostart: true
   #   autorestart: true
+
+# PgBouncer Configuration (Connection Pooling)
+pgbouncer_enabled: true
+pgbouncer_listen_port: "{{ vault_pgbouncer_port | default(6432) }}"
+pgbouncer_listen_address: "127.0.0.1"  # Local only on web servers
+
+# Backend Database Connection
+pgbouncer_database_host: "{{ database_host | default('db.internal') }}"
+pgbouncer_database_port: "{{ vault_postgresql_port | default(5433) }}"
+pgbouncer_database_name: "{{ database_name | default('postgres') }}"
+pgbouncer_database_user: "{{ database_user | default('postgres') }}"
+
+# Connection Pool Settings
+pgbouncer_pool_mode: "transaction"  # transaction, session, or statement
+pgbouncer_default_pool_size: 5      # Connections per user/database pair
+pgbouncer_max_db_connections: 10    # Max backend connections per database
+pgbouncer_max_client_conn: 100      # Max client connections to pgbouncer
+pgbouncer_reserve_pool_size: 5      # Reserve connections for super users
+
+# Timeouts
+pgbouncer_server_idle_timeout: 600  # Close idle server connections after 10 min
+pgbouncer_query_wait_timeout: 60    # Cancel queries waiting too long

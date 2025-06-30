@@ -228,6 +228,7 @@ generic_servers:
 ./claudia django --install                             # Django web application
 ./claudia redis --install --port 6380 --memory 512    # Redis with custom port and memory
 ./claudia nginx --install --domain example.com --ssl  # Nginx with SSL domain
+./claudia pgbouncer --install                          # PgBouncer on web servers (localhost:6432)
 
 # Environment-specific deployments
 ./claudia security --install --prod
@@ -251,10 +252,14 @@ generic_servers:
 ./claudia redis --set-password newpass               # Change Redis password
 ./claudia nginx --setup-ssl example.com              # Setup SSL for domain
 ./claudia nginx --add-domain api.example.com         # Add new domain
+./claudia pgbouncer --configure-port 6433            # Change PgBouncer port
+./claudia pgbouncer --set-pool-size 30               # Update connection pool size
+./claudia pgbouncer --restart                        # Restart PgBouncer service
 
 # Dry runs and testing
 ./claudia redis --install --check --port 6380
 ./claudia nginx --install --check --domain example.com --ssl
+./claudia pgbouncer --install --check --port 6433
 ./claudia security --install --prod --check
 
 # Legacy syntax (not recommended - use universal parameters instead)
@@ -330,7 +335,7 @@ cloudy/
 │   ├── sys/              # System operations (SSH, firewall, users)
 │   ├── db/               # Database automation (PostgreSQL)
 │   ├── web/              # Web server management
-│   └── services/         # Service management (Docker, Redis, VPN)
+│   └── services/         # Service management (Docker, Redis, VPN, PgBouncer)
 ├── templates/            # Configuration file templates
 ├── inventory/            # Server inventory configurations
 └── ansible.cfg          # Ansible configuration
@@ -585,8 +590,16 @@ vault_locale: "en_US.UTF-8"
 
 # === SERVICE CREDENTIALS ===
 vault_postgres_password: "your_postgres_password"
+vault_mysql_root_password: "your_mysql_root_password"
 vault_redis_password: "your_redis_password"
 vault_vpn_passphrase: "your_vpn_passphrase"
+
+# === SERVICE PORTS ===
+vault_postgresql_port: 5433    # Non-standard for security
+vault_pgbouncer_port: 6432     # PgBouncer on web servers
+vault_redis_port: 6379         # Redis default
+vault_nginx_http_port: 80      # HTTP
+vault_nginx_https_port: 443    # HTTPS
 ```
 
 ### Configuration Fallback System
@@ -691,3 +704,60 @@ vault_admin_password: "secret"
 4. **Regular rotation** - Update credentials periodically
 5. **Follow authentication flow** - Always run security setup first
 6. **Use SSH keys** - Root with SSH keys for all automation
+
+## Connection Pooling Architecture with PgBouncer
+
+### Overview
+PgBouncer is deployed on web servers to provide local connection pooling, reducing database connections by 10x or more.
+
+### Architecture
+```
+Internet → Load Balancer (Nginx/SSL)
+         ↓
+    Web Server 1              Web Server 2              Web Server N
+    ├─ Django/Node.js        ├─ Django/Node.js        ├─ Django/Node.js
+    └─ PgBouncer:6432 →      └─ PgBouncer:6432 →      └─ PgBouncer:6432 →
+                          ↘         ↓         ↙
+                            PostgreSQL:5433
+                           (Single Database)
+```
+
+### Benefits
+- **Reduced Connections**: 50 web servers × 10 connections = 500 pooled connections vs 5000 direct
+- **Transaction Pooling**: Most efficient for web applications
+- **Zero Code Changes**: Applications connect to localhost:6432 instead of remote database
+- **Distributed Architecture**: No single point of failure (each web server has its own pooler)
+- **Security**: Database on non-standard port (5433) with poolers only on localhost
+
+### Configuration Example
+```yaml
+# .vault/prod.yml
+vault_postgresql_port: 5433      # Non-standard PostgreSQL port
+vault_pgbouncer_port: 6432       # PgBouncer on each web server
+vault_pgbouncer_pool_size: 25    # Connections per pool
+vault_pgbouncer_max_clients: 100 # Max client connections
+
+# Django settings.py
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'HOST': 'localhost',      # Connect to local PgBouncer
+        'PORT': 6432,            # PgBouncer port
+        'NAME': 'myapp',
+        'USER': 'myapp_user',
+        'PASSWORD': 'secure_password',
+    }
+}
+```
+
+### Deployment Commands
+```bash
+# Install PgBouncer on existing web servers
+./claudia pgbouncer --install
+
+# Configure with custom settings
+./claudia pgbouncer --install --port 6433 --pool-size 30
+
+# Verify installation
+./claudia pgbouncer --health-check
+```

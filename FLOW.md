@@ -41,6 +41,15 @@ After security hardening, ALL servers receive base configuration:
   - Password authentication
   - Excellent TypeScript/Python client support
 
+### 2.5. Connection Pooler (Web Server Component)
+- **PgBouncer**: Installed on web servers for local pooling
+  - Lightweight (~2MB memory footprint)
+  - Transaction pooling mode for web applications
+  - Reduces database connections by 10x
+  - Configurable port (default: 6432)
+  - MD5 authentication support
+  - Zero application changes needed (drop-in replacement)
+
 ### 3. Load Balancer
 - **Nginx**: `nginx --install`
   - SSL termination with Let's Encrypt
@@ -70,13 +79,15 @@ After security hardening, ALL servers receive base configuration:
   - Celery support for async tasks
   - Development and production modes
 
-**Database Connection Options:**
-- Direct connection
-- Via PgPool2: `--pgpool2`
+**Connection Pooling:**
+- PgBouncer installed locally on each web server
+- Reduces database connections by 10x
+- Transaction pooling for maximum efficiency
 
 **Architecture Example:**
 ```
-User → Load Balancer (SSL) → Web Server (Django) → PgPool2 (configurable port) → Database (PostgreSQL on custom port)
+User → Load Balancer (SSL) → Web Server → PgBouncer (localhost:6432) → Database (PostgreSQL:5433)
+                              (Django)     (local connection pooling)
 ```
 
 ### 5. Generic Server
@@ -150,12 +161,14 @@ vault_v2ray_port: 10086
 
 ## Connection Flow for Web Applications
 
-### With Connection Pooling:
+### With Connection Pooling (PgBouncer):
 ```
 Internet → Load Balancer (Nginx with SSL/Let's Encrypt)
-         → Web Servers (Django/Node.js)
-         → Connection Pool (PgPool2 on configurable port)
-         → Database (PostgreSQL on vault-defined port)
+         → Web Server 1 + PgBouncer → 
+         → Web Server 2 + PgBouncer → PostgreSQL (port 5433)
+         → Web Server N + PgBouncer →
+
+Each web server has local PgBouncer (localhost:6432)
 ```
 
 ### Direct Connection:

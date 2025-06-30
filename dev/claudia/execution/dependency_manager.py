@@ -80,11 +80,13 @@ class DependencyManager:
             # Database services
             "psql": ["security", "base"],
             "postgis": ["security", "base"],
-            "pgpool2": ["security", "base"],
             "mongodb": ["security", "base"],
             
             # Cache services
             "redis": ["security", "base"],
+            
+            # Connection pooling
+            "pgbouncer": [],  # No dependencies - installed on existing web servers
             
             # Web services
             "nginx": ["security", "base"],

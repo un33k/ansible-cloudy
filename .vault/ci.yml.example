@@ -21,6 +21,13 @@ vault_postgres_password: "ci_postgres_password"
 vault_redis_password: "ci_redis_password"
 vault_vpn_passphrase: "ci_vpn_passphrase"
 
+# === SERVICE PORTS ===
+vault_postgresql_port: 5433    # Non-standard for security
+vault_pgbouncer_port: 6432     # PgBouncer on web servers
+vault_redis_port: 6379         # Redis default
+vault_nginx_http_port: 80      # HTTP
+vault_nginx_https_port: 443    # HTTPS
+
 # === CI/CD SPECIFIC ===
 # These credentials are for automated testing
 # Keep them simple but secure for CI environments

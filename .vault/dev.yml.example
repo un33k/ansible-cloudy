@@ -21,6 +21,13 @@ vault_postgres_password: "your_postgres_password"
 vault_redis_password: "your_redis_password"
 vault_vpn_passphrase: "your_vpn_passphrase"
 
+# === SERVICE PORTS ===
+vault_postgresql_port: 5433    # Non-standard for security
+vault_pgbouncer_port: 6432     # PgBouncer on web servers
+vault_redis_port: 6379         # Redis default
+vault_nginx_http_port: 80      # HTTP
+vault_nginx_https_port: 443    # HTTPS
+
 # === USAGE INSTRUCTIONS ===
 # 1. Copy this file: cp .vault/dev.yml.example .vault/my-dev.yml
 # 2. Edit with your real credentials: vim .vault/my-dev.yml

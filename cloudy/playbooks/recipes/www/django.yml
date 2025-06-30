@@ -144,6 +144,33 @@
       when: setup_database | bool
       tags: [database, postgis, configure]
       
+    # Connection Pooling (PgBouncer on Web Server)
+    - name: Install PgBouncer for connection pooling
+      include_tasks: "{{ task_paths }}/services/pgbouncer/install.yml"
+      when: setup_pgbouncer | default(true) | bool
+      tags: [pgbouncer, install]
+      
+    - name: Configure PgBouncer
+      include_tasks: "{{ task_paths }}/services/pgbouncer/configure.yml"
+      vars:
+        database_host: "{{ db_host | default('localhost') }}"
+        database_port: "{{ vault_postgresql_port | default(5432) }}"
+        database_name: "{{ db_name | default('postgres') }}"
+        database_user: "{{ db_user | default('postgres') }}"
+        database_password: "{{ db_password | default(vault_postgres_password) }}"
+      when: setup_pgbouncer | default(true) | bool
+      tags: [pgbouncer, configure]
+      
+    - name: Configure PgBouncer authentication
+      include_tasks: "{{ task_paths }}/services/pgbouncer/configure-auth.yml"
+      when: setup_pgbouncer | default(true) | bool
+      tags: [pgbouncer, auth]
+      
+    - name: Start PgBouncer service
+      include_tasks: "{{ task_paths }}/services/pgbouncer/start.yml"
+      when: setup_pgbouncer | default(true) | bool
+      tags: [pgbouncer, service]
+      
     # Firewall Configuration
     - name: Allow HTTP through firewall
       include_tasks: "{{ task_paths }}/sys/firewall/allow-http.yml"
@@ -174,6 +201,7 @@
              ├── Port: {{ webserver_port }}
              ├── Python: {{ 'Installed with common packages' if setup_python else 'Skipped' }}
              ├── Database: {{ 'PostgreSQL + PostGIS installed' if setup_database else 'Skipped' }}
+             ├── PgBouncer: {{ 'Installed (localhost:' + (vault_pgbouncer_port | default(6432) | string) + ')' if setup_pgbouncer | default(true) else 'Skipped' }}
              ├── Firewall: {{ 'HTTP/HTTPS + custom ports allowed' if setup_firewall else 'Not configured' }}
              └── Status: Ready for Django deployment
           
@@ -184,3 +212,9 @@
           2. Configure database connections in Django settings
           3. Set up SSL certificates if using HTTPS
           4. Configure reverse proxy (Nginx) if needed
+          
+  handlers:
+    - name: restart pgbouncer
+      service:
+        name: pgbouncer
+        state: restarted

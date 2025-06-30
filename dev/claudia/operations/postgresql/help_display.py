@@ -50,7 +50,7 @@ class PostgreSQLHelpDisplay:
         print(f"  {Colors.GREEN}claudia psql --change-password foo --password newpass{Colors.NC}  Change user password")
         print(f"  {Colors.GREEN}claudia psql --grant-privileges foo --database myapp{Colors.NC}   Grant user privileges")
         print(f"  {Colors.GREEN}claudia psql --install-postgis{Colors.NC}                    Install PostGIS extension")
-        print(f"  {Colors.GREEN}claudia psql --configure-port 5433{Colors.NC}               Configure PostgreSQL port")
+        print(f"  {Colors.GREEN}claudia psql --configure-port 5432{Colors.NC}               Configure PostgreSQL port")
         print(f"  {Colors.GREEN}claudia psql --get-version{Colors.NC}                        Get installed PostgreSQL version")
         print(f"  {Colors.GREEN}claudia psql --create-cluster mycluster{Colors.NC}          Create PostgreSQL cluster")
         print(f"  {Colors.GREEN}claudia psql --install-client{Colors.NC}                    Install PostgreSQL client tools")
@@ -75,7 +75,7 @@ class PostgreSQLHelpDisplay:
         print(f"""  {Colors.GREEN}test-server:{Colors.NC}
     {Colors.CYAN}postgresql_version:{Colors.NC} "17"
     {Colors.CYAN}postgis_version:{Colors.NC} "3"
-    {Colors.CYAN}database_port:{Colors.NC} 5433
+    {Colors.CYAN}database_port:{Colors.NC} 5432
     {Colors.CYAN}setup_postgis:{Colors.NC} true
     {Colors.CYAN}pg_databases:{Colors.NC}
       - name: myapp_db
