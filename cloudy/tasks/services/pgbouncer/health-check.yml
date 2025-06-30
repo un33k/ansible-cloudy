@@ -1,0 +1,66 @@
+# Task: PgBouncer Health Check
+# Purpose: Verify pgbouncer is healthy and can connect to backend database
+
+---
+- name: Check if pgbouncer service is active
+  systemd:
+    name: pgbouncer
+  register: pgbouncer_service_status
+
+- name: Test pgbouncer admin console connectivity
+  postgresql_ping:
+    db: pgbouncer
+    login_host: "{{ pgbouncer_listen_address | default('127.0.0.1') }}"
+    login_port: "{{ vault_pgbouncer_port | default(6432) }}"
+    login_user: postgres
+  register: pgbouncer_admin_ping
+  ignore_errors: yes
+
+- name: Check pgbouncer process and memory usage
+  shell: |
+    ps aux | grep '[p]gbouncer' | awk '{print "PID:", $2, "CPU:", $3"%", "MEM:", $4"%", "RSS:", $6"KB"}'
+  register: pgbouncer_process_info
+  changed_when: false
+
+- name: Get pool status from pgbouncer
+  shell: |
+    echo "SHOW POOLS;" | psql -h {{ pgbouncer_listen_address | default('127.0.0.1') }} -p {{ vault_pgbouncer_port | default(6432) }} -U postgres -t pgbouncer 2>/dev/null || echo "Unable to connect to admin console"
+  register: pool_status
+  changed_when: false
+
+- name: Get client connections count
+  shell: |
+    echo "SHOW CLIENTS;" | psql -h {{ pgbouncer_listen_address | default('127.0.0.1') }} -p {{ vault_pgbouncer_port | default(6432) }} -U postgres -t pgbouncer 2>/dev/null | wc -l || echo "0"
+  register: client_count
+  changed_when: false
+
+- name: Test backend database connectivity through pgbouncer
+  postgresql_ping:
+    db: "{{ database_name | default('postgres') }}"
+    login_host: "{{ pgbouncer_listen_address | default('127.0.0.1') }}"
+    login_port: "{{ vault_pgbouncer_port | default(6432) }}"
+    login_user: "{{ database_user | default('postgres') }}"
+    login_password: "{{ database_password | default(vault_postgres_password) }}"
+  register: backend_connectivity
+  ignore_errors: yes
+
+- name: Display health check results
+  debug:
+    msg: |
+      🏥 PgBouncer Health Check Results:
+      
+      Service Status: {{ pgbouncer_service_status.status.ActiveState }}
+      Process Info: {{ pgbouncer_process_info.stdout }}
+      
+      Admin Console: {{ 'Accessible' if pgbouncer_admin_ping is succeeded else 'Not accessible' }}
+      Active Clients: {{ (client_count.stdout | int - 1) if client_count.stdout != "0" else "0" }}
+      Backend Connection: {{ 'Working' if backend_connectivity is succeeded else 'Failed' }}
+      
+      Pool Status:
+      {{ pool_status.stdout if pool_status.stdout != "Unable to connect to admin console" else "Admin console not available" }}
+      
+      {% if pgbouncer_service_status.status.ActiveState != 'active' or backend_connectivity is failed %}
+      ⚠️  WARNING: PgBouncer health check detected issues!
+      {% else %}
+      ✅ PgBouncer is healthy and routing connections
+      {% endif %}

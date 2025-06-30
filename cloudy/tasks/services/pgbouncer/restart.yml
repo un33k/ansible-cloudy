@@ -1,0 +1,36 @@
+# Task: Restart PgBouncer Service
+# Purpose: Gracefully restart pgbouncer to apply configuration changes
+
+---
+- name: Check if pgbouncer is running
+  shell: pgrep -f pgbouncer
+  register: pgbouncer_running
+  changed_when: false
+  failed_when: false
+
+- name: Reload pgbouncer configuration (if running)
+  shell: |
+    echo "RELOAD;" | psql -h {{ pgbouncer_listen_address | default('127.0.0.1') }} -p {{ vault_pgbouncer_port | default(6432) }} -U postgres pgbouncer
+  when: pgbouncer_running.rc == 0
+  ignore_errors: yes
+  register: pgbouncer_reload
+
+- name: Restart pgbouncer service (if reload failed)
+  service:
+    name: pgbouncer
+    state: restarted
+  when: pgbouncer_reload is failed or pgbouncer_running.rc != 0
+  register: pgbouncer_restart
+
+- name: Wait for pgbouncer to be ready
+  wait_for:
+    port: "{{ vault_pgbouncer_port | default(6432) }}"
+    host: "{{ pgbouncer_listen_address | default('127.0.0.1') }}"
+    delay: 2
+    timeout: 30
+
+- name: Display restart status
+  debug:
+    msg: |
+      ✅ PgBouncer {{ 'reloaded' if pgbouncer_reload is succeeded else 'restarted' }} successfully
+      Service is accepting connections on port {{ vault_pgbouncer_port | default(6432) }}

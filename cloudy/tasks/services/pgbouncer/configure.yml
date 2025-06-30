@@ -1,0 +1,68 @@
+# Task: Configure PgBouncer for Web Server Deployment
+# Purpose: Configure pgbouncer for local connection pooling on web servers
+# Connection: localhost:6432 → database_host:5432
+
+---
+- name: Set pgbouncer configuration variables
+  set_fact:
+    pgbouncer_listen_port: "{{ vault_pgbouncer_port | default(6432) }}"
+    pgbouncer_listen_addr: "{{ pgbouncer_listen_address | default('127.0.0.1') }}"
+    pgbouncer_db_host: "{{ database_host | default('localhost') }}"
+    pgbouncer_db_port: "{{ vault_postgresql_port | default(5432) }}"
+    pgbouncer_db_name: "{{ database_name | default('postgres') }}"
+    pgbouncer_db_user: "{{ database_user | default('postgres') }}"
+    pgbouncer_max_client_conn: "{{ max_client_connections | default(100) }}"
+    pgbouncer_default_pool_size: "{{ pool_size | default(5) }}"
+    pgbouncer_max_db_connections: "{{ max_db_connections | default(10) }}"
+
+- name: Backup original pgbouncer config
+  copy:
+    src: /etc/pgbouncer/pgbouncer.ini
+    dest: /etc/pgbouncer/pgbouncer.ini.backup
+    remote_src: yes
+    force: no
+
+- name: Deploy pgbouncer.ini from template
+  template:
+    src: pgbouncer/pgbouncer.ini.j2
+    dest: /etc/pgbouncer/pgbouncer.ini
+    owner: postgres
+    group: postgres
+    mode: '0640'
+    backup: yes
+  notify: restart pgbouncer
+
+- name: Deploy userlist.txt from template
+  template:
+    src: pgbouncer/userlist.txt.j2
+    dest: /etc/pgbouncer/userlist.txt
+    owner: postgres
+    group: postgres
+    mode: '0640'
+    backup: yes
+  notify: restart pgbouncer
+
+- name: Configure pgbouncer defaults
+  template:
+    src: pgbouncer/pgbouncer.defaults.j2
+    dest: /etc/default/pgbouncer
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart pgbouncer
+
+- name: Enable pgbouncer service
+  service:
+    name: pgbouncer
+    enabled: yes
+
+- name: Display configuration summary
+  debug:
+    msg: |
+      ✅ PgBouncer configured successfully
+      Listen: {{ pgbouncer_listen_addr }}:{{ pgbouncer_listen_port }}
+      Backend: {{ pgbouncer_db_host }}:{{ pgbouncer_db_port }}
+      Database: {{ pgbouncer_db_name }}
+      Pool Size: {{ pgbouncer_default_pool_size }} (max {{ pgbouncer_max_db_connections }})
+      Max Clients: {{ pgbouncer_max_client_conn }}
+      Mode: Transaction pooling (most efficient)

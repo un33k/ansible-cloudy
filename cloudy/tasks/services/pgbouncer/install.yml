@@ -1,0 +1,46 @@
+# Task: Install PgBouncer Connection Pooler
+# Purpose: Install pgbouncer on web servers for local connection pooling
+# Architecture: Web App → PgBouncer (localhost) → PostgreSQL (remote)
+
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Install PgBouncer
+  apt:
+    name: pgbouncer
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Create pgbouncer runtime directory
+  file:
+    path: /var/run/pgbouncer
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: Create pgbouncer log directory
+  file:
+    path: /var/log/pgbouncer
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: Ensure pgbouncer service is stopped after install
+  service:
+    name: pgbouncer
+    state: stopped
+    
+- name: Display installation status
+  debug:
+    msg: |
+      ✅ PgBouncer installed successfully
+      Installation type: Web server (local pooling)
+      Config directory: /etc/pgbouncer
+      Runtime directory: /var/run/pgbouncer
+      Log directory: /var/log/pgbouncer

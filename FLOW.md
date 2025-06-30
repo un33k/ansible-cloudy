@@ -86,7 +86,7 @@ After security hardening, ALL servers receive base configuration:
 
 **Architecture Example:**
 ```
-User → Load Balancer (SSL) → Web Server → PgBouncer (localhost:6432) → Database (PostgreSQL:5433)
+User → Load Balancer (SSL) → Web Server → PgBouncer (localhost) → Database (PostgreSQL)
                               (Django)     (local connection pooling)
 ```
 
@@ -165,7 +165,7 @@ vault_v2ray_port: 10086
 ```
 Internet → Load Balancer (Nginx with SSL/Let's Encrypt)
          → Web Server 1 + PgBouncer → 
-         → Web Server 2 + PgBouncer → PostgreSQL (port 5433)
+         → Web Server 2 + PgBouncer → PostgreSQL (configurable port)
          → Web Server N + PgBouncer →
 
 Each web server has local PgBouncer (localhost:6432)

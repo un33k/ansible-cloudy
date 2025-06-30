@@ -1,0 +1,35 @@
+# Task: Start PgBouncer Service
+# Purpose: Start pgbouncer and verify it's accepting connections
+
+---
+- name: Start pgbouncer service
+  service:
+    name: pgbouncer
+    state: started
+  register: pgbouncer_start
+
+- name: Wait for pgbouncer to be ready
+  wait_for:
+    port: "{{ vault_pgbouncer_port | default(6432) }}"
+    host: "{{ pgbouncer_listen_address | default('127.0.0.1') }}"
+    delay: 2
+    timeout: 30
+
+- name: Check pgbouncer process
+  shell: pgrep -f pgbouncer
+  register: pgbouncer_process
+  changed_when: false
+  failed_when: pgbouncer_process.rc != 0
+
+- name: Get pgbouncer version
+  command: pgbouncer --version
+  register: pgbouncer_version
+  changed_when: false
+
+- name: Display service status
+  debug:
+    msg: |
+      ✅ PgBouncer service started
+      Status: Running (PID: {{ pgbouncer_process.stdout }})
+      Version: {{ pgbouncer_version.stdout }}
+      Listening: {{ pgbouncer_listen_address | default('127.0.0.1') }}:{{ vault_pgbouncer_port | default(6432) }}

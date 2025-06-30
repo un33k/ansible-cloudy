@@ -1,0 +1,45 @@
+# Task: Uninstall PgBouncer
+# Purpose: Clean removal of pgbouncer from web server
+
+---
+- name: Stop pgbouncer service
+  service:
+    name: pgbouncer
+    state: stopped
+  ignore_errors: yes
+
+- name: Disable pgbouncer service
+  service:
+    name: pgbouncer
+    enabled: no
+  ignore_errors: yes
+
+- name: Remove pgbouncer package
+  apt:
+    name: pgbouncer
+    state: absent
+    purge: yes
+  when: ansible_os_family == "Debian"
+
+- name: Remove pgbouncer configuration directory
+  file:
+    path: /etc/pgbouncer
+    state: absent
+
+- name: Remove pgbouncer runtime directory
+  file:
+    path: /var/run/pgbouncer
+    state: absent
+
+- name: Remove pgbouncer log directory
+  file:
+    path: /var/log/pgbouncer
+    state: absent
+
+- name: Display uninstall status
+  debug:
+    msg: |
+      ✅ PgBouncer uninstalled successfully
+      - Package removed
+      - Configuration cleaned
+      - Directories removed

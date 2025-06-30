@@ -595,8 +595,13 @@ vault_redis_password: "your_redis_password"
 vault_vpn_passphrase: "your_vpn_passphrase"
 
 # === SERVICE PORTS ===
-vault_postgresql_port: 5433    # Non-standard for security
-vault_pgbouncer_port: 6432     # PgBouncer on web servers
+# Default ports used when not specified (standard service ports)
+# vault_postgresql_port: 5432    # PostgreSQL standard (default)
+# vault_pgbouncer_port: 6432     # PgBouncer standard (default)
+
+# Production example: Security through obscurity
+# vault_postgresql_port: 6543    # Non-standard port for PostgreSQL
+# vault_pgbouncer_port: 5432     # PgBouncer masquerades as PostgreSQL
 vault_redis_port: 6379         # Redis default
 vault_nginx_http_port: 80      # HTTP
 vault_nginx_https_port: 443    # HTTPS
@@ -718,7 +723,7 @@ Internet → Load Balancer (Nginx/SSL)
     ├─ Django/Node.js        ├─ Django/Node.js        ├─ Django/Node.js
     └─ PgBouncer:6432 →      └─ PgBouncer:6432 →      └─ PgBouncer:6432 →
                           ↘         ↓         ↙
-                            PostgreSQL:5433
+                            PostgreSQL:5432
                            (Single Database)
 ```
 
@@ -727,13 +732,17 @@ Internet → Load Balancer (Nginx/SSL)
 - **Transaction Pooling**: Most efficient for web applications
 - **Zero Code Changes**: Applications connect to localhost:6432 instead of remote database
 - **Distributed Architecture**: No single point of failure (each web server has its own pooler)
-- **Security**: Database on non-standard port (5433) with poolers only on localhost
+- **Security**: Configurable ports via vault (can use non-standard ports for security)
 
 ### Configuration Example
 ```yaml
-# .vault/prod.yml
-vault_postgresql_port: 5433      # Non-standard PostgreSQL port
-vault_pgbouncer_port: 6432       # PgBouncer on each web server
+# .vault/prod.yml (production with security hardening)
+vault_postgresql_port: 6543      # Non-standard port (security through obscurity)
+vault_pgbouncer_port: 5432       # PgBouncer masquerades as PostgreSQL
+
+# .vault/dev.yml (development with standard ports)
+# vault_postgresql_port: 5432    # Uses default if not specified
+# vault_pgbouncer_port: 6432     # Uses default if not specified
 vault_pgbouncer_pool_size: 25    # Connections per pool
 vault_pgbouncer_max_clients: 100 # Max client connections
 
@@ -761,3 +770,42 @@ DATABASES = {
 # Verify installation
 ./claudia pgbouncer --health-check
 ```
+
+## Port Configuration Philosophy
+
+### Principle: No Hardcoded Ports
+All service ports are configurable via vault files, with **standard defaults** when not specified.
+
+### Why Standard Defaults Matter
+- **No surprises**: PostgreSQL on 5432 by default (as documented everywhere)
+- **Easy testing**: `psql -h localhost -p 5432` works without configuration
+- **Development friendly**: Standard ports work out of the box
+- **Documentation aligned**: Matches official service documentation
+
+### Configuration Examples
+
+#### Development (Standard Ports)
+```yaml
+# .vault/dev.yml - Uses all standard ports
+# No port configuration needed - defaults are used
+```
+
+#### Production (Security Hardened)
+```yaml
+# .vault/prod.yml - Non-standard ports for security
+vault_postgresql_port: 6543    # Obscure port (not 5432)
+vault_pgbouncer_port: 5432     # Masquerade as PostgreSQL
+vault_redis_port: 7001         # Non-standard Redis port
+```
+
+### How It Works
+1. **Application** → connects to localhost:5432 (thinks it's PostgreSQL)
+2. **PgBouncer** → listens on 5432, pools connections
+3. **Network** → PgBouncer connects to remote PostgreSQL:6543
+4. **Firewall** → blocks 5432, allows only 6543 from web servers
+
+### Benefits
+- **Transparent**: Apps use standard PostgreSQL port
+- **Secure**: Real database on obscure port
+- **Flexible**: Change ports anytime via vault
+- **No code changes**: Applications remain unchanged

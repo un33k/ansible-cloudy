@@ -22,8 +22,10 @@ vault_redis_password: "secure_production_redis_password"
 vault_vpn_passphrase: "secure_production_vpn_passphrase"
 
 # === SERVICE PORTS ===
-vault_postgresql_port: 5433    # Non-standard for security
-vault_pgbouncer_port: 6432     # PgBouncer on web servers
+# Production recommendation: Use non-standard ports for security
+vault_postgresql_port: 6543    # Non-standard port (blocks port scanners)
+vault_pgbouncer_port: 5432     # PgBouncer listens on PostgreSQL default
+# Apps connect to localhost:5432 → PgBouncer → Network → DB:6543
 vault_redis_port: 6379         # Redis default
 vault_nginx_http_port: 80      # HTTP
 vault_nginx_https_port: 443    # HTTPS

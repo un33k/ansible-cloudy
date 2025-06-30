@@ -51,7 +51,7 @@ pgbouncer_listen_address: "127.0.0.1"  # Local only on web servers
 
 # Backend Database Connection
 pgbouncer_database_host: "{{ database_host | default('db.internal') }}"
-pgbouncer_database_port: "{{ vault_postgresql_port | default(5433) }}"
+pgbouncer_database_port: "{{ vault_postgresql_port | default(5432) }}"
 pgbouncer_database_name: "{{ database_name | default('postgres') }}"
 pgbouncer_database_user: "{{ database_user | default('postgres') }}"
 
