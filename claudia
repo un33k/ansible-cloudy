@@ -1,6 +1,17 @@
-#\!/bin/bash
+#!/bin/bash
 # Claudia (Claude-inspired Infrastructure Assistant) wrapper script
 # This prevents pyenv from creating shims for the Python implementation
 
-exec python3 "$(dirname "$0")/dev/claudia/cli/main.py" "$@"
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Check if .venv/bin/python exists and use it preferentially
+if [ -f "$SCRIPT_DIR/.venv/bin/python" ]; then
+    PYTHON="$SCRIPT_DIR/.venv/bin/python"
+else
+    # Fallback to system python3
+    PYTHON="python3"
+fi
+
+exec "$PYTHON" "$SCRIPT_DIR/dev/claudia/cli/main.py" "$@"
 EOF < /dev/null

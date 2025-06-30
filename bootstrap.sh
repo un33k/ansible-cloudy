@@ -216,15 +216,8 @@ install_deps() {
     source "$VENV_DIR/bin/activate"
     pip install --upgrade pip
     
-    # Install Ansible and development tools
-    pip install \
-        "ansible>=6.0.0" \
-        "ansible-lint>=6.0.0" \
-        "yamllint>=1.28.0" \
-        "pyyaml>=6.0" \
-        "passlib>=1.7.0" \
-        "ruamel.yaml>=0.17.0" \
-        "jsonschema>=4.0.0"
+    # Install Ansible and development tools from pyproject.toml
+    pip install -e ".[dev]"
     
     log "Ansible dependencies installed successfully"
 }
