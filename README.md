@@ -22,6 +22,8 @@ source .venv/bin/activate
 pip install ansible
 ```
 
+> **💡 Tip:** After activation, you can use either `claudia` or `cli` ([C]laudia [L]ine [I]nterface). Both commands are identical - `cli` is a convenient short alias for faster typing.
+
 ### Basic Usage
 ```bash
 # Show help and configuration options (default action)

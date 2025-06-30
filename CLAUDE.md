@@ -48,6 +48,8 @@ source .venv/bin/activate
 cd ansible-cloudy/
 ```
 
+**Note:** Once activated, you can use either `claudia` or its shorter alias `cli` (Claudia Line Interface). Both commands are identical - `cli` is simply a convenient short alias for faster typing.
+
 ### Core Development Commands
 
 #### Simplified Server Setup (Recommended) - Using Claudia CLI
