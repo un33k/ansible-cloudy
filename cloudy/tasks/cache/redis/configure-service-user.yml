@@ -1,0 +1,58 @@
+# Granular Task: Configure Redis with Service User Support  
+# Purpose: Set up Redis to run under grunt user when available (optional)
+# Usage: include_tasks: tasks/cache/redis/configure-service-user.yml
+
+---
+- name: Configure Redis service user (optional)
+  include_tasks: "../../sys/services/configure-service-user.yml"
+  vars:
+    service_name: "redis-server"
+    service_user: "redis"  # Default Redis user
+    service_groups: ["redis"]
+    service_directories:
+      - "/var/lib/redis"
+      - "/var/log/redis"
+  when: use_grunt_for_redis | default(false)
+
+- name: Update Redis systemd service to use grunt user
+  lineinfile:
+    path: /lib/systemd/system/redis-server.service
+    regexp: '^User='
+    line: "User={{ effective_service_user }}"
+    backup: true
+  when: use_grunt_for_redis | default(false) and vault_grunt_user is defined
+  notify: 
+    - reload systemd
+    - restart redis
+
+- name: Update Redis systemd service group
+  lineinfile:
+    path: /lib/systemd/system/redis-server.service
+    regexp: '^Group='
+    line: "Group={{ effective_service_user }}"
+    backup: true
+  when: use_grunt_for_redis | default(false) and vault_grunt_user is defined
+  notify: 
+    - reload systemd  
+    - restart redis
+
+- name: Change ownership of Redis directories to service user
+  file:
+    path: "{{ item }}"
+    owner: "{{ effective_service_user }}"
+    group: "{{ effective_service_user }}"
+    recurse: true
+    state: directory
+  loop:
+    - "/var/lib/redis"
+    - "/var/log/redis"
+  when: use_grunt_for_redis | default(false) and vault_grunt_user is defined
+
+- name: Display Redis service user configuration
+  debug:
+    msg: |
+      📦 Redis Service User Configuration:
+      ├── Service User: {{ effective_service_user if use_grunt_for_redis | default(false) and vault_grunt_user is defined else 'redis (default)' }}
+      ├── Grunt User Override: {{ 'Enabled' if use_grunt_for_redis | default(false) and vault_grunt_user is defined else 'Disabled' }}
+      ├── Data Directory: /var/lib/redis
+      └── Log Directory: /var/log/redis

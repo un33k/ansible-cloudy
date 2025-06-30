@@ -93,6 +93,11 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Show Claudia version information",
     )
+    parser.add_argument(
+        "-H", "--host",
+        dest="target_host",
+        help="Target host IP address (overrides inventory)",
+    )
 
     return parser
 

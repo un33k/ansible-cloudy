@@ -228,9 +228,9 @@ class CommandRouter:
         return True
     
     def handle_generic_service(self, service_name, args, ansible_args):
-        """Handle generic services using recipe finder"""
+        """Handle generic services using recipe finder with dependency management"""
         from utils.config import InventoryManager  # noqa: E402
-        from execution.ansible import AnsibleRunner  # noqa: E402
+        from execution.dependency_manager import DependencyManager  # noqa: E402
         
         config = self.initialize_config()
         finder = RecipeFinder(config)
@@ -245,19 +245,18 @@ class CommandRouter:
             help_parser.display_recipe_help(service_name, recipe_path)
             return
         
-        # Execute recipe
-        inventory_manager = InventoryManager(config)
-        runner = AnsibleRunner(config)
+        # Execute recipe with dependency management
+        dependency_manager = DependencyManager(config)
         
         if args.verbose:
             ansible_args.insert(0, "-v")
         
-        inventory_path = inventory_manager.get_inventory_path(args.prod)
-        exit_code = runner.run_recipe(
-            recipe_path=recipe_path,
-            inventory_path=inventory_path,
+        exit_code = dependency_manager.execute_with_dependencies(
+            service_name=service_name,
+            production=args.prod,
             extra_args=ansible_args,
             dry_run=args.check,
+            target_host=getattr(args, 'target_host', None),
         )
         
         sys.exit(exit_code)

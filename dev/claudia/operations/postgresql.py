@@ -10,6 +10,7 @@ from pathlib import Path
 from utils.colors import Colors, error
 from utils.config import AliConfig, InventoryManager
 from execution.ansible import AnsibleRunner
+from execution.dependency_manager import DependencyManager
 from discovery.service_scanner import ServiceScanner
 from operations.recipes import RecipeFinder, RecipeHelpParser
 
@@ -21,6 +22,7 @@ class PostgreSQLOperations:
         self.config = config
         self.inventory_manager = InventoryManager(config)
         self.runner = AnsibleRunner(config)
+        self.dependency_manager = DependencyManager(config)
         self.scanner = ServiceScanner(config)
 
     def handle_operation(self, args, ansible_args: List[str]) -> int:
@@ -214,14 +216,7 @@ class PostgreSQLOperations:
         return None
 
     def _handle_recipe_install(self, args, ansible_args: List[str], psql_args: Dict[str, Any]) -> int:
-        """Handle PostgreSQL recipe installation"""
-        
-        # Find PostgreSQL recipe
-        finder = RecipeFinder(self.config)
-        recipe_path = finder.find_recipe("psql")
-        
-        if not recipe_path:
-            error("PostgreSQL recipe not found")
+        """Handle PostgreSQL recipe installation with automatic dependencies"""
         
         # Build Ansible extra vars from psql_args
         extra_vars = []
@@ -234,13 +229,15 @@ class PostgreSQLOperations:
         if hasattr(args, 'verbose') and args.verbose:
             extra_vars.insert(0, "-v")
         
-        # Execute recipe
-        inventory_path = self.inventory_manager.get_inventory_path(args.prod)
-        return self.runner.run_recipe(
-            recipe_path=recipe_path,
-            inventory_path=inventory_path,
-            extra_args=extra_vars + [arg for arg in ansible_args if arg not in ['--port', '--pgis'] and not arg.isdigit()],
+        # Execute with automatic dependency resolution (security → base → psql)
+        full_extra_args = extra_vars + [arg for arg in ansible_args if arg not in ['--port', '--pgis'] and not arg.isdigit()]
+        
+        return self.dependency_manager.execute_with_dependencies(
+            service_name="psql",
+            production=args.prod,
+            extra_args=full_extra_args,
             dry_run=args.check,
+            target_host=getattr(args, 'target_host', None),
         )
 
     def _handle_granular_operation(self, operation: str, args, ansible_args: List[str], psql_args: Dict[str, Any]) -> int:
@@ -359,6 +356,7 @@ class PostgreSQLOperations:
             inventory_path=inventory_path,
             extra_args=extra_vars,
             dry_run=args.check,
+            target_host=getattr(args, 'target_host', None),
         )
 
     def _show_psql_help(self) -> int:

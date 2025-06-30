@@ -1,0 +1,51 @@
+# Granular Task: Configure Service User for Applications
+# Purpose: Set up applications to run under grunt user when available
+# Usage: include_tasks: tasks/sys/services/configure-service-user.yml
+
+---
+- name: Determine effective service user
+  set_fact:
+    effective_service_user: "{{ grunt_user if vault_grunt_user is defined else service_user | default('root') }}"
+    
+- name: Display service user configuration
+  debug:
+    msg: |
+      🔧 Service User Configuration:
+      ├── Service: {{ service_name | default('Unknown') }}
+      ├── Effective User: {{ effective_service_user }}
+      ├── Grunt User Available: {{ 'Yes (' + grunt_user + ')' if vault_grunt_user is defined else 'No' }}
+      └── Fallback User: {{ service_user | default('root') }}
+
+- name: Ensure service user exists
+  user:
+    name: "{{ effective_service_user }}"
+    state: present
+    shell: /bin/bash
+    create_home: true
+  when: effective_service_user != 'root'
+
+- name: Add service user to necessary groups
+  user:
+    name: "{{ effective_service_user }}"
+    groups: "{{ service_groups | default(['www-data']) }}"
+    append: true
+  when: effective_service_user != 'root' and service_groups is defined
+
+- name: Create service directories with proper ownership
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ effective_service_user }}"
+    group: "{{ effective_service_user }}"
+    mode: '0755'
+  loop: "{{ service_directories | default([]) }}"
+  when: service_directories is defined
+
+- name: Set ownership for service files
+  file:
+    path: "{{ item }}"
+    owner: "{{ effective_service_user }}"
+    group: "{{ effective_service_user }}"
+    recurse: true
+  loop: "{{ service_files | default([]) }}"
+  when: service_files is defined

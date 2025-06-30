@@ -75,6 +75,18 @@
       when: setup_security | default(true) | bool
       tags: [security, packages]
       
+    # Service User Configuration
+    - name: Configure base service directories for grunt user
+      include_tasks: "{{ task_paths }}/sys/services/configure-service-user.yml"
+      vars:
+        service_name: "base-services"
+        service_directories:
+          - "/opt/services"
+          - "/var/log/services"
+          - "/var/run/services"
+      when: vault_grunt_user is defined
+      tags: [services, grunt]
+      
     # Final Validation
     - name: Validate grunt user access and configuration
       include_tasks: "{{ task_paths }}/sys/core/validate-grunt-access.yml"
@@ -95,10 +107,12 @@
              ├── Grunt User: {{ grunt_user if vault_grunt_user is defined else 'Not configured' }}
              ├── SSH Port: {{ ansible_port }}
              ├── Firewall: UFW enabled
-             └── Git: Configured
+             ├── Git: Configured
+             └── Service Directories: {{ 'Created for grunt user' if vault_grunt_user is defined else 'Standard root-based' }}
           
           🚀 Core server foundation ready for service deployments!
           
           📚 Next Steps:
-             • Deploy services: web-server.yml, database-server.yml, etc.
-             • All services run as root with SSH key authentication
+             • Deploy services: ./claudia psql --install, ./claudia django --install, etc.
+             • Service User Mode: {{ 'Grunt user (' + grunt_user + ') for service processes' if vault_grunt_user is defined else 'Root user for all operations' }}
+             • All automation continues as root with SSH key authentication
