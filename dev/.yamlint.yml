@@ -5,7 +5,6 @@ extends: default
 
 # Ignore patterns for third-party and service directories
 ignore: |
-  */tasks/services/memcached/*
   */tasks/services/redis/*
   */tasks/services/vpn/*
 

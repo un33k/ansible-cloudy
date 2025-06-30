@@ -18,7 +18,6 @@ vault_locale: "en_US.UTF-8"
 
 # === SERVICE CREDENTIALS ===
 vault_postgres_password: "your_postgres_password"
-vault_mysql_root_password: "your_mysql_root_password"
 vault_redis_password: "your_redis_password"
 vault_vpn_passphrase: "your_vpn_passphrase"
 

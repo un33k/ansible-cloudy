@@ -20,10 +20,6 @@ pg_users: []
   #   privileges: ALL
   #   database: myapp
 
-# MySQL Configuration (if needed)
-mysql_version: "8.0"
-mysql_port: 3306
-mysql_root_password: "{{ vault_mysql_root_password }}"
 
 # Redis Configuration (if on same server)
 redis_port: 6379

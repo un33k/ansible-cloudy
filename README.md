@@ -105,7 +105,7 @@ ansible-cloudy/
 │   │   └── vpn/             # openvpn.yml
 │   ├── tasks/                # Granular, reusable task files
 │   │   ├── sys/             # System operations (SSH, firewall, users)
-│   │   ├── db/              # Database automation (PostgreSQL, MySQL)
+│   │   ├── db/              # Database automation (PostgreSQL)
 │   │   ├── web/             # Web server management
 │   │   └── services/        # Service management (Docker, Redis, VPN)
 │   ├── templates/           # Configuration file templates

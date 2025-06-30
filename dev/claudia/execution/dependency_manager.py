@@ -80,12 +80,10 @@ class DependencyManager:
             # Database services
             "psql": ["security", "base"],
             "postgis": ["security", "base"],
-            "mysql": ["security", "base"],
             "mongodb": ["security", "base"],
             
             # Cache services
             "redis": ["security", "base"],
-            "memcached": ["security", "base"],
             
             # Web services
             "nginx": ["security", "base"],

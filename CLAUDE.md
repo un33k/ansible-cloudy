@@ -228,7 +228,6 @@ generic_servers:
 ./claudia django --install                             # Django web application
 ./claudia redis --install --port 6380 --memory 512    # Redis with custom port and memory
 ./claudia nginx --install --domain example.com --ssl  # Nginx with SSL domain
-./claudia mysql --install --port 3307 --root-password secret  # MySQL on custom port
 
 # Environment-specific deployments
 ./claudia security --install --prod
@@ -329,7 +328,7 @@ cloudy/
 ├── playbooks/recipes/     # High-level deployment recipes
 ├── tasks/                 # Modular task files
 │   ├── sys/              # System operations (SSH, firewall, users)
-│   ├── db/               # Database automation (PostgreSQL, MySQL)
+│   ├── db/               # Database automation (PostgreSQL)
 │   ├── web/              # Web server management
 │   └── services/         # Service management (Docker, Redis, VPN)
 ├── templates/            # Configuration file templates
@@ -463,7 +462,6 @@ cd ansible-cloudy/
 ./claudia psql --install --port 5544 --pgis             # PostgreSQL with PostGIS on custom port
 ./claudia redis --install --ci --port 6380 --memory 512 # Redis in CI with custom settings
 ./claudia nginx --install --domain example.com --ssl    # Nginx with SSL domain configuration
-./claudia mysql --install --port 3307 --root-password secret  # MySQL on custom port
 
 # Granular operations (service-specific tasks)
 ./claudia psql --adduser myuser --password secret123    # Add PostgreSQL user
@@ -587,7 +585,6 @@ vault_locale: "en_US.UTF-8"
 
 # === SERVICE CREDENTIALS ===
 vault_postgres_password: "your_postgres_password"
-vault_mysql_root_password: "your_mysql_root_password"
 vault_redis_password: "your_redis_password"
 vault_vpn_passphrase: "your_vpn_passphrase"
 ```

@@ -409,7 +409,6 @@ PostgreSQL with spatial extensions.
 - ✅ Generic server foundation
 - ✅ PostgreSQL installation
 - ✅ PostGIS spatial extensions
-- ✅ PgBouncer connection pooling
 - ✅ Database user management
 
 ### Cache Server

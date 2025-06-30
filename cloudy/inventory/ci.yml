@@ -78,7 +78,6 @@ all:
         admin_groups: "admin,www-data"
         postgresql_version: "15"
         postgis_version: "3.3"
-        pgbouncer_enabled: true
         listen_address: "*"
         
       hosts:
