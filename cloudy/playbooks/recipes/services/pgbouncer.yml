@@ -16,18 +16,19 @@
   
   vars:
     task_paths: "../../../tasks"
-    # Override defaults with CLI parameters
-    pgbouncer_port: "{{ port | default(pgbouncer_port) }}"
-    pgbouncer_backend_host: "{{ database_host | default(pgbouncer_backend_host) }}"
-    pgbouncer_backend_port: "{{ database_port | default(postgresql_port) }}"
-    pgbouncer_default_database: "{{ database_name | default(pgbouncer_default_database) }}"
-    pgbouncer_default_pool_size: "{{ pool_size | default(pgbouncer_default_pool_size) }}"
-    pgbouncer_max_db_connections: "{{ max_db_connections | default(pgbouncer_max_db_connections) }}"
-    pgbouncer_max_client_conn: "{{ max_client_connections | default(pgbouncer_max_client_conn) }}"
     
-    # Variable mapping for backward compatibility
-    pgbouncer_listen_port: "{{ pgbouncer_port }}"  # Deprecated
-    pgbouncer_listen_addr: "{{ pgbouncer_listen_address }}"
+    # Apply defaults with vault override pattern
+    pgbouncer_port: "{{ vault_pgbouncer_port | default(pgbouncer_port_default) }}"
+    pgbouncer_listen_addr: "{{ vault_pgbouncer_listen_addr | default(pgbouncer_listen_addr_default) }}"
+    pgbouncer_backend_host: "{{ vault_pgbouncer_backend_host | default(pgbouncer_backend_host_default) }}"
+    pgbouncer_backend_port: "{{ vault_pg_port | default(pg_port_default) }}"
+    pgbouncer_backend_database: "{{ vault_pgbouncer_backend_database | default(pgbouncer_backend_database_default) }}"
+    pgbouncer_default_pool_size: "{{ vault_pgbouncer_default_pool_size | default(pgbouncer_default_pool_size_default) }}"
+    pgbouncer_max_db_connections: "{{ vault_pgbouncer_max_db_connections | default(pgbouncer_max_db_connections_default) }}"
+    pgbouncer_max_client_conn: "{{ vault_pgbouncer_max_client_conn | default(pgbouncer_max_client_conn_default) }}"
+    
+    # Required variables from vault
+    database_password: "{{ vault_postgres_password }}"
     pgbouncer_db_host: "{{ pgbouncer_backend_host }}"  # Deprecated
     pgbouncer_db_port: "{{ pgbouncer_backend_port }}"  # Deprecated
     pgbouncer_db_name: "{{ pgbouncer_default_database }}"  # Deprecated

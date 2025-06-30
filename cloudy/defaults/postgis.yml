@@ -1,0 +1,66 @@
+---
+# PostGIS Extension Defaults
+# Variable naming convention: postgis_<setting>
+# These are overridden by vault_postgis_<setting> variables
+
+# === VERSION DEFAULTS ===
+postgis_version_default: "3.4"          # Current stable version
+postgis_version_suffix_default: ""      # Version suffix if needed
+
+# === EXTENSION DEFAULTS ===
+postgis_extensions_default:
+  - "postgis"
+  - "postgis_topology"
+  - "postgis_raster"
+  - "fuzzystrmatch"
+  - "postgis_tiger_geocoder"
+  - "address_standardizer"
+  - "address_standardizer_data_us"
+
+# === OPTIONAL EXTENSIONS ===
+postgis_optional_extensions_default:
+  - "pgrouting"
+  - "pointcloud"
+  - "pointcloud_postgis"
+  - "h3"
+  - "h3_postgis"
+
+# === CONFIGURATION DEFAULTS ===
+postgis_gdal_enabled_drivers_default: "ENABLE_ALL"
+postgis_enable_outdb_rasters_default: 1
+postgis_raster_overviews_default: true
+
+# === PERFORMANCE DEFAULTS ===
+postgis_max_wal_size_default: "1GB"
+postgis_checkpoint_completion_target_default: 0.9
+postgis_random_page_cost_default: 1.1
+postgis_effective_cache_size_default: "4GB"
+
+# === DATABASE TEMPLATE DEFAULTS ===
+postgis_template_database_default: "template_postgis"
+postgis_template_encoding_default: "UTF8"
+postgis_template_locale_default: "en_US.UTF-8"
+
+# === SPATIAL REFERENCE DEFAULTS ===
+postgis_srid_default: 4326              # WGS84
+postgis_srid_units_default: "degrees"
+postgis_srid_auth_default: "EPSG"
+
+# === TOPOLOGY DEFAULTS ===
+postgis_topology_schema_default: "topology"
+postgis_topology_precision_default: 0
+
+# === RASTER DEFAULTS ===
+postgis_raster_block_size_default: "auto"
+postgis_raster_overview_factor_default: 2
+postgis_raster_constraint_checks_default: true
+
+# === GEOCODING DEFAULTS ===
+postgis_tiger_schema_default: "tiger"
+postgis_tiger_data_default: "/gisdata"
+postgis_geocoder_type_default: "tiger"
+
+# === PATHS DEFAULTS ===
+postgis_extension_dir_default: "/usr/share/postgresql"
+postgis_proj_data_dir_default: "/usr/share/proj"
+postgis_gdal_data_dir_default: "/usr/share/gdal"

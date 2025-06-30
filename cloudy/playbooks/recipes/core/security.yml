@@ -8,11 +8,16 @@
   gather_facts: true
   become: true
   
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/security.yml"
+    - "../../../defaults/system.yml"
+  
   vars:
     task_paths: "../../../tasks"
     emergency_user: "{{ grunt_user }}"    # Only set if vault_grunt_user is defined
     # SSH Port Management Variables
-    target_ssh_port: "{{ new_ssh_port | default(vault_ssh_port | default(22022)) }}"
+    target_ssh_port: "{{ new_ssh_port | default(vault_ssh_port | default(ssh_port_default)) }}"
     phase_mode: "{{ 'port_change' if ssh_port_change_only | default(false) else 'full' if not skip_ssh_port_change | default(false) else 'no_port_change' }}"
     
   pre_tasks:

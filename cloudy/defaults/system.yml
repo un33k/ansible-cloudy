@@ -12,6 +12,10 @@ system_locale_default: "en_US.UTF-8"
 system_language_default: "en_US.UTF-8"
 system_timezone_default: "UTC"
 
+# === GIT DEFAULTS ===
+git_user_full_name_default: "System Administrator"
+git_user_email_default: "admin@example.com"
+
 # === PACKAGE MANAGEMENT DEFAULTS ===
 system_update_cache_valid_time_default: 3600
 system_upgrade_dist_default: "no"
@@ -89,6 +93,10 @@ system_backup_compression_default: "gzip"
 system_default_shell_default: "/bin/bash"
 system_default_umask_default: "022"
 system_password_hash_rounds_default: 5000
+
+# === GIT DEFAULTS ===
+git_user_full_name_default: "John Doe"
+git_user_email_default: "jdoe@example.com"
 
 # === PATHS DEFAULTS ===
 system_tmp_dir_default: "/tmp"

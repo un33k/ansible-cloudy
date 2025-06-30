@@ -16,6 +16,7 @@ redis_tcp_keepalive_default: 300
 
 # === AUTHENTICATION DEFAULTS ===
 redis_requirepass_default: ""   # Empty = no password
+redis_password_default: ""      # Alias for requirepass
 redis_acl_enabled_default: "no"
 
 # === MEMORY DEFAULTS ===

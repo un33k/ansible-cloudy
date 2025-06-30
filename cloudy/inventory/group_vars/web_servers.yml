@@ -1,11 +1,7 @@
 # Web Server Variables
-# Uses standardized variable naming convention
+# This file can override defaults for web servers
 
-# Web Server Choice
-webserver_type: "nginx"  # nginx, apache, or both
-webserver_port: 80
-
-# Domain Configuration
+# Domain Configuration (usually set per host)
 nginx_domain: "example.com"
 nginx_server_aliases: []
   # - www.example.com
@@ -13,27 +9,8 @@ nginx_server_aliases: []
 
 # SSL Configuration
 nginx_ssl_enabled: true
-nginx_ssl_cert_dir: "/etc/nginx/ssl"
-nginx_ssl_certificate: "{{ nginx_ssl_cert_dir }}/{{ nginx_domain }}.crt"
-nginx_ssl_certificate_key: "{{ nginx_ssl_cert_dir }}/{{ nginx_domain }}.key"
 letsencrypt_enabled: false
 letsencrypt_email: "admin@{{ nginx_domain }}"
-
-# Nginx Specific
-nginx_worker_processes: "auto"
-nginx_worker_connections: 1024
-nginx_client_max_body_size: "64M"
-nginx_keepalive_timeout: 65
-
-# Apache Specific  
-apache_mpm: "prefork"
-apache_max_request_workers: 256
-
-# Application Configuration
-app_user: "www-data"
-app_group: "www-data"
-app_root: "/srv/www"
-app_port: 8000
 
 # Supervisor Configuration
 supervisor_enabled: false
@@ -47,30 +24,6 @@ supervisor_programs: []
 
 # PgBouncer Configuration (Connection Pooling)
 pgbouncer_enabled: true
-pgbouncer_port: "{{ vault_pgbouncer_port | default(6432) }}"
-pgbouncer_listen_address: "127.0.0.1"  # Local only on web servers
 
-# Backend Database Connection
-pgbouncer_backend_host: "{{ database_host | default('db.internal') }}"
-pgbouncer_backend_port: "{{ vault_postgresql_port | default(5432) }}"
-pgbouncer_default_database: "{{ database_name | default('postgres') }}"
-pgbouncer_database_user: "{{ database_user | default('postgres') }}"
-
-# Connection Pool Settings
-pgbouncer_pool_mode: "transaction"  # transaction, session, or statement
-pgbouncer_default_pool_size: 5      # Connections per user/database pair
-pgbouncer_max_db_connections: 10    # Max backend connections per database
-pgbouncer_max_client_conn: 100      # Max client connections to pgbouncer
-pgbouncer_reserve_pool_size: 5      # Reserve connections for super users
-
-# Timeouts
-pgbouncer_server_idle_timeout: 600  # Close idle server connections after 10 min
-pgbouncer_query_wait_timeout: 60    # Cancel queries waiting too long
-
-# Backward compatibility mappings
-domain_name: "{{ nginx_domain }}"
-ssl_enabled: "{{ nginx_ssl_enabled }}"
-pgbouncer_listen_port: "{{ pgbouncer_port }}"
-pgbouncer_database_host: "{{ pgbouncer_backend_host }}"
-pgbouncer_database_port: "{{ pgbouncer_backend_port }}"
-pgbouncer_database_name: "{{ pgbouncer_default_database }}"
+# Backend Database Connection (usually set per environment)
+pgbouncer_backend_host: "db.internal"  # Override per environment

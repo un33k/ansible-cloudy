@@ -7,15 +7,19 @@
   gather_facts: true
   become: true
   
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/vpn.yml"
+  
   vars:
     task_paths: "../../../tasks"
     # OpenVPN Configuration
     vpn_domain: "{{ domain | default(inventory_hostname) }}"
-    vpn_port: "{{ port | default('1194') }}"
-    vpn_proto: "{{ proto | default('udp') }}"
-    vpn_passphrase: "{{ passphrase | default('nopass') }}"
-    vpn_datadir: "{{ datadir | default('/docker/openvpn') }}"
-    vpn_repo: "{{ repo | default('kylemanna/openvpn') }}"
+    vpn_port: "{{ port | default(vault_vpn_port | default(vpn_port_default)) }}"
+    vpn_proto: "{{ proto | default(vault_vpn_proto | default(vpn_proto_default)) }}"
+    vpn_passphrase: "{{ passphrase | default(vault_vpn_passphrase | default(vpn_passphrase_default)) }}"
+    vpn_datadir: "{{ datadir | default(vault_vpn_datadir | default(vpn_docker_volume_default)) }}"
+    vpn_repo: "{{ repo | default(vault_vpn_repo | default(vpn_docker_image_default)) }}"
     
     # Setup flags
     setup_docker: true

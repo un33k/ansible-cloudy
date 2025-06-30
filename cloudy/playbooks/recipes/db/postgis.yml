@@ -8,12 +8,16 @@
   gather_facts: true
   become: true
   
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/postgresql.yml"
+  
   vars:
     task_paths: "../../../tasks"
     # Database Configuration
-    pg_version: "{{ postgresql_version | default('15') }}"
-    pgis_version: "{{ postgis_version | default('') }}"
-    db_port: "{{ database_port | default(vault_postgresql_port | default(5432)) }}"
+    pg_version: "{{ postgresql_version | default(pg_version_default) }}"
+    pgis_version: "{{ postgis_version | default(pg_postgis_version_default) }}"
+    db_port: "{{ database_port | default(vault_postgresql_port | default(pg_port_default)) }}"
     
     # Setup flags
     run_generic_setup: "{{ generic | default(true) }}"

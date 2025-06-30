@@ -7,17 +7,17 @@ all:
     # === CONNECTION CONFIGURATIONS ===
     
     # Default connection (root with SSH keys - post-security)
-    ansible_user: root
-    ansible_port: "{{ vault_ssh_port | default(22) }}"
-    ansible_host_key_checking: false
-    ansible_ssh_private_key_file: ~/.ssh/id_rsa
-    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_user: "{{ vault_ansible_user | default(ansible_user_default) }}"
+    ansible_port: "{{ vault_ssh_port | default(ssh_port_default) }}"
+    ansible_host_key_checking: "{{ vault_ansible_host_key_checking | default(ansible_host_key_checking_default) }}"
+    ansible_ssh_private_key_file: "{{ vault_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file_default) }}"
+    ansible_ssh_common_args: "{{ vault_ansible_ssh_common_args | default(ansible_ssh_common_args_default) }}"
     
     # Global Settings (with vault fallbacks)
-    git_user_full_name: "{{ vault_git_user_full_name | default('Staging Admin') }}"
-    git_user_email: "{{ vault_git_user_email | default('staging@example.com') }}"
-    timezone: "{{ vault_timezone | default('America/New_York') }}"
-    locale: "{{ vault_locale | default('en_US.UTF-8') }}"
+    git_user_full_name: "{{ vault_git_user_full_name | default(git_user_full_name_default) }}"
+    git_user_email: "{{ vault_git_user_email | default(git_user_email_default) }}"
+    timezone: "{{ vault_timezone | default(system_timezone_default) }}"
+    locale: "{{ vault_locale | default(system_locale_default) }}"
     
   children:
     # === CONNECTION SWITCHING GROUPS ===
@@ -25,12 +25,12 @@ all:
     # Security setup group - uses root with password for initial setup
     security_targets:
       vars:
-        ansible_user: root
-        ansible_port: 22
-        ansible_ssh_pass: "{{ vault_root_password | default('changeme') }}"
-        ansible_host_key_checking: false
-        ansible_ssh_private_key_file: ~/.ssh/id_rsa
-        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+        ansible_user: "{{ vault_ansible_user | default(ansible_user_default) }}"
+        ansible_port: "{{ vault_initial_ssh_port | default(ssh_port_default) }}"
+        ansible_ssh_pass: "{{ vault_root_password }}"  # Required for initial setup, no default
+        ansible_host_key_checking: "{{ vault_ansible_host_key_checking | default(ansible_host_key_checking_default) }}"
+        ansible_ssh_private_key_file: "{{ vault_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file_default) }}"
+        ansible_ssh_common_args: "{{ vault_ansible_ssh_common_args | default(ansible_ssh_common_args_default) }}"
       hosts:
         # Include all staging servers for security setup
         staging-web: {}
@@ -40,11 +40,11 @@ all:
     # Post-security group - uses root with SSH keys for all operations  
     service_targets:
       vars:
-        ansible_user: "{{ vault_admin_user | default('admin') }}"
-        ansible_port: "{{ vault_ssh_port | default(22) }}"
-        ansible_host_key_checking: false
-        ansible_ssh_private_key_file: ~/.ssh/id_rsa
-        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+        ansible_user: "{{ vault_ansible_user | default(ansible_user_default) }}"
+        ansible_port: "{{ vault_ssh_port | default(ssh_port_default) }}"
+        ansible_host_key_checking: "{{ vault_ansible_host_key_checking | default(ansible_host_key_checking_default) }}"
+        ansible_ssh_private_key_file: "{{ vault_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file_default) }}"
+        ansible_ssh_common_args: "{{ vault_ansible_ssh_common_args | default(ansible_ssh_common_args_default) }}"
       hosts:
         # Include all staging servers for service operations
         staging-web: {}
@@ -56,8 +56,8 @@ all:
     # Web Application Servers
     web_servers:
       vars:
-        admin_user: "{{ vault_admin_user | default('admin') }}"
-        admin_password: "{{ vault_admin_password | default('changeme') }}"
+        admin_user: "{{ vault_admin_user | default(admin_user_default) }}"
+        admin_password: "{{ vault_admin_password }}"  # Required, no default
         admin_groups: "admin,www-data"
         webserver: gunicorn
         webserver_port: 8181
@@ -73,8 +73,8 @@ all:
     # Database Servers
     database_servers:
       vars:
-        admin_user: "{{ vault_admin_user | default('admin') }}"
-        admin_password: "{{ vault_admin_password | default('changeme') }}"
+        admin_user: "{{ vault_admin_user | default(admin_user_default) }}"
+        admin_password: "{{ vault_admin_password }}"  # Required, no default
         admin_groups: "admin,www-data"
         postgresql_version: "15"
         postgis_version: "3.3"
@@ -85,13 +85,13 @@ all:
           ansible_host: 10.0.10.11
           hostname: staging-db.example.com
           database_port: 5432
-          postgres_password: "{{ vault_postgres_password | default('changeme') }}"
+          postgres_password: "{{ vault_postgres_password }}"  # Required, no default
 
     # Cache Servers  
     cache_servers:
       vars:
-        admin_user: "{{ vault_admin_user | default('admin') }}"
-        admin_password: "{{ vault_admin_password | default('changeme') }}"
+        admin_user: "{{ vault_admin_user | default(admin_user_default) }}"
+        admin_password: "{{ vault_admin_password }}"  # Required, no default
         admin_groups: "admin,www-data"
         redis_memory: 256  # MB - smaller for staging
         redis_interface: "0.0.0.0"
@@ -101,4 +101,4 @@ all:
           ansible_host: 10.0.10.12
           hostname: staging-cache.example.com
           port: 6379
-          password: "{{ vault_redis_password | default('changeme') }}"
+          password: "{{ vault_redis_password }}"  # Required, no default

@@ -9,6 +9,10 @@
   gather_facts: true
   become: true
   
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/system.yml"
+  
   vars:
     task_paths: "../../../tasks"
     # Base system configuration (configurable via inventory)

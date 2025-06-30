@@ -4,7 +4,7 @@
 # These are overridden by vault_security_<setting> variables
 
 # === SSH DEFAULTS ===
-ssh_port_default: 22022         # Non-standard SSH port for security
+ssh_port_default: 22            # Standard SSH port (override with vault for security)
 ssh_permit_root_login_default: "prohibit-password"
 ssh_password_authentication_default: "no"
 ssh_pubkey_authentication_default: "yes"
@@ -102,8 +102,15 @@ kernel_modules_blacklist_default:
   - "bluetooth"
   - "usb-storage"
 
+# === ANSIBLE CONNECTION DEFAULTS ===
+ansible_user_default: "root"
+ansible_ssh_private_key_file_default: "~/.ssh/id_rsa"
+ansible_ssh_common_args_default: "-o StrictHostKeyChecking=no"
+ansible_host_key_checking_default: false
+
 # === PATHS DEFAULTS ===
 ssh_config_dir_default: "/etc/ssh"
 ssh_authorized_keys_dir_default: ".ssh"
+ssh_private_key_dir_default: "~/.ssh"
 fail2ban_config_dir_default: "/etc/fail2ban"
 audit_log_dir_default: "/var/log/audit"

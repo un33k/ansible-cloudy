@@ -9,50 +9,50 @@
 all:
   vars:
     # Global Settings (with vault fallbacks)
-    git_user_full_name: "{{ vault_git_user_full_name | default('John Doe') }}"
-    git_user_email: "{{ vault_git_user_email | default('jdoe@example.com') }}"
-    timezone: "{{ vault_timezone | default('America/New_York') }}"
-    locale: "{{ vault_locale | default('en_US.UTF-8') }}"
+    git_user_full_name: "{{ vault_git_user_full_name | default(git_user_full_name_default) }}"
+    git_user_email: "{{ vault_git_user_email | default(git_user_email_default) }}"
+    timezone: "{{ vault_timezone | default(system_timezone_default) }}"
+    locale: "{{ vault_locale | default(system_locale_default) }}"
     
     # === CONNECTION CONFIGURATIONS ===
     
     # Default connection (root with SSH keys - for all operations)
-    ansible_user: root
-    ansible_port: "{{ vault_ssh_port | default(22) }}"
-    ansible_host_key_checking: false
-    ansible_ssh_private_key_file: ~/.ssh/id_rsa
-    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_user: "{{ vault_ansible_user | default(ansible_user_default) }}"
+    ansible_port: "{{ vault_ssh_port | default(ssh_port_default) }}"
+    ansible_host_key_checking: "{{ vault_ansible_host_key_checking | default(ansible_host_key_checking_default) }}"
+    ansible_ssh_private_key_file: "{{ vault_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file_default) }}"
+    ansible_ssh_common_args: "{{ vault_ansible_ssh_common_args | default(ansible_ssh_common_args_default) }}"
     
     # Security Configuration - Optional Grunt User Section
     # Only configured if vault_grunt_user is defined in vault
     # Services can optionally run under this user instead of root
-    grunt_user: "{{ vault_grunt_user }}"
-    grunt_password: "{{ vault_grunt_password }}"
-    grunt_groups: "admin,www-data"
-    grunt_ssh_private_key_file: ~/.ssh/id_rsa
+    grunt_user: "{{ vault_grunt_user | default('') }}"
+    grunt_password: "{{ vault_grunt_password | default('') }}"
+    grunt_groups: "{{ vault_grunt_groups | default(admin_groups_default) }}"
+    grunt_ssh_private_key_file: "{{ vault_grunt_ssh_private_key_file | default(ansible_ssh_private_key_file_default) }}"
     
   # === GROUP VARIABLES FOR CONNECTION SWITCHING ===
   children:
     # Security setup group - uses root with password for initial setup
     security_targets:
       vars:
-        ansible_user: root
-        ansible_port: 22
-        ansible_ssh_pass: "{{ vault_root_password | default('changeme') }}"
-        ansible_host_key_checking: false
-        ansible_ssh_private_key_file: ~/.ssh/id_rsa
-        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+        ansible_user: "{{ vault_ansible_user | default(ansible_user_default) }}"
+        ansible_port: "{{ vault_initial_ssh_port | default(ssh_port_default) }}"
+        ansible_ssh_pass: "{{ vault_root_password }}"  # Required for initial setup, no default
+        ansible_host_key_checking: "{{ vault_ansible_host_key_checking | default(ansible_host_key_checking_default) }}"
+        ansible_ssh_private_key_file: "{{ vault_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file_default) }}"
+        ansible_ssh_common_args: "{{ vault_ansible_ssh_common_args | default(ansible_ssh_common_args_default) }}"
       hosts:
         test-server: {}
     
     # Post-security group - uses root with SSH keys for all operations
     service_targets:
       vars:
-        ansible_user: root
-        ansible_port: "{{ vault_ssh_port | default(22) }}"
-        ansible_host_key_checking: false
-        ansible_ssh_private_key_file: ~/.ssh/id_rsa
-        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+        ansible_user: "{{ vault_ansible_user | default(ansible_user_default) }}"
+        ansible_port: "{{ vault_ssh_port | default(ssh_port_default) }}"
+        ansible_host_key_checking: "{{ vault_ansible_host_key_checking | default(ansible_host_key_checking_default) }}"
+        ansible_ssh_private_key_file: "{{ vault_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file_default) }}"
+        ansible_ssh_common_args: "{{ vault_ansible_ssh_common_args | default(ansible_ssh_common_args_default) }}"
       hosts:
         test-server: {}
 
@@ -61,22 +61,7 @@ all:
     test-server:
       ansible_host: 10.10.10.198
       hostname: test-server.example.com
-      ansible_ssh_private_key_file: ~/.ssh/id_rsa
-      
-      # Service-specific configs (using standardized variable names)
-      
-      # Nginx Configuration
-      nginx_domain: test-server.example.com
-      nginx_protocol: https
-      nginx_ssl_enabled: true
-      nginx_upstream_servers:
-        - "127.0.0.1:8000"
-      
-      # PostgreSQL Configuration (standardized names)
-      postgresql_version: "17"
-      postgresql_port: 5432
-      postgis_version: "3"
-      setup_postgis: true
+      ansible_ssh_private_key_file: "{{ vault_ansible_ssh_private_key_file | default(ansible_ssh_private_key_file_default) }}"
       
       # PostgreSQL Databases to Create
       postgresql_databases:
@@ -94,31 +79,16 @@ all:
       # PostgreSQL Users to Create
       postgresql_users:
         - name: myapp_user
-          password: "{{ vault_postgres_password | default('changeme') }}"
+          password: "{{ vault_postgres_password }}"  # Required, no default
           database: myapp_db
           priv: ALL
           role_attr_flags: CREATEDB,NOSUPERUSER
         - name: gis_user
-          password: "{{ vault_postgres_password | default('changeme') }}"
+          password: "{{ vault_postgres_password }}"  # Required, no default
           database: gis_db
           priv: ALL
           role_attr_flags: CREATEDB,NOSUPERUSER
         - name: readonly_user
-          password: "{{ vault_postgres_password | default('changeme') }}"
+          password: "{{ vault_postgres_password }}"  # Required, no default
           role_attr_flags: NOSUPERUSER
       
-      # Redis Configuration (standardized names)
-      redis_memory_mb: 512
-      redis_port: 6379
-      redis_password: "{{ vault_redis_password | default('') }}"
-      redis_persistence_enabled: true
-      
-      # PgBouncer Configuration (if needed)
-      pgbouncer_port: 6432
-      pgbouncer_backend_host: localhost
-      pgbouncer_backend_port: 5432
-      pgbouncer_default_pool_size: 25
-      
-      # Web Server Configuration
-      webserver_type: gunicorn
-      webserver_port: 8181
