@@ -5,6 +5,7 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PYTHON_VERSION="3.11.9"
 VENV_DIR="./.venv"
 AUTO_YES=false
@@ -219,6 +220,11 @@ install_deps() {
     # Install Ansible and development tools from pyproject.toml
     pip install -e ".[dev]"
     
+    # Install claudia wrapper into venv
+    log "Installing claudia command..."
+    cp "$SCRIPT_DIR/dev/claudia/bin/claudia-venv" "$VENV_DIR/bin/claudia"
+    chmod +x "$VENV_DIR/bin/claudia"
+    
     log "Ansible dependencies installed successfully"
 }
 
@@ -253,17 +259,17 @@ main() {
     log "Bootstrap complete!"
     echo -e "${GREEN}To activate the environment:${NC} source $VENV_DIR/bin/activate"
     echo -e "${GREEN}To test the setup:${NC}"
-    echo "  ./claudia dev syntax    # Quick syntax check"
-    echo "  ./claudia dev yaml      # YAML syntax validation"
-    echo "  ./claudia dev lint      # Complete linting (YAML + Ansible)"
-    echo "  ./claudia dev validate  # Full validation"
+    echo "  claudia dev syntax    # Quick syntax check"
+    echo "  claudia dev yaml      # YAML syntax validation"
+    echo "  claudia dev lint      # Complete linting (YAML + Ansible)"
+    echo "  claudia dev validate  # Full validation"
     echo
     echo -e "${GREEN}To run recipes:${NC}"
-    echo "  ./claudia security --install      # Security hardening"
-    echo "  ./claudia django --install        # Django web server"
-    echo "  ./claudia psql --install          # PostgreSQL database"
+    echo "  claudia security --install      # Security hardening"
+    echo "  claudia django --install        # Django web server"
+    echo "  claudia psql --install          # PostgreSQL database"
     echo
-    echo -e "${YELLOW}Remember to activate the environment (source .venv/bin/activate) and run ./claudia from project root!${NC}"
+    echo -e "${YELLOW}Remember to activate the environment first: source .venv/bin/activate${NC}"
 }
 
 main "$@"

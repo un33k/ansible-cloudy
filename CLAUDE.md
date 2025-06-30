@@ -11,10 +11,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Be direct and concise**: Get straight to implementation without excessive commentary
 
 ### Claudia CLI Mandatory Usage
-- **ALWAYS use `./claudia` for operations**: Unless debugging internal mechanisms, use Claudia CLI for all testing and execution
-- **NO direct ansible-playbook calls**: Use `./claudia [service] --install` instead of direct Ansible commands
-- **Testing**: Use `./claudia [service] --install --check` for dry runs
-- **Granular operations**: Use `./claudia psql --adduser foo --password 1234` for specific tasks
+- **ALWAYS use `claudia` for operations**: Unless debugging internal mechanisms, use Claudia CLI for all testing and execution (requires activated venv)
+- **NO direct ansible-playbook calls**: Use `claudia [service] --install` instead of direct Ansible commands
+- **Testing**: Use `claudia [service] --install --check` for dry runs
+- **Granular operations**: Use `claudia psql --adduser foo --password 1234` for specific tasks
 
 ### Claudia Architecture Standards
 - **Smart intuitive interface**: Make Claudia CLI intelligent and user-friendly with auto-discovery
@@ -25,9 +25,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Modular refactoring**: Large modules split into focused sub-modules (e.g., ansible/, postgresql/, dev_tools/)
 
 ### Development Workflow
-1. **Use Claudia CLI**: `./claudia [service] --install` for recipe operations
-2. **Use granular operations**: `./claudia psql --adduser foo --password 1234` for specific tasks
-3. **Test with dry runs**: `./claudia [service] --install --check` before real execution  
+1. **Activate venv**: `source .venv/bin/activate` before using claudia
+2. **Use Claudia CLI**: `claudia [service] --install` for recipe operations
+3. **Use granular operations**: `claudia psql --adduser foo --password 1234` for specific tasks
+4. **Test with dry runs**: `claudia [service] --install --check` before real execution  
 4. **Maintain modularity**: Keep recipes focused, use `import_playbook` for orchestration
 5. **File organization**: `/claudia/` for CLI, `/tasks/` for reusable components, `/recipes/` for orchestration
 6. **Auto-discovery**: Add Claudia metadata headers to tasks for automatic CLI integration
@@ -37,10 +38,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Environment Setup
 
 ```bash
-# Install Ansible
-pip install ansible
+# Run bootstrap to set up environment
+./bootstrap.sh
 
-# Navigate to project directory
+# Activate virtual environment
+source .venv/bin/activate
+
+# Navigate to project directory (if not already there)
 cd ansible-cloudy/
 ```
 
@@ -53,41 +57,41 @@ cd ansible-cloudy/
 **Phase 1: Initial Security Setup** (Root + Password)
 - **Connection**: `root` user with `vault_root_password` 
 - **Purpose**: Install SSH keys, configure firewall, optionally create grunt service user
-- **Command**: `./claudia security --install`
+- **Command**: `claudia security --install`
 
 **Phase 2: All Operations** (Root + SSH Keys)  
 - **Connection**: `root` user with SSH keys only (no passwords)
 - **Purpose**: All service installations and configurations
-- **Commands**: `./claudia base --install`, `./claudia psql --install`, etc.
+- **Commands**: `claudia base --install`, `claudia psql --install`, etc.
 
 **🚀 Workflow:**
-- **Step 1 - Security**: `./claudia security --install` (root password → SSH keys)
-- **Step 2 - Core**: `./claudia base --install` (basic server config)
-- **Step 3 - Services**: `./claudia psql --install`, `./claudia redis --install --port 6380 --memory 512`, `./claudia nginx --install --domain example.com --ssl` (deploy services as root)
+- **Step 1 - Security**: `claudia security --install` (root password → SSH keys)
+- **Step 2 - Core**: `claudia base --install` (basic server config)
+- **Step 3 - Services**: `claudia psql --install`, `claudia redis --install --port 6380 --memory 512`, `claudia nginx --install --domain example.com --ssl` (deploy services as root)
 
 #### Environment Selection & Configuration
-- **Development (default)**: `./claudia security --install` or `./claudia security --install --dev`
-- **Production**: `./claudia security --install --prod`, `./claudia django --install --prod`
-- **CI/CD**: `./claudia security --install --ci`, `./claudia redis --install --ci`
-- **Custom Inventory**: `./claudia security --install -i inventory/custom.yml`
-- **Custom Vault**: `./claudia security --install -e .vault/prod-secrets.yml`
-- **Combined**: `./claudia psql --install --prod -e .vault/prod-db.yml -H 192.168.1.100`
+- **Development (default)**: `claudia security --install` or `claudia security --install --dev`
+- **Production**: `claudia security --install --prod`, `claudia django --install --prod`
+- **CI/CD**: `claudia security --install --ci`, `claudia redis --install --ci`
+- **Custom Inventory**: `claudia security --install -i inventory/custom.yml`
+- **Custom Vault**: `claudia security --install -e .vault/prod-secrets.yml`
+- **Combined**: `claudia psql --install --prod -e .vault/prod-db.yml -H 192.168.1.100`
 
 #### Universal Parameter Support & Granular Operations
-- **PostgreSQL**: `./claudia psql --install --port 5544 --pgis`, `./claudia psql --adduser foo --password 1234`, `./claudia psql --list-users`
-- **Redis**: `./claudia redis --install --port 6380 --memory 512 --password secret`, `./claudia redis --configure-port 6380`, `./claudia redis --restart`
-- **Nginx**: `./claudia nginx --install --domain example.com --ssl --backends "192.168.1.10:8080,192.168.1.11:8080"`, `./claudia nginx --setup-ssl example.com`
-- **MySQL**: `./claudia mysql --install --port 3307 --root-password secret`
+- **PostgreSQL**: `claudia psql --install --port 5544 --pgis`, `claudia psql --adduser foo --password 1234`, `claudia psql --list-users`
+- **Redis**: `claudia redis --install --port 6380 --memory 512 --password secret`, `claudia redis --configure-port 6380`, `claudia redis --restart`
+- **Nginx**: `claudia nginx --install --domain example.com --ssl --backends "192.168.1.10:8080,192.168.1.11:8080"`, `claudia nginx --setup-ssl example.com`
+- **MySQL**: `claudia mysql --install --port 3307 --root-password secret`
 - **Auto-discovery**: All operations automatically discovered from task files
 - **Smart parameters**: Intuitive parameter names mapped to Ansible variables
 - **Backward compatibility**: Traditional `-- -e "var=value"` syntax still supported
 
 #### Development Tools
 - **Bootstrap**: `./bootstrap.sh` - Sets up .venv with all development tools
-- **Claudia CLI**: `./claudia security --install` - Intelligent infrastructure management
-- **Claudia Dev Commands**: `./claudia dev validate` (pre-commit suite), `./claudia dev syntax`, `./claudia dev comprehensive`, `./claudia dev lint`, `./claudia dev test`
-- **Authentication test**: `./claudia dev test` - Test server authentication flow
-- **Service discovery**: `./claudia --list-services` - Show all auto-discovered services
+- **Claudia CLI**: `claudia security --install` - Intelligent infrastructure management
+- **Claudia Dev Commands**: `claudia dev validate` (pre-commit suite), `claudia dev syntax`, `claudia dev comprehensive`, `claudia dev lint`, `claudia dev test`
+- **Authentication test**: `claudia dev test` - Test server authentication flow
+- **Service discovery**: `claudia --list-services` - Show all auto-discovered services
 - **Clean output**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Spell checking**: Configured via `dev/.cspell.json` with 480+ technical terms
 - **Linting**: Configured via `dev/.ansible-lint.yml` and `dev/.yamlint.yml`
@@ -128,7 +132,7 @@ generic_servers:
 
 Then run commands normally:
 ```bash
-./claudia security --install
+claudia security --install
 ```
 
 #### Method 2: Environment Variable
@@ -139,7 +143,7 @@ Set the sudo password via environment variable:
 export ANSIBLE_BECOME_PASS=secure123
 
 # Or provide it directly with the command
-ANSIBLE_BECOME_PASS=secure123 ./claudia security --install
+ANSIBLE_BECOME_PASS=secure123 claudia security --install
 ```
 
 **SSH Key Configuration**:
@@ -175,16 +179,16 @@ generic_servers:
 **Complete Secure Workflow Example**:
 ```bash
 # 1. Setup secure server (root SSH keys + admin user, firewall, port change)
-./claudia security --install
+claudia security --install
 
 # 2. Deploy base configuration
-./claudia base --install
+claudia base --install
 
 # 3. Deploy services
-./claudia psql --install    # PostgreSQL database
-./claudia django --install  # Django web application
-./claudia redis --install   # Redis cache
-./claudia nginx --install   # Nginx load balancer
+claudia psql --install    # PostgreSQL database
+claudia django --install  # Django web application
+claudia redis --install   # Redis cache
+claudia nginx --install   # Nginx load balancer
 ```
 
 **Security Features**:
@@ -198,7 +202,7 @@ generic_servers:
 - ✅ **Default**: Shows only changes and failures (clean output)
 - ✅ **Minimal**: `ANSIBLE_STDOUT_CALLBACK=minimal` (compact format)
 - ✅ **One-line**: `ANSIBLE_STDOUT_CALLBACK=oneline` (single line per task)
-- ✅ **Verbose**: `./claudia ... -v` (detailed debugging)
+- ✅ **Verbose**: `claudia ... -v` (detailed debugging)
 - ✅ **Always Shown**: Changed tasks, failed tasks, unreachable hosts
 - ✅ **Hidden by Default**: Successful unchanged tasks, skipped tasks
 
@@ -207,75 +211,75 @@ generic_servers:
 ```bash
 # Claudia CLI - Universal Parameter Support
 # Help and Discovery (default action)
-./claudia security                  # Show security help and configuration options
-./claudia base                      # Show base setup help and variables
-./claudia psql                      # Show PostgreSQL help and configuration
-./claudia redis                     # Show Redis help and all parameters
-./claudia nginx                     # Show Nginx help and configuration
+claudia security                  # Show security help and configuration options
+claudia base                      # Show base setup help and variables
+claudia psql                      # Show PostgreSQL help and configuration
+claudia redis                     # Show Redis help and all parameters
+claudia nginx                     # Show Nginx help and configuration
 
 # Step 1: Security setup
-./claudia security --install
-./claudia security --install --dev    # Development environment (default)
-./claudia security --install --prod   # Production environment
-./claudia security --install --ci     # CI/CD environment
+claudia security --install
+claudia security --install --dev    # Development environment (default)
+claudia security --install --prod   # Production environment
+claudia security --install --ci     # CI/CD environment
 
 # Step 2: Core setup  
-./claudia base --install
-./claudia base --install --prod
+claudia base --install
+claudia base --install --prod
 
 # Step 3: Service deployment with parameters
-./claudia psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
-./claudia django --install                             # Django web application
-./claudia redis --install --port 6380 --memory 512    # Redis with custom port and memory
-./claudia nginx --install --domain example.com --ssl  # Nginx with SSL domain
-./claudia pgbouncer --install                          # PgBouncer on web servers (localhost:6432)
+claudia psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
+claudia django --install                             # Django web application
+claudia redis --install --port 6380 --memory 512    # Redis with custom port and memory
+claudia nginx --install --domain example.com --ssl  # Nginx with SSL domain
+claudia pgbouncer --install                          # PgBouncer on web servers (localhost:6432)
 
 # Environment-specific deployments
-./claudia security --install --prod
-./claudia django --install --prod
-./claudia redis --install --prod --memory 1024
-./claudia psql --install --ci
+claudia security --install --prod
+claudia django --install --prod
+claudia redis --install --prod --memory 1024
+claudia psql --install --ci
 
 # Custom inventory and vault files
-./claudia security --install -i inventory/staging.yml
-./claudia psql --install -e .vault/prod-secrets.yml
-./claudia django --install --prod -i inventory/web-servers.yml -e .vault/prod-web.yml
+claudia security --install -i inventory/staging.yml
+claudia psql --install -e .vault/prod-secrets.yml
+claudia django --install --prod -i inventory/web-servers.yml -e .vault/prod-web.yml
 
 # Target specific hosts
-./claudia security --install -H 192.168.1.100
-./claudia psql --install --prod -H 10.0.0.50 -e .vault/prod.yml
+claudia security --install -H 192.168.1.100
+claudia psql --install --prod -H 10.0.0.50 -e .vault/prod.yml
 
 # Granular operations (no recipe installation)
-./claudia psql --adduser myuser --password secret123  # Add PostgreSQL user
-./claudia psql --adddb myapp --owner myuser           # Add database with owner
-./claudia redis --configure-port 6380                 # Change Redis port
-./claudia redis --set-password newpass               # Change Redis password
-./claudia nginx --setup-ssl example.com              # Setup SSL for domain
-./claudia nginx --add-domain api.example.com         # Add new domain
-./claudia pgbouncer --configure-port 6433            # Change PgBouncer port
-./claudia pgbouncer --set-pool-size 30               # Update connection pool size
-./claudia pgbouncer --restart                        # Restart PgBouncer service
+claudia psql --adduser myuser --password secret123  # Add PostgreSQL user
+claudia psql --adddb myapp --owner myuser           # Add database with owner
+claudia redis --configure-port 6380                 # Change Redis port
+claudia redis --set-password newpass               # Change Redis password
+claudia nginx --setup-ssl example.com              # Setup SSL for domain
+claudia nginx --add-domain api.example.com         # Add new domain
+claudia pgbouncer --configure-port 6433            # Change PgBouncer port
+claudia pgbouncer --set-pool-size 30               # Update connection pool size
+claudia pgbouncer --restart                        # Restart PgBouncer service
 
 # Dry runs and testing
-./claudia redis --install --check --port 6380
-./claudia nginx --install --check --domain example.com --ssl
-./claudia pgbouncer --install --check --port 6433
-./claudia security --install --prod --check
+claudia redis --install --check --port 6380
+claudia nginx --install --check --domain example.com --ssl
+claudia pgbouncer --install --check --port 6433
+claudia security --install --prod --check
 
 # Legacy syntax (not recommended - use universal parameters instead)
-# OLD: ./claudia redis --install -- -e "redis_port=6380" -e "redis_memory_mb=512"
-# NEW: ./claudia redis --install --port 6380 --memory 512
+# OLD: claudia redis --install -- -e "redis_port=6380" -e "redis_memory_mb=512"
+# NEW: claudia redis --install --port 6380 --memory 512
 
 # Development and validation
-./claudia dev validate                  # Pre-commit validation suite (recommended)
-./claudia dev comprehensive             # Comprehensive validation (includes structure)
-./claudia dev syntax                    # Quick syntax check
-./claudia dev test                      # Authentication flow test
-./claudia dev lint                      # Ansible linting
-./claudia dev spell                     # Spell checking
+claudia dev validate                  # Pre-commit validation suite (recommended)
+claudia dev comprehensive             # Comprehensive validation (includes structure)
+claudia dev syntax                    # Quick syntax check
+claudia dev test                      # Authentication flow test
+claudia dev lint                      # Ansible linting
+claudia dev spell                     # Spell checking
 
 # Service discovery
-./claudia --list-services               # Show all available services and operations
+claudia --list-services               # Show all available services and operations
 ```
 
 #### Recipe Categories
@@ -313,16 +317,16 @@ Claudia supports multiple environments with flexible configuration options:
 **Examples:**
 ```bash
 # Use production with custom vault
-./claudia security --install --prod -e .vault/prod-secrets.yml
+claudia security --install --prod -e .vault/prod-secrets.yml
 
 # Use custom inventory with host override
-./claudia psql --install -i inventory/staging.yml -H 10.0.0.100
+claudia psql --install -i inventory/staging.yml -H 10.0.0.100
 
 # CI environment with custom variables
-./claudia redis --install --ci -e ci-overrides.yml
+claudia redis --install --ci -e ci-overrides.yml
 
 # Development (default) with all options
-./claudia nginx --install --dev -i custom.yml -e secrets.yml -H 192.168.1.50
+claudia nginx --install --dev -i custom.yml -e secrets.yml -H 192.168.1.50
 ```
 
 ## Architecture Overview
@@ -433,46 +437,46 @@ cd ansible-cloudy/
 ```
 
 ### Core Claudia Commands
-- **Show service help**: `./claudia [service-name]` (security, base, psql, redis, nginx, etc.)
-- **Execute recipes with parameters**: `./claudia [service-name] --install [options]` (requires explicit flag for safety)
-- **Granular operations**: `./claudia psql --adduser foo --password 1234` (no recipe installation)
-- **Test authentication flow**: `./claudia dev test`
-- **Service discovery**: `./claudia --list-services` (show all available services and operations)
+- **Show service help**: `claudia [service-name]` (security, base, psql, redis, nginx, etc.)
+- **Execute recipes with parameters**: `claudia [service-name] --install [options]` (requires explicit flag for safety)
+- **Granular operations**: `claudia psql --adduser foo --password 1234` (no recipe installation)
+- **Test authentication flow**: `claudia dev test`
+- **Service discovery**: `claudia --list-services` (show all available services and operations)
 - **Clean output (changes only)**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Alternative output formats**:
-  - `ANSIBLE_STDOUT_CALLBACK=minimal ./claudia ... --install` (compact format)
-  - `ANSIBLE_STDOUT_CALLBACK=oneline ./claudia ... --install` (one line per task)
-  - Standard verbose: `./claudia ... --install -v` (detailed debugging)
+  - `ANSIBLE_STDOUT_CALLBACK=minimal claudia ... --install` (compact format)
+  - `ANSIBLE_STDOUT_CALLBACK=oneline claudia ... --install` (one line per task)
+  - Standard verbose: `claudia ... --install -v` (detailed debugging)
 
 ### Claudia Service Examples
 ```bash
 # Help and configuration (default action)
-./claudia security              # Show security help and options
-./claudia base                  # Show base configuration help
-./claudia psql                  # Show PostgreSQL help and parameters
-./claudia redis                 # Show Redis help and all available parameters
-./claudia nginx                 # Show Nginx help and configuration options
+claudia security              # Show security help and options
+claudia base                  # Show base configuration help
+claudia psql                  # Show PostgreSQL help and parameters
+claudia redis                 # Show Redis help and all available parameters
+claudia nginx                 # Show Nginx help and configuration options
 
 # Recipe execution with environment selection
-./claudia security --install                              # Dev environment (default)
-./claudia security --install --prod                       # Production environment
-./claudia security --install --ci                         # CI/CD environment
-./claudia security --install -i inventory/staging.yml     # Custom inventory
-./claudia security --install -e .vault/prod.yml          # Custom vault
-./claudia security --install --prod -e .vault/prod.yml -H 10.0.0.50  # All options
+claudia security --install                              # Dev environment (default)
+claudia security --install --prod                       # Production environment
+claudia security --install --ci                         # CI/CD environment
+claudia security --install -i inventory/staging.yml     # Custom inventory
+claudia security --install -e .vault/prod.yml          # Custom vault
+claudia security --install --prod -e .vault/prod.yml -H 10.0.0.50  # All options
 
 # Recipe execution with universal parameters
-./claudia openvpn --install                              # VPN server setup (OpenVPN with Docker)
-./claudia django --install --prod                        # Django in production
-./claudia psql --install --port 5544 --pgis             # PostgreSQL with PostGIS on custom port
-./claudia redis --install --ci --port 6380 --memory 512 # Redis in CI with custom settings
-./claudia nginx --install --domain example.com --ssl    # Nginx with SSL domain configuration
+claudia openvpn --install                              # VPN server setup (OpenVPN with Docker)
+claudia django --install --prod                        # Django in production
+claudia psql --install --port 5544 --pgis             # PostgreSQL with PostGIS on custom port
+claudia redis --install --ci --port 6380 --memory 512 # Redis in CI with custom settings
+claudia nginx --install --domain example.com --ssl    # Nginx with SSL domain configuration
 
 # Granular operations (service-specific tasks)
-./claudia psql --adduser myuser --password secret123    # Add PostgreSQL user
-./claudia psql --adddb myapp --owner myuser             # Add database with owner
-./claudia redis --configure-port 6380                   # Change Redis port
-./claudia nginx --setup-ssl example.com                 # Setup SSL for specific domain
+claudia psql --adduser myuser --password secret123    # Add PostgreSQL user
+claudia psql --adddb myapp --owner myuser             # Add database with owner
+claudia redis --configure-port 6380                   # Change Redis port
+claudia nginx --setup-ssl example.com                 # Setup SSL for specific domain
 ```
 
 ### Ansible Security Features
@@ -541,7 +545,7 @@ cp .vault/dev.yml.example .vault/my-dev.yml
 vim .vault/my-dev.yml
 
 # Use with Claudia commands
-./claudia psql --install -- -e @.vault/my-dev.yml
+claudia psql --install -- -e @.vault/my-dev.yml
 ```
 
 **Simple Configuration Benefits:**
@@ -554,10 +558,10 @@ vim .vault/my-dev.yml
 
 ```bash
 # Use vault with Claudia commands
-./claudia psql --install -- -e @.vault/my-dev.yml
+claudia psql --install -- -e @.vault/my-dev.yml
 
 # Production deployment
-./claudia psql --install --prod -- -e @.vault/my-prod.yml
+claudia psql --install --prod -- -e @.vault/my-prod.yml
 
 # Direct Ansible usage
 ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbooks/recipes/db/psql.yml
@@ -636,7 +640,7 @@ ansible_port: "{{ vault_ssh_port | default(22) }}"
 ```bash
 # Connection: root user with password
 # Purpose: Bootstrap SSH keys and secure server
-./claudia security --install
+claudia security --install
 
 # What happens:
 # 1. Connects as root with vault_root_password
@@ -650,9 +654,9 @@ ansible_port: "{{ vault_ssh_port | default(22) }}"
 ```bash
 # Connection: root user with SSH keys ONLY
 # Purpose: All service installations and management
-./claudia base --install
-./claudia psql --install
-./claudia redis --install
+claudia base --install
+claudia psql --install
+claudia redis --install
 
 # What happens:
 # 1. Connects as root with SSH keys
@@ -762,13 +766,13 @@ DATABASES = {
 ### Deployment Commands
 ```bash
 # Install PgBouncer on existing web servers
-./claudia pgbouncer --install
+claudia pgbouncer --install
 
 # Configure with custom settings
-./claudia pgbouncer --install --port 6433 --pool-size 30
+claudia pgbouncer --install --port 6433 --pool-size 30
 
 # Verify installation
-./claudia pgbouncer --health-check
+claudia pgbouncer --health-check
 ```
 
 ## Port Configuration Philosophy

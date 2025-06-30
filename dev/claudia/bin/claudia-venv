@@ -1,0 +1,11 @@
+#!/bin/bash
+# Claudia (Claude-inspired Infrastructure Assistant) - venv version
+# This version is installed into .venv/bin/ and assumes it's running from there
+
+# Get the virtual environment root (two levels up from .venv/bin/)
+VENV_BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
+VENV_DIR="$(dirname "$VENV_BIN_DIR")"
+PROJECT_ROOT="$(dirname "$VENV_DIR")"
+
+# Use the venv's Python to run claudia
+exec "$VENV_BIN_DIR/python" "$PROJECT_ROOT/dev/claudia/cli/main.py" "$@"
