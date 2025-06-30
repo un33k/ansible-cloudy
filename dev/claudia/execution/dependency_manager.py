@@ -80,6 +80,7 @@ class DependencyManager:
             # Database services
             "psql": ["security", "base"],
             "postgis": ["security", "base"],
+            "pgpool2": ["security", "base"],
             "mongodb": ["security", "base"],
             
             # Cache services

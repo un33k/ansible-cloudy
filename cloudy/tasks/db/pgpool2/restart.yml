@@ -1,0 +1,31 @@
+# Task: Restart PgPool-II Service
+# Purpose: Restart pgpool2 service to apply configuration changes
+
+---
+- name: Restart pgpool2 service
+  service:
+    name: pgpool2
+    state: restarted
+  register: pgpool_restart
+
+- name: Wait for pgpool2 to be ready after restart
+  wait_for:
+    port: "{{ pgpool_port | default(5432) }}"
+    host: "{{ pgpool_listen_address | default('localhost') }}"
+    delay: 3
+    timeout: 30
+
+- name: Verify pgpool2 is accepting connections
+  postgresql_ping:
+    db: postgres
+    login_host: "{{ pgpool_listen_address | default('localhost') }}"
+    login_port: "{{ pgpool_port | default(5432) }}"
+  register: pgpool_ping
+  ignore_errors: yes
+
+- name: Display restart status
+  debug:
+    msg: |
+      ✅ PgPool-II restarted successfully
+      Service: {{ 'Running' if pgpool_restart is succeeded else 'Failed' }}
+      Accepting connections: {{ 'Yes' if pgpool_ping is succeeded else 'No' }}

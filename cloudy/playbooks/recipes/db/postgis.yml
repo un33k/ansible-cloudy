@@ -14,6 +14,7 @@
     pg_version: "{{ postgresql_version | default('15') }}"
     pgis_version: "{{ postgis_version | default('') }}"
     db_port: "{{ database_port | default(5432) }}"
+    setup_pgpool2: "{{ pgpool2 | default(false) }}"
     
     # Setup flags
     run_generic_setup: "{{ generic | default(true) }}"
@@ -32,6 +33,7 @@
           PostgreSQL Version: {{ pg_version }}
           PostGIS Version: {{ 'Latest available' if pgis_version == '' else pgis_version }}
           Port: {{ db_port }}
+          PgPool2: {{ 'Yes' if setup_pgpool2 else 'No' }}
           
   tasks:
     # Generic Server Setup - Include core foundation tasks
@@ -78,11 +80,55 @@
         legacy: "{{ legacy_postgis | default(false) }}"
       tags: [database, postgis, configure]
       
+    # PgPool2 Connection Pooling (Optional)
+    - name: Install PgPool2
+      include_tasks: "{{ task_paths }}/db/pgpool2/install.yml"
+      when: setup_pgpool2 | bool
+      tags: [database, pgpool2, install]
+      
+    - name: Configure PgPool2
+      include_tasks: "{{ task_paths }}/db/pgpool2/configure.yml"
+      vars:
+        backend_host: "localhost"
+        backend_port: "{{ db_port if db_port != 5432 else 5433 }}"
+        pgpool_port: "5432"
+      when: setup_pgpool2 | bool
+      tags: [database, pgpool2, configure]
+      
+    - name: Configure PgPool2 backends
+      include_tasks: "{{ task_paths }}/db/pgpool2/configure-backends.yml"
+      vars:
+        backend_host: "localhost"
+        backend_port: "{{ db_port if db_port != 5432 else 5433 }}"
+      when: setup_pgpool2 | bool
+      tags: [database, pgpool2, backends]
+      
+    - name: Start PgPool2
+      include_tasks: "{{ task_paths }}/db/pgpool2/start.yml"
+      when: setup_pgpool2 | bool
+      tags: [database, pgpool2, service]
+      
     # Firewall Configuration
     - name: Allow PostgreSQL through firewall
       include_tasks: "{{ task_paths }}/sys/firewall/allow-postgresql.yml"
-      when: setup_firewall | bool
+      when: setup_firewall | bool and not setup_pgpool2
       tags: [firewall, postgresql]
+      
+    - name: Allow PgPool2 through firewall
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-port.yml"
+      vars:
+        port: "5432"
+        proto: tcp
+      when: setup_firewall | bool and setup_pgpool2
+      tags: [firewall, pgpool2]
+      
+    - name: Allow PostgreSQL backend through firewall (with PgPool2)
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-port.yml"
+      vars:
+        port: "{{ db_port if db_port != 5432 else 5433 }}"
+        proto: tcp
+      when: setup_firewall | bool and setup_pgpool2 and (db_port != 5432 or setup_pgpool2)
+      tags: [firewall, postgresql-backend]
       
       
   post_tasks:
@@ -94,8 +140,8 @@
              ├── PostgreSQL Version: {{ pg_version }}
              ├── PostGIS Version: {{ pgis_version if pgis_version != '' else 'Latest available' }}
              ├── Template Database: template_postgis (ready for spatial databases)
-             ├── Connection: Direct PostgreSQL connection
-             ├── Backend Port: {{ db_port }}
+             ├── Connection Pooling: {{ 'PgPool2 enabled on port 5432' if setup_pgpool2 else 'Direct PostgreSQL connection' }}
+             ├── Backend Port: {{ db_port if not setup_pgpool2 else (db_port if db_port != 5432 else 5433) }}
              ├── Firewall: {{ 'Database ports allowed' if setup_firewall else 'Not configured' }}
              └── Status: Ready for spatial database applications
           
@@ -103,7 +149,7 @@
           
           📖 Connection Information:
           - Host: {{ ansible_host }}
-          - Port: {{ db_port }}
+          - Port: {{ '5432 (PgPool2) → ' + (db_port|string if db_port != 5432 else '5433') + ' (PostgreSQL)' if setup_pgpool2 else db_port }}
           - Template: template_postgis (for new spatial databases)
           
           📖 Next Steps:
@@ -112,3 +158,9 @@
           2. Create database users and set permissions
           3. Configure client applications to connect
           4. Set up backup and monitoring
+          
+  handlers:
+    - name: restart pgpool2
+      service:
+        name: pgpool2
+        state: restarted

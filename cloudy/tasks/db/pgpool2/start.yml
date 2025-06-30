@@ -1,0 +1,28 @@
+# Task: Start PgPool-II Service
+# Purpose: Start pgpool2 service and verify it's running
+
+---
+- name: Start pgpool2 service
+  service:
+    name: pgpool2
+    state: started
+  register: pgpool_start
+
+- name: Wait for pgpool2 to be ready
+  wait_for:
+    port: "{{ pgpool_port | default(5432) }}"
+    host: "{{ pgpool_listen_address | default('localhost') }}"
+    delay: 2
+    timeout: 30
+
+- name: Check pgpool2 service status
+  command: systemctl status pgpool2
+  register: pgpool_status
+  changed_when: false
+
+- name: Display service status
+  debug:
+    msg: |
+      ✅ PgPool-II service started
+      Status: {{ 'Running' if pgpool_status.rc == 0 else 'Failed' }}
+      Port: {{ pgpool_port | default(5432) }}

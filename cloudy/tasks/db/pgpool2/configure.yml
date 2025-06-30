@@ -1,0 +1,54 @@
+# Task: Configure PgPool-II
+# Purpose: Configure pgpool2 with backend PostgreSQL settings
+# Variables required: backend_host, backend_port, pgpool_port
+
+---
+- name: Set pgpool2 configuration variables
+  set_fact:
+    pgpool_listen_port: "{{ pgpool_port | default(5432) }}"
+    pgpool_backend_host: "{{ backend_host | default('localhost') }}"
+    pgpool_backend_port: "{{ backend_port | default(5433) }}"
+    pgpool_socket_dir: "/var/run/postgresql"
+    pgpool_num_init_children: "{{ num_init_children | default(32) }}"
+    pgpool_max_pool: "{{ max_pool | default(4) }}"
+
+- name: Backup original pgpool.conf
+  copy:
+    src: /etc/pgpool2/pgpool.conf
+    dest: /etc/pgpool2/pgpool.conf.backup
+    remote_src: yes
+    force: no
+
+- name: Deploy pgpool.conf from template
+  template:
+    src: pgpool2/pgpool.conf.j2
+    dest: /etc/pgpool2/pgpool.conf
+    owner: postgres
+    group: postgres
+    mode: '0640'
+    backup: yes
+  notify: restart pgpool2
+
+- name: Configure pool_hba.conf for authentication
+  template:
+    src: pgpool2/pool_hba.conf.j2
+    dest: /etc/pgpool2/pool_hba.conf
+    owner: postgres
+    group: postgres
+    mode: '0640'
+    backup: yes
+  notify: restart pgpool2
+
+- name: Set pgpool2 to start on boot
+  service:
+    name: pgpool2
+    enabled: yes
+
+- name: Display configuration summary
+  debug:
+    msg: |
+      ✅ PgPool-II configured successfully
+      Listen Port: {{ pgpool_listen_port }}
+      Backend: {{ pgpool_backend_host }}:{{ pgpool_backend_port }}
+      Connection Pool Size: {{ pgpool_num_init_children }} children × {{ pgpool_max_pool }} connections
+      Total Connections: {{ pgpool_num_init_children | int * pgpool_max_pool | int }}

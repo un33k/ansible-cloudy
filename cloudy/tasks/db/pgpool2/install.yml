@@ -1,0 +1,48 @@
+# Task: Install PgPool-II Connection Pooler
+# Purpose: Install pgpool2 for PostgreSQL connection pooling
+# Based on: python-cloudy best practices
+
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Install PgPool-II
+  apt:
+    name: 
+      - pgpool2
+      - postgresql-{{ pg_version | default('15') }}-pgpool2
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Ensure pgpool2 service is stopped after install
+  service:
+    name: pgpool2
+    state: stopped
+  
+- name: Create pgpool2 runtime directory
+  file:
+    path: /var/run/pgpool
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: Create pgpool2 log directory
+  file:
+    path: /var/log/pgpool
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: Display installation status
+  debug:
+    msg: |
+      ✅ PgPool-II installed successfully
+      Version: pgpool2 with PostgreSQL {{ pg_version | default('15') }} support
+      Config directory: /etc/pgpool2
+      Runtime directory: /var/run/pgpool
+      Log directory: /var/log/pgpool

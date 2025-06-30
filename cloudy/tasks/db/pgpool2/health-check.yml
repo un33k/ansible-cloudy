@@ -1,0 +1,44 @@
+# Task: PgPool-II Health Check
+# Purpose: Verify pgpool2 is running and can connect to backend
+
+---
+- name: Check if pgpool2 service is active
+  systemd:
+    name: pgpool2
+  register: pgpool_service_status
+
+- name: Test pgpool2 connectivity
+  postgresql_ping:
+    db: postgres
+    login_host: "{{ pgpool_listen_address | default('localhost') }}"
+    login_port: "{{ pgpool_port | default(5432) }}"
+  register: pgpool_connectivity
+  ignore_errors: yes
+
+- name: Check pgpool2 process
+  shell: pgrep -f pgpool
+  register: pgpool_process
+  changed_when: false
+  failed_when: false
+
+- name: Get pgpool2 node information
+  command: pgpool show pool_nodes
+  register: pool_nodes
+  changed_when: false
+  failed_when: false
+  become_user: postgres
+
+- name: Display health check results
+  debug:
+    msg: |
+      🏥 PgPool-II Health Check Results:
+      Service Status: {{ pgpool_service_status.status.ActiveState }}
+      Process Running: {{ 'Yes' if pgpool_process.rc == 0 else 'No' }}
+      Accepting Connections: {{ 'Yes' if pgpool_connectivity is succeeded else 'No' }}
+      Backend Nodes: {{ pool_nodes.stdout_lines | length if pool_nodes.rc == 0 else 'Unknown' }}
+      
+      {% if pgpool_service_status.status.ActiveState != 'active' or pgpool_connectivity is failed %}
+      ⚠️  WARNING: PgPool-II health check failed!
+      {% else %}
+      ✅ PgPool-II is healthy
+      {% endif %}
