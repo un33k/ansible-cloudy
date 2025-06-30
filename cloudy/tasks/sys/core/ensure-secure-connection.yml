@@ -1,5 +1,5 @@
-# Ensure Grunt Connection - Connection Validation Task
-# Validates that the current connection is using grunt user with SSH keys
+# Ensure Secure Connection - Connection Validation Task
+# Validates that the current connection is using root user with SSH keys
 # This task should be included in all service recipes to ensure proper authentication
 
 ---
@@ -16,11 +16,11 @@
     msg: |
       ❌ SECURITY ERROR: Connected as root user!
       
-      This recipe requires grunt user connection with SSH keys.
+      This recipe requires root user connection with SSH keys.
       
       Root access should only be used for initial security setup.
       
-      Expected: ansible_user should be 'grunt' or '{{ grunt_user | default("grunt") }}'
+      Expected: ansible_user should be 'root'
       Actual: ansible_user is '{{ ansible_user }}'
       
       🔧 Fix:
@@ -35,7 +35,7 @@
       
       This recipe requires SSH key authentication only.
       
-      Grunt passwords should only be used for account creation and sudo.
+      Root user should only use SSH key authentication.
       
       🔧 Fix:
       1. Remove ansible_ssh_pass from inventory
@@ -58,25 +58,25 @@
       2. Ensure inventory uses the secure SSH port (22022)
   when: ansible_port == 22
 
-- name: Validate grunt user
+- name: Validate current user
   command: whoami
   register: current_user
   changed_when: false
   become: false
 
-- name: Fail if not connecting as expected grunt user
+- name: Fail if not connecting as root user
   fail:
     msg: |
-      ❌ USER ERROR: Not connecting as expected grunt user!
+      ❌ USER ERROR: Not connecting as root user!
       
-      Expected: {{ grunt_user | default('grunt') }}
+      Expected: root
       Actual: {{ current_user.stdout }}
       
       🔧 Fix:
       1. Verify admin user exists on server
       2. Check SSH key permissions
       3. Run security setup: ./claudia security --install
-  when: current_user.stdout != (grunt_user | default('grunt'))
+  when: current_user.stdout != 'root'
 
 - name: Test SSH key authentication
   stat:
@@ -106,9 +106,9 @@
 - name: Fail if sudo access not working
   fail:
     msg: |
-      ❌ SUDO ERROR: Grunt user cannot sudo without password!
+      ❌ SUDO ERROR: Root user authentication issue!
       
-      Expected: NOPASSWD sudo access for grunt user
+      Expected: Root user should have full access
       Actual: sudo requires password or fails
       
       🔧 Fix:
@@ -122,7 +122,7 @@
       ✅ CONNECTION VALIDATION PASSED
       
       🔐 Authentication Status: SECURE
-      ├── User: {{ current_user.stdout }} (grunt)
+      ├── User: {{ current_user.stdout }} (root)
       ├── Port: {{ ansible_port }} (secure)
       ├── Auth: SSH keys only
       ├── Sudo: NOPASSWD access

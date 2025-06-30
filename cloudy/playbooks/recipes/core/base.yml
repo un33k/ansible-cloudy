@@ -15,9 +15,9 @@
     setup_swap: false
           
   pre_tasks:
-    # Ensure proper grunt connection
-    - name: Validate grunt connection
-      include_tasks: "{{ task_paths }}/sys/core/ensure-grunt-connection.yml"
+    # Ensure proper secure connection
+    - name: Validate secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
           
   tasks:
     # System Initialization
@@ -51,6 +51,7 @@
         target_user: "{{ grunt_user }}"
         git_name: "{{ git_user_full_name }}"
         git_email: "{{ git_user_email }}"
+      when: vault_grunt_user is defined
       tags: [users, grunt, git]
       
     # Firewall Setup (additional rules beyond SSH)
@@ -79,6 +80,7 @@
       include_tasks: "{{ task_paths }}/sys/core/validate-grunt-access.yml"
       vars:
         grunt_password: "{{ grunt_password }}"
+      when: vault_grunt_user is defined
       tags: [validation, grunt]
       
   post_tasks:
@@ -90,7 +92,7 @@
           📋 Configuration Summary:
              ├── Hostname: {{ hostname }}
              ├── Timezone: {{ timezone }}
-             ├── Grunt User: {{ grunt_user }}
+             ├── Grunt User: {{ grunt_user if vault_grunt_user is defined else 'Not configured' }}
              ├── SSH Port: {{ ansible_port }}
              ├── Firewall: UFW enabled
              └── Git: Configured
@@ -99,4 +101,4 @@
           
           📚 Next Steps:
              • Deploy services: web-server.yml, database-server.yml, etc.
-             • All services now use grunt user with sudo access
+             • All services run as root with SSH key authentication

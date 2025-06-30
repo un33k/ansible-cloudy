@@ -43,10 +43,10 @@
   
 - name: Add grunt user to docker group
   user:
-    name: "{{ grunt_user | default('grunt') }}"
+    name: "{{ grunt_user }}"
     groups: docker
     append: true
-  when: grunt_user is defined
+  when: vault_grunt_user is defined
   register: docker_group_result
   
 - name: Verify Docker installation

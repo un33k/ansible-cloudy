@@ -19,9 +19,9 @@
     postgis_version: "3"
     
   pre_tasks:
-    # Ensure proper grunt connection
-    - name: Validate grunt connection
-      include_tasks: "{{ task_paths }}/sys/core/ensure-grunt-connection.yml"
+    # Ensure proper secure connection
+    - name: Validate secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
     
     - name: Display PostgreSQL setup information
       debug:

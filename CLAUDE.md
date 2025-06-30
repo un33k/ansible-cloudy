@@ -47,22 +47,22 @@ cd ansible-cloudy/
 
 #### Simplified Server Setup (Recommended) - Using Claudia CLI
 
-**🔒 Two-Phase Authentication Model:**
+**🔒 Simplified Authentication Model:**
 
 **Phase 1: Initial Security Setup** (Root + Password)
 - **Connection**: `root` user with `vault_root_password` 
-- **Purpose**: Install SSH keys, create grunt user, secure server
+- **Purpose**: Install SSH keys, configure firewall, optionally create grunt service user
 - **Command**: `./claudia security --install`
 
-**Phase 2: All Service Operations** (Admin + SSH Keys)  
-- **Connection**: `admin` user with SSH keys only (no passwords)
+**Phase 2: All Operations** (Root + SSH Keys)  
+- **Connection**: `root` user with SSH keys only (no passwords)
 - **Purpose**: All service installations and configurations
 - **Commands**: `./claudia base --install`, `./claudia psql --install`, etc.
 
 **🚀 Workflow:**
-- **Step 1 - Security**: `./claudia security --install` (root → admin transition)
+- **Step 1 - Security**: `./claudia security --install` (root password → SSH keys)
 - **Step 2 - Core**: `./claudia base --install` (basic server config)
-- **Step 3 - Services**: `./claudia psql --install`, `./claudia redis --install --port 6380 --memory 512`, `./claudia nginx --install --domain example.com --ssl` (deploy services with parameters)
+- **Step 3 - Services**: `./claudia psql --install`, `./claudia redis --install --port 6380 --memory 512`, `./claudia nginx --install --domain example.com --ssl` (deploy services as root)
 
 #### Production Setup
 - **Claudia CLI**: `./claudia security --install --prod`, `./claudia django --install --prod`, `./claudia redis --install --prod`
@@ -91,15 +91,15 @@ cd ansible-cloudy/
 **🎯 SIMPLE APPROACH**: Three clear steps for any server.
 
 **Workflow**:
-1. **core/security.yml** → Sets up grunt user, SSH keys, firewall, disables root
+1. **core/security.yml** → Sets up SSH keys, firewall, optionally creates grunt service user
 2. **core/base.yml** → Basic server config (hostname, git, timezone, etc.)  
 3. **[category]/[service].yml** → Deploy specific services (www/django, db/psql, cache/redis, etc.)
 
 **Security Features**:
-- ✅ **Grunt user**: Created with SSH key access
-- ✅ **Root disabled**: No more root login after security step
+- ✅ **Root with SSH keys**: All operations use root with key authentication
+- ✅ **Optional grunt user**: Created only if `vault_grunt_user` is defined - for service processes
 - ✅ **Firewall**: UFW configured with custom SSH port
-- ✅ **Simple**: No complex detection logic
+- ✅ **Simple**: Single connection context, no user switching
 
 ### Legacy Single-Phase Setup
 
@@ -518,9 +518,9 @@ ansible_port: "{{ vault_ssh_port | default(22) }}"
 
 ### 🔒 Authentication Flow & Security Model
 
-#### **Two-Phase Authentication Architecture**
+#### **Simplified Authentication Architecture**
 
-**🎯 Design Goal**: Admin passwords are NEVER used for automation - only SSH keys after initial setup.
+**🎯 Design Goal**: Root SSH key authentication for ALL operations. Optional grunt user ONLY for service processes.
 
 #### **Phase 1: Initial Security Setup**
 ```bash
@@ -530,48 +530,72 @@ ansible_port: "{{ vault_ssh_port | default(22) }}"
 
 # What happens:
 # 1. Connects as root with vault_root_password
-# 2. Installs SSH keys for root and grunt users  
-# 3. Creates grunt user with vault_grunt_password
+# 2. Installs SSH keys for root user
+# 3. Optionally creates grunt user (only if vault_grunt_user is defined)
 # 4. Configures firewall and secure SSH port
 # 5. Disables root password authentication
 ```
 
-#### **Phase 2: All Service Operations**
+#### **Phase 2: All Operations**
 ```bash
-# Connection: grunt user with SSH keys ONLY
+# Connection: root user with SSH keys ONLY
 # Purpose: All service installations and management
 ./claudia base --install
 ./claudia psql --install
 ./claudia redis --install
 
 # What happens:
-# 1. Connects as grunt user with SSH keys
-# 2. Uses sudo for privileged operations (NOPASSWD)
+# 1. Connects as root with SSH keys
+# 2. Full root privileges - no sudo needed
 # 3. Never uses passwords for authentication
-# 4. All automation runs under grunt user context
+# 4. All automation runs as root (simple and secure)
 ```
 
 #### **Connection Validation**
 Every service recipe automatically validates:
-- ✅ Connected as grunt user (not root)
+- ✅ Connected as root user with SSH keys
 - ✅ Using SSH keys (no passwords)
-- ✅ Secure SSH port (not 22)
-- ✅ Sudo access works without password
+- ✅ Secure SSH port (22022 instead of 22)
+- ✅ Full root access available
 - ❌ Fails with clear error messages if wrong connection type
 
 #### **Security Features**
-- 🔐 **Root Access**: Only during initial setup, then disabled
-- 🔑 **SSH Keys**: All automation uses keys after setup
-- 🛡️ **Admin Passwords**: Only for account creation and manual access
-- 🚫 **No Password Automation**: Zero passwords in service configurations
-- 📋 **Consistent Context**: All services run under grunt user
+- 🔐 **Root Access**: SSH key authentication for all operations
+- 🔑 **SSH Keys**: All automation uses keys after initial setup
+- 🛡️ **Optional Grunt User**: Only created if vault defines it - for service processes
+- 🚫 **No Password Automation**: Zero passwords in automation
+- 📋 **Simple Context**: All operations run as root (no user switching)
 - 🔍 **Connection Validation**: Automatic verification before operations
+
+### **🤖 Optional Grunt Service User**
+
+The grunt user is **completely optional** and only created if you define it in vault:
+
+```yaml
+# .vault/dev.yml
+vault_grunt_user: "myservice"    # Uncomment to enable grunt user creation
+vault_grunt_password: "secret"
+```
+
+**When to use grunt user:**
+- ✅ Running web applications (nginx, apache, etc.)
+- ✅ Database processes that don't need root
+- ✅ Application containers and services
+- ✅ Isolating service permissions
+
+**When NOT to use grunt user:**
+- ❌ System administration tasks (always use root)
+- ❌ Installing packages and services (use root)
+- ❌ Firewall and network configuration (use root)
+- ❌ SSH and security management (use root)
+
+**Default behavior:** If `vault_grunt_user` is not defined, all operations run as root with SSH keys.
 
 ### Security Best Practices
 
 1. **Never commit credentials** - Add vault files to .gitignore
-2. **Use strong passwords** - Generate secure credentials
+2. **Use strong passwords** - Generate secure credentials for grunt user (if used)
 3. **Environment separation** - Different vault files for dev/prod
 4. **Regular rotation** - Update credentials periodically
 5. **Follow authentication flow** - Always run security setup first
-6. **Use SSH keys** - Admin passwords only for manual access
+6. **Use SSH keys** - Root with SSH keys for all automation

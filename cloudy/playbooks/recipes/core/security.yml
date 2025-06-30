@@ -10,7 +10,7 @@
   
   vars:
     task_paths: "../../../tasks"
-    emergency_user: "{{ grunt_user | default('grunt') }}"    # Configurable username from inventory
+    emergency_user: "{{ grunt_user }}"    # Only set if vault_grunt_user is defined
     
   pre_tasks:
     - name: Validate root connection for security setup
@@ -38,7 +38,7 @@
           
           Security Model:
           ├── Root User: SSH keys ONLY (automation access)
-          ├── Grunt User: {{ emergency_user }} (password + SSH keys)
+          ├── Grunt User: {{ emergency_user if vault_grunt_user is defined else 'Not configured - Optional service user' }} {{ '(password + SSH keys)' if vault_grunt_user is defined else '' }}
           ├── SSH Port: {{ ansible_port }} → 22022 (secure port)
           └── Firewall: UFW enabled with strict rules
           
@@ -61,11 +61,12 @@
       when: ansible_ssh_private_key_file is defined
       tags: [ssh, keys, root]
       
-    # Phase 3: Create Grunt Access User
+    # Phase 3: Create Optional Grunt Service User
     - name: Create grunt user ({{ emergency_user }})
       include_tasks: "{{ task_paths }}/sys/user/add-user.yml"
       vars:
         username: "{{ emergency_user }}"
+      when: vault_grunt_user is defined
       tags: [users, grunt]
       
     - name: Set grunt user password
@@ -73,6 +74,7 @@
       vars:
         username: "{{ emergency_user }}"
         password: "{{ grunt_password }}"
+      when: vault_grunt_user is defined
       tags: [users, grunt, password]
       
     - name: Add grunt user to sudoers with NOPASSWD
@@ -80,6 +82,7 @@
       vars:
         username: "{{ emergency_user }}"
         nopasswd_sudo: true
+      when: vault_grunt_user is defined
       tags: [users, grunt, sudo]
       
     - name: Install SSH public key for grunt user
@@ -87,7 +90,7 @@
       vars:
         target_user: "{{ emergency_user }}"
         pub_key_path: "{{ ansible_ssh_private_key_file }}.pub"
-      when: ansible_ssh_private_key_file is defined
+      when: vault_grunt_user is defined and ansible_ssh_private_key_file is defined
       tags: [ssh, keys, grunt]
       
     # Phase 4: Firewall Setup (Early Protection)
@@ -159,7 +162,7 @@
           
           📋 Security Configuration:
              ├── Root Access: SSH keys ONLY (automation)
-             ├── Grunt Access: {{ emergency_user }} (password + SSH keys)
+             ├── Grunt Access: {{ emergency_user if vault_grunt_user is defined else 'Not configured' }} {{ '(password + SSH keys)' if vault_grunt_user is defined else '' }}
              ├── SSH Port: {{ ansible_port }}
              ├── Firewall: UFW enabled with strict rules
              ├── Monitoring: fail2ban active
@@ -169,5 +172,5 @@
           
           🚀 Next Steps:
              • All automation continues as root (no connection switching)
-             • Grunt access: ssh {{ emergency_user }}@{{ ansible_host }}:{{ ansible_port }}
+             • Grunt access: {{ 'ssh ' + emergency_user + '@' + ansible_host + ':' + (ansible_port|string) if vault_grunt_user is defined else 'No grunt user configured - using root for all operations' }}
              • Deploy services: ./claudia base --install, ./claudia psql --install, etc.
