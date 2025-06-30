@@ -30,7 +30,7 @@ pip install ansible
 ./claudia redis       # View Redis setup help and all parameters
 
 # Execute recipes with universal parameter support
-./claudia security --install                           # Security setup (admin user, SSH keys, firewall)
+./claudia security --install                           # Security setup (grunt user, SSH keys, firewall)
 ./claudia base --install                               # Base configuration (hostname, git, timezone, swap)
 ./claudia psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
 ./claudia redis --install --port 6380 --memory 512    # Redis with custom port and memory
@@ -128,7 +128,7 @@ Configure servers in `cloudy/inventory/dev.yml`:
 ```yaml
 all:
   vars:
-    ansible_user: admin         # Connect as admin user (after setup)
+    ansible_user: admin         # Connect as grunt user (after setup)
     ansible_port: 22022         # Custom SSH port
     ansible_host_key_checking: false
     
@@ -138,8 +138,8 @@ all:
         my-server:
           ansible_host: 10.10.10.100
           hostname: my-server.example.com
-          admin_user: admin
-          admin_password: secure123
+          grunt_user: admin
+          grunt_password: secure123
 ```
 
 ### 2. Vault Configuration (Recommended)
@@ -155,8 +155,8 @@ For production deployments, use Ansible Vault for credentials:
 Example vault content:
 ```yaml
 vault_root_password: "secure_root_password_123"
-vault_admin_password: "secure_admin_password_456"
-vault_admin_user: "admin"
+vault_grunt_password: "secure_grunt_password_456"
+vault_grunt_user: "admin"
 vault_ssh_port: 22022
 ```
 
@@ -172,7 +172,7 @@ ansible_port: 22
 **Phase 2 - Service Operations** (Admin + SSH Keys):
 ```yaml
 # After security setup - inventory configuration
-ansible_user: "{{ vault_admin_user | default('admin') }}"
+ansible_user: "{{ vault_grunt_user | default('admin') }}"
 ansible_port: "{{ vault_ssh_port | default(22022) }}"
 ```
 
@@ -180,7 +180,7 @@ ansible_port: "{{ vault_ssh_port | default(22022) }}"
 
 ### Complete Web Application Stack
 ```bash
-# Step 1: Secure server foundation (creates admin user, SSH keys, firewall)
+# Step 1: Secure server foundation (creates grunt user, SSH keys, firewall)
 ./claudia security --install
 
 # Step 2: Base server configuration (hostname, git, timezone, swap)

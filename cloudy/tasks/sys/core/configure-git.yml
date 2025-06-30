@@ -1,6 +1,6 @@
 # Granular Task: Configure Git for User
 # Equivalent to: cloudy-old/sys/core.py::sys_git_configure()
-# Usage: ansible-playbook tasks/sys/core/configure-git.yml -e "target_user=admin git_name='John Doe' git_email='john@example.com'"
+# Usage: ansible-playbook tasks/sys/core/configure-git.yml -e "target_user=grunt git_name='John Doe' git_email='john@example.com'"
 
 ---
 - name: Install git-core package

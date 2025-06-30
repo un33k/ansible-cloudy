@@ -1,5 +1,5 @@
-# Ensure Admin Connection - Connection Validation Task
-# Validates that the current connection is using admin user with SSH keys
+# Ensure Grunt Connection - Connection Validation Task
+# Validates that the current connection is using grunt user with SSH keys
 # This task should be included in all service recipes to ensure proper authentication
 
 ---
@@ -16,11 +16,11 @@
     msg: |
       ❌ SECURITY ERROR: Connected as root user!
       
-      This recipe requires admin user connection with SSH keys.
+      This recipe requires grunt user connection with SSH keys.
       
       Root access should only be used for initial security setup.
       
-      Expected: ansible_user should be 'admin' or '{{ admin_user | default("admin") }}'
+      Expected: ansible_user should be 'grunt' or '{{ grunt_user | default("grunt") }}'
       Actual: ansible_user is '{{ ansible_user }}'
       
       🔧 Fix:
@@ -35,7 +35,7 @@
       
       This recipe requires SSH key authentication only.
       
-      Admin passwords should only be used for account creation and sudo.
+      Grunt passwords should only be used for account creation and sudo.
       
       🔧 Fix:
       1. Remove ansible_ssh_pass from inventory
@@ -58,25 +58,25 @@
       2. Ensure inventory uses the secure SSH port (22022)
   when: ansible_port == 22
 
-- name: Validate admin user
+- name: Validate grunt user
   command: whoami
   register: current_user
   changed_when: false
   become: false
 
-- name: Fail if not connecting as expected admin user
+- name: Fail if not connecting as expected grunt user
   fail:
     msg: |
-      ❌ USER ERROR: Not connecting as expected admin user!
+      ❌ USER ERROR: Not connecting as expected grunt user!
       
-      Expected: {{ admin_user | default('admin') }}
+      Expected: {{ grunt_user | default('grunt') }}
       Actual: {{ current_user.stdout }}
       
       🔧 Fix:
       1. Verify admin user exists on server
       2. Check SSH key permissions
       3. Run security setup: ./claudia security --install
-  when: current_user.stdout != (admin_user | default('admin'))
+  when: current_user.stdout != (grunt_user | default('grunt'))
 
 - name: Test SSH key authentication
   stat:
@@ -106,9 +106,9 @@
 - name: Fail if sudo access not working
   fail:
     msg: |
-      ❌ SUDO ERROR: Admin user cannot sudo without password!
+      ❌ SUDO ERROR: Grunt user cannot sudo without password!
       
-      Expected: NOPASSWD sudo access for admin user
+      Expected: NOPASSWD sudo access for grunt user
       Actual: sudo requires password or fails
       
       🔧 Fix:
@@ -122,7 +122,7 @@
       ✅ CONNECTION VALIDATION PASSED
       
       🔐 Authentication Status: SECURE
-      ├── User: {{ current_user.stdout }} (admin)
+      ├── User: {{ current_user.stdout }} (grunt)
       ├── Port: {{ ansible_port }} (secure)
       ├── Auth: SSH keys only
       ├── Sudo: NOPASSWD access

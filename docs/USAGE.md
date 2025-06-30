@@ -27,7 +27,7 @@ Complete reference for the **Claudia CLI** - an intelligent command-line interfa
 ```bash
 # Security Setup (Two-phase authentication model)
 ./claudia security                  # Show help and configuration options
-./claudia security --install       # Execute security setup (SSH keys, admin user, firewall)
+./claudia security --install       # Execute security setup (SSH keys, grunt user, firewall)
 
 # Base Configuration  
 ./claudia base                      # Show help and available variables
@@ -244,11 +244,11 @@ Ansible Cloudy uses a sophisticated two-phase authentication approach:
 
 **Phase 1 - Initial Security Setup** (Root + Password):
 - Connection: Root user with password authentication
-- Purpose: Install SSH keys, create admin user, secure server
+- Purpose: Install SSH keys, create grunt user, secure server
 - Command: `./claudia security --install`
 
 **Phase 2 - Service Operations** (Admin + SSH Keys):
-- Connection: Admin user with SSH key authentication
+- Connection: Grunt user with SSH key authentication
 - Purpose: All service installations and configurations  
 - Commands: `./claudia base --install`, `./claudia psql --install`, etc.
 
@@ -271,8 +271,8 @@ all:
         my-server:
           ansible_host: 192.168.1.100
           hostname: my-server.example.com
-          admin_user: admin
-          admin_password: secure_admin_password  # or use vault_admin_password
+          grunt_user: admin
+          grunt_password: secure_grunt_password  # or use vault_grunt_password
 ```
 
 #### After Security Setup (Production Use)
@@ -312,9 +312,9 @@ Example vault content:
 # Root credentials for initial setup
 vault_root_password: "secure_root_password_123"
 
-# Admin user configuration
-vault_admin_user: "admin"
-vault_admin_password: "secure_admin_password_456"
+# Grunt user configuration
+vault_grunt_user: "admin"
+vault_grunt_password: "secure_grunt_password_456"
 vault_ssh_port: 22022
 
 # Global server configuration
@@ -331,8 +331,8 @@ Use vault variables in inventory:
 ```yaml
 all:
   vars:
-    ansible_user: "{{ vault_admin_user | default('admin') }}"
-    ansible_ssh_pass: "{{ vault_admin_password }}"
+    ansible_user: "{{ vault_grunt_user | default('admin') }}"
+    ansible_ssh_pass: "{{ vault_grunt_password }}"
     ansible_port: "{{ vault_ssh_port | default(22022) }}"
 ```
 
@@ -356,12 +356,12 @@ Sets up secure SSH, user management, and firewall.
 
 ```bash
 # Deploy secure foundation (two-step process)
-./claudia security --install    # Security setup (SSH keys, admin user, firewall)
+./claudia security --install    # Security setup (SSH keys, grunt user, firewall)
 ./claudia base --install        # Base configuration (hostname, git, timezone)
 ```
 
 **What it does:**
-- ✅ Creates admin user with SSH key access
+- ✅ Creates grunt user with SSH key access
 - ✅ Configures UFW firewall 
 - ✅ Changes SSH port to 22022
 - ✅ Disables root login
@@ -478,10 +478,10 @@ Maximum detail:
 
 ```bash
 # 1. Start with fresh server, deploy foundation
-./claudia security --install   # Create admin user, SSH keys, firewall
+./claudia security --install   # Create grunt user, SSH keys, firewall
 ./claudia base --install       # Base configuration
 
-# 2. Update inventory to use admin user on port 22022
+# 2. Update inventory to use grunt user on port 22022
 # Edit inventory: ansible_user: admin, ansible_port: 22022
 
 # 3. Deploy database layer
@@ -500,7 +500,7 @@ Maximum detail:
 # Single command deployment (includes security setup)
 ./claudia openvpn --install
 
-# Inventory automatically updated for admin user access
+# Inventory automatically updated for grunt user access
 ```
 
 ### Scenario 3: Cache-Only Server
@@ -522,7 +522,7 @@ Create separate inventory files:
 all:
   vars:
     ansible_user: admin
-    ansible_ssh_pass: admin_password
+    ansible_ssh_pass: grunt_password
     ansible_port: 22022
     
   children:
@@ -539,7 +539,7 @@ all:
 all:
   vars:
     ansible_user: admin
-    ansible_ssh_pass: admin_password
+    ansible_ssh_pass: grunt_password
     ansible_port: 22022
     
   children:

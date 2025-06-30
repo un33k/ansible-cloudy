@@ -1,13 +1,13 @@
-# Validate Admin User Access and Sudo
-# Final validation that admin user can perform system operations
+# Validate Grunt User Access and Sudo
+# Final validation that grunt user can perform system operations
 
 ---
-- name: Test basic connectivity as admin user
+- name: Test basic connectivity as grunt user
   command: whoami
   register: whoami_result
   changed_when: false
   become: false
-  become_user: "{{ admin_user | default('admin') }}"
+  become_user: "{{ grunt_user | default('grunt') }}"
 
 - name: Test sudo access (NOPASSWD)
   command: sudo -n whoami
@@ -15,19 +15,19 @@
   changed_when: false
   failed_when: false
   become: false
-  become_user: "{{ admin_user | default('admin') }}"
+  become_user: "{{ grunt_user | default('grunt') }}"
 
 - name: Test system command access
   command: uname -a
   register: uname_result
   changed_when: false
   become: false
-  become_user: "{{ admin_user | default('admin') }}"
+  become_user: "{{ grunt_user | default('grunt') }}"
 
 - name: Display validation results
   debug:
     msg: |
-      ✅ Admin User Validation Results:
+      ✅ Grunt User Validation Results:
       Current User: {{ whoami_result.stdout }}
       Sudo Access: {{ 'SUCCESS (can become root)' if sudo_test.stdout | default('') == 'root' else 'FAILED' }}
       System Info: {{ uname_result.stdout }}

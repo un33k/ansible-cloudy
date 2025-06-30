@@ -51,7 +51,7 @@ cd ansible-cloudy/
 
 **Phase 1: Initial Security Setup** (Root + Password)
 - **Connection**: `root` user with `vault_root_password` 
-- **Purpose**: Install SSH keys, create admin user, secure server
+- **Purpose**: Install SSH keys, create grunt user, secure server
 - **Command**: `./claudia security --install`
 
 **Phase 2: All Service Operations** (Admin + SSH Keys)  
@@ -91,12 +91,12 @@ cd ansible-cloudy/
 **🎯 SIMPLE APPROACH**: Three clear steps for any server.
 
 **Workflow**:
-1. **core/security.yml** → Sets up admin user, SSH keys, firewall, disables root
+1. **core/security.yml** → Sets up grunt user, SSH keys, firewall, disables root
 2. **core/base.yml** → Basic server config (hostname, git, timezone, etc.)  
 3. **[category]/[service].yml** → Deploy specific services (www/django, db/psql, cache/redis, etc.)
 
 **Security Features**:
-- ✅ **Admin user**: Created with SSH key access
+- ✅ **Grunt user**: Created with SSH key access
 - ✅ **Root disabled**: No more root login after security step
 - ✅ **Firewall**: UFW configured with custom SSH port
 - ✅ **Simple**: No complex detection logic
@@ -107,7 +107,7 @@ cd ansible-cloudy/
 
 **⚠️ CRITICAL - Sudo Password Requirements**:
 
-Ansible requires sudo password configuration for privileged operations after switching from root to admin user. There are two ways to provide this:
+Ansible requires sudo password configuration for privileged operations after switching from root to grunt user. There are two ways to provide this:
 
 #### Method 1: Inventory Configuration (Recommended)
 Add the sudo password directly in your inventory file:
@@ -116,7 +116,7 @@ Add the sudo password directly in your inventory file:
 generic_servers:
   hosts:
     test-generic:
-      admin_password: secure123        # Login password  
+      grunt_password: secure123        # Login password  
       ansible_become_pass: secure123   # Sudo password
 ```
 
@@ -148,27 +148,27 @@ all:
 generic_servers:
   hosts:
     test-generic:
-      admin_password: secure123        # Login password  
+      grunt_password: secure123        # Login password  
       ansible_become_pass: secure123   # Sudo password
 ```
 
 **How SSH Key Installation Works**:
 1. **Initial connection**: Uses `root` + SSH key (if available) or password fallback
-2. **Create admin user**: Sets up admin user with password
-3. **Install SSH key**: Copies the public key (`~/.ssh/id_rsa.pub`) to admin user's `~/.ssh/authorized_keys`
-4. **Switch connection**: Changes to admin user with SSH key authentication
+2. **Create grunt user**: Sets up grunt user with password
+3. **Install SSH key**: Copies the public key (`~/.ssh/id_rsa.pub`) to grunt user's `~/.ssh/authorized_keys`
+4. **Switch connection**: Changes to grunt user with SSH key authentication
 5. **Secure server**: Disables root login and password authentication
 
 **Why This is Needed**:
 - Initial connection uses `root` with SSH key authentication (preferred) or password fallback
-- After admin user creation and SSH key installation, connection switches to admin user
-- Admin user requires sudo password for privileged operations (firewall, system config, etc.)
-- The `admin_password` is for SSH login, `ansible_become_pass` is for sudo operations
+- After grunt user creation and SSH key installation, connection switches to grunt user
+- Grunt user requires sudo password for privileged operations (firewall, system config, etc.)
+- The `grunt_password` is for SSH login, `ansible_become_pass` is for sudo operations
 - SSH keys provide secure, passwordless authentication after setup
 
 **Complete Secure Workflow Example**:
 ```bash
-# 1. Setup secure server (root SSH keys + admin user, firewall, port change)
+# 1. Setup secure server (root SSH keys + grunt user, firewall, port change)
 ./claudia security --install
 
 # 2. Deploy base configuration
@@ -183,7 +183,7 @@ generic_servers:
 
 **Security Features**:
 - ✅ Root login disabled (`PermitRootLogin no`)
-- ✅ Admin user with SSH key authentication
+- ✅ Grunt user with SSH key authentication
 - ✅ Custom SSH port (default: 22022)
 - ✅ UFW firewall configured
 - ✅ Sudo access for privileged operations
@@ -254,7 +254,7 @@ generic_servers:
 ```
 
 #### Recipe Categories
-- **core/security.yml**: Initial server security (admin user, SSH keys, firewall, disable root)
+- **core/security.yml**: Initial server security (grunt user, SSH keys, firewall, disable root)
 - **core/base.yml**: Basic server configuration (hostname, git, timezone, swap)
 - **db/psql.yml**: PostgreSQL database server
 - **db/postgis.yml**: PostgreSQL with PostGIS extensions
@@ -296,8 +296,8 @@ all:
         production-web:
           ansible_host: 10.10.10.100
           hostname: web.example.com
-          admin_user: admin
-          admin_password: secure123
+          grunt_user: admin
+          grunt_password: secure123
           ssh_port: 22022
 ```
 
@@ -362,7 +362,7 @@ cd ansible-cloudy/
 ./claudia nginx                 # Show Nginx help and configuration options
 
 # Recipe execution with universal parameters
-./claudia security --install                              # Security setup (root SSH keys + admin user, firewall, port change)
+./claudia security --install                              # Security setup (root SSH keys + grunt user, firewall, port change)
 ./claudia openvpn --install                              # VPN server setup (OpenVPN with Docker)
 ./claudia django --install                               # Web server setup (Django with Nginx/Apache/Supervisor)
 ./claudia psql --install --port 5544 --pgis             # PostgreSQL with PostGIS on custom port
@@ -380,17 +380,17 @@ cd ansible-cloudy/
 ### Ansible Security Features
 - ✅ **Safe Authentication Flow**: UFW firewall configured before SSH port changes
 - ✅ **SSH Key Management**: Automated public key installation and validation
-- ✅ **Connection Transition**: Seamless root-to-admin user switching
+- ✅ **Connection Transition**: Seamless root-to-grunt user switching
 - ✅ **Firewall Integration**: Port 22022 opened before SSH service restart
 - ✅ **Sudo Configuration**: NOPASSWD sudo access for admin operations
-- ✅ **Root Login Disable**: Safely disabled after admin user verification
+- ✅ **Root Login Disable**: Safely disabled after grunt user verification
 
 ### Ansible Inventory Configuration
 The `inventory/test-recipes.yml` file configures connection parameters:
 ```yaml
 all:
   vars:
-    ansible_user: admin          # Connect as admin user (after setup)
+    ansible_user: admin          # Connect as grunt user (after setup)
     ansible_ssh_pass: secure123  # Admin password
     ansible_port: 22022          # Custom SSH port
     ansible_host_key_checking: false
@@ -401,8 +401,8 @@ all:
         test-generic:
           ansible_host: 10.10.10.198
           hostname: test-generic.example.com
-          admin_user: admin
-          admin_password: secure123
+          grunt_user: admin
+          grunt_password: secure123
 ```
 
 ### Ansible Output Control
@@ -478,10 +478,10 @@ ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbooks/recipes/db
 ---
 # === AUTHENTICATION CREDENTIALS ===
 vault_root_password: "your_root_password_here"
-vault_admin_password: "your_admin_password_here"
+vault_grunt_password: "your_grunt_password_here"
 
 # === CONNECTION CONFIGURATION ===
-vault_admin_user: "admin"
+vault_grunt_user: "admin"
 vault_ssh_port: 22022
 
 # === GLOBAL SERVER CONFIGURATION ===
@@ -507,7 +507,7 @@ git_user_full_name: "{{ vault_git_user_full_name | default('John Doe') }}"
 git_user_email: "{{ vault_git_user_email | default('jdoe@example.com') }}"
 timezone: "{{ vault_timezone | default('America/New_York') }}"
 locale: "{{ vault_locale | default('en_US.UTF-8') }}"
-ansible_user: "{{ vault_admin_user | default('admin') }}"
+ansible_user: "{{ vault_grunt_user | default('admin') }}"
 ansible_port: "{{ vault_ssh_port | default(22) }}"
 ```
 
@@ -530,30 +530,30 @@ ansible_port: "{{ vault_ssh_port | default(22) }}"
 
 # What happens:
 # 1. Connects as root with vault_root_password
-# 2. Installs SSH keys for root and admin users  
-# 3. Creates admin user with vault_admin_password
+# 2. Installs SSH keys for root and grunt users  
+# 3. Creates grunt user with vault_grunt_password
 # 4. Configures firewall and secure SSH port
 # 5. Disables root password authentication
 ```
 
 #### **Phase 2: All Service Operations**
 ```bash
-# Connection: admin user with SSH keys ONLY
+# Connection: grunt user with SSH keys ONLY
 # Purpose: All service installations and management
 ./claudia base --install
 ./claudia psql --install
 ./claudia redis --install
 
 # What happens:
-# 1. Connects as admin user with SSH keys
+# 1. Connects as grunt user with SSH keys
 # 2. Uses sudo for privileged operations (NOPASSWD)
 # 3. Never uses passwords for authentication
-# 4. All automation runs under admin user context
+# 4. All automation runs under grunt user context
 ```
 
 #### **Connection Validation**
 Every service recipe automatically validates:
-- ✅ Connected as admin user (not root)
+- ✅ Connected as grunt user (not root)
 - ✅ Using SSH keys (no passwords)
 - ✅ Secure SSH port (not 22)
 - ✅ Sudo access works without password
@@ -564,7 +564,7 @@ Every service recipe automatically validates:
 - 🔑 **SSH Keys**: All automation uses keys after setup
 - 🛡️ **Admin Passwords**: Only for account creation and manual access
 - 🚫 **No Password Automation**: Zero passwords in service configurations
-- 📋 **Consistent Context**: All services run under admin user
+- 📋 **Consistent Context**: All services run under grunt user
 - 🔍 **Connection Validation**: Automatic verification before operations
 
 ### Security Best Practices

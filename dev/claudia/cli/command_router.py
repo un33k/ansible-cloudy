@@ -95,7 +95,7 @@ class CommandRouter:
 
 {Colors.YELLOW}DESCRIPTION:{Colors.NC}
     Tests the authentication setup process to validate server configuration.
-    Verifies admin user creation, SSH keys, firewall, and sudo access.
+    Verifies grunt user creation, SSH keys, firewall, and sudo access.
 
 {Colors.YELLOW}USAGE:{Colors.NC}
     claudia dev test [OPTIONS] [-- ANSIBLE_ARGS]
@@ -120,27 +120,27 @@ class CommandRouter:
     • ansible_host="10.10.10.199"       Target server IP address
 
     {Colors.GREEN}Admin User Configuration:{Colors.NC}
-    • vault_admin_user="myuser"         Admin username (default: admin)
-    • vault_admin_password="secret"     Admin user password
+    • vault_grunt_user="myuser"         Grunt username (default: grunt)
+    • vault_grunt_password="secret"     Grunt user password
     • admin_groups="admin,sudo"         User groups (default: admin,www-data)
 
     {Colors.GREEN}SSH & Security:{Colors.NC}
     • ssh_port=2222                     SSH port configuration
-    • admin_user="myuser"               Admin username for test
+    • grunt_user="myuser"               Grunt username for test
     • admin_password="secure123"        Admin password for test
 
 {Colors.YELLOW}VARIABLE OVERRIDE EXAMPLES:{Colors.NC}
     # Test with standard SSH port
     claudia dev test -- -e "vault_ssh_port=22"
     
-    # Test with different admin user
-    claudia dev test -- -e "vault_admin_user=deploy" -e "admin_user=deploy"
+    # Test with different grunt user
+    claudia dev test -- -e "vault_grunt_user=deploy" -e "grunt_user=deploy"
     
     # Test with custom server
     claudia dev test -- -e "ansible_host=192.168.1.100" -e "vault_ssh_port=22"
     
     # Multiple overrides
-    claudia dev test -- -e "vault_root_password=mypass" -e "vault_ssh_port=22" -e "admin_user=myuser"
+    claudia dev test -- -e "vault_root_password=mypass" -e "vault_ssh_port=22" -e "grunt_user=myuser"
 
 {Colors.YELLOW}WHAT IT TESTS:{Colors.NC}
     • Server connectivity and authentication
@@ -152,21 +152,21 @@ class CommandRouter:
 
 {Colors.YELLOW}AUTHENTICATION:{Colors.NC}
     • Uses root credentials from .vault/dev.yml for initial connection
-    • Tests admin user setup and SSH key authentication
+    • Tests grunt user setup and SSH key authentication
     • Validates two-phase authentication model
 
 {Colors.YELLOW}VAULT CONFIGURATION:{Colors.NC}
     Automatically loads credentials from .vault/dev.yml if present.
     Common vault variables:
     • vault_root_password: Root password for initial connection
-    • vault_admin_password: Admin user password
-    • vault_admin_user: Admin username
+    • vault_grunt_password: Grunt user password
+    • vault_grunt_user: Grunt username
     • vault_ssh_port: SSH port configuration
 
 {Colors.YELLOW}INVENTORY TARGETS:{Colors.NC}
     Test runs against 'security_targets' group in inventory/dev.yml
     • Uses root user with password authentication
-    • Configures admin user with SSH keys
+    • Configures grunt user with SSH keys
     • Tests firewall and security settings
 """)
     

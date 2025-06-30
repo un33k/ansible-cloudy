@@ -30,8 +30,8 @@ This directory contains configuration templates for different environments.
 All vault variables use the `vault_*` prefix for clear organization:
 
 - `vault_root_password` - Initial root password
-- `vault_admin_password` - Admin user password
-- `vault_admin_user` - Admin username
+- `vault_grunt_password` - Grunt user password
+- `vault_grunt_user` - Grunt username
 - `vault_ssh_port` - Custom SSH port
 - Service-specific passwords (postgres, mysql, redis, etc.)
 

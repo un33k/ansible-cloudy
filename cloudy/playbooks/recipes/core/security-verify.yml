@@ -23,7 +23,7 @@
           
   tasks:
     # Basic Admin User Validation
-    - name: Validate admin user access and configuration
+    - name: Validate grunt user access and configuration
       include_tasks: "{{ task_paths }}/sys/core/validate-admin-access.yml"
       tags: [validation, admin, access]
       

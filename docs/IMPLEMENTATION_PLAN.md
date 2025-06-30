@@ -47,12 +47,12 @@ Utils Layer                   → Configuration, colors, dev tools
 
 #### **Phase 1: Initial Security Setup**
 - **Connection**: Root user with SSH keys (preferred) or password fallback
-- **Purpose**: Install SSH keys, create admin user, secure server  
+- **Purpose**: Install SSH keys, create grunt user, secure server  
 - **Command**: `./claudia security --install`
 - **Security Features**: UFW firewall, custom SSH port, fail2ban installation
 
 #### **Phase 2: Service Operations**
-- **Connection**: Admin user with SSH keys only (no passwords)
+- **Connection**: Grunt user with SSH keys only (no passwords)
 - **Purpose**: All service installations and configurations
 - **Commands**: `./claudia base --install`, `./claudia psql --install`, etc.
 - **Security Features**: NOPASSWD sudo, connection validation, consistent context
@@ -207,7 +207,7 @@ ansible_port: 22
 
 # Security tasks
 - Install SSH keys for root and admin
-- Create admin user with NOPASSWD sudo
+- Create grunt user with NOPASSWD sudo
 - Configure UFW firewall 
 - Change SSH port to 22022
 - Enable fail2ban intrusion detection
@@ -222,7 +222,7 @@ ansible_ssh_private_key_file: ~/.ssh/id_rsa
 
 # All service installations and configurations
 - Connection validation before each operation
-- Consistent admin user context
+- Consistent grunt user context
 - SSH key authentication only
 ```
 

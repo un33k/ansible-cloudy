@@ -41,12 +41,12 @@
     state: started
   register: docker_service_result
   
-- name: Add admin user to docker group
+- name: Add grunt user to docker group
   user:
-    name: "{{ admin_user | default('admin') }}"
+    name: "{{ grunt_user | default('grunt') }}"
     groups: docker
     append: true
-  when: admin_user is defined
+  when: grunt_user is defined
   register: docker_group_result
   
 - name: Verify Docker installation

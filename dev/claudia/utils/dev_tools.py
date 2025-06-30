@@ -181,7 +181,7 @@ class DevTools:
 ├── {Colors.GREEN}✅ SSH connection established{Colors.NC}
 └── {Colors.GREEN}✅ Playbook execution completed{Colors.NC}
 
-{Colors.BLUE}👤 Admin User Configuration:{Colors.NC}
+{Colors.BLUE}👤 Grunt User Configuration:{Colors.NC}
 ├── {Colors.GREEN}✅ User created successfully{Colors.NC}
 ├── {Colors.GREEN}✅ Home directory configured{Colors.NC}
 ├── {Colors.GREEN}✅ SSH keys installed{Colors.NC}
@@ -197,7 +197,7 @@ class DevTools:
 {Colors.BLUE}🚀 Next Steps:{Colors.NC}
 ├── Run {Colors.GREEN}'./claudia security --install'{Colors.NC} for full security setup
 ├── This will restart SSH service on the configured port
-└── After setup, connect using admin user with SSH keys
+└── After setup, connect using grunt user with SSH keys
 
 {Colors.GREEN}⚡ Status: AUTHENTICATION FRAMEWORK VALIDATED ✅{Colors.NC}
 """)

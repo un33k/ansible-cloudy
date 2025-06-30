@@ -21,9 +21,9 @@
     setup_firewall: true
     
   pre_tasks:
-    # Ensure proper admin connection
-    - name: Validate admin connection
-      include_tasks: "{{ task_paths }}/sys/core/ensure-admin-connection.yml"
+    # Ensure proper grunt connection
+    - name: Validate grunt connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-grunt-connection.yml"
     
     - name: Display cache server setup information
       debug:

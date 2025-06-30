@@ -87,12 +87,12 @@ def create_parser() -> argparse.ArgumentParser:
 
 {Colors.YELLOW}Advanced:{Colors.NC}
   {Colors.GREEN}claudia psql --install -- --tags postgresql{Colors.NC}  Pass args to ansible-playbook
-  {Colors.GREEN}claudia psql --install -- -e "admin_user=myuser"{Colors.NC}  Override variables
+  {Colors.GREEN}claudia psql --install -- -e "grunt_user=myuser"{Colors.NC}  Override variables
   {Colors.GREEN}claudia redis --install -- --skip-tags firewall{Colors.NC}  Skip specific tasks
   
 {Colors.BLUE}Authentication Flow:{Colors.NC}
   1. {Colors.YELLOW}Security Setup{Colors.NC}: Uses root password, installs SSH keys
-  2. {Colors.YELLOW}All Other Operations{Colors.NC}: Uses admin user with SSH keys only
+  2. {Colors.YELLOW}All Other Operations{Colors.NC}: Uses grunt user with SSH keys only
 
 {Colors.BLUE}Note:{Colors.NC} Use {Colors.CYAN}`--`{Colors.NC} to pass parameters directly to ansible-playbook
         """,

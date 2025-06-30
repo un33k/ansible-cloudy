@@ -1,5 +1,5 @@
 # Recipe: Rock-Solid Security Setup
-# Purpose: Enterprise-grade security - Root (SSH keys) + Admin User (password+SSH keys)
+# Purpose: Enterprise-grade security - Root (SSH keys) + Grunt User (password+SSH keys)
 # Usage: ansible-playbook playbooks/recipes/core/security.yml -i inventory/hosts.yml
 
 ---
@@ -10,7 +10,7 @@
   
   vars:
     task_paths: "../../../tasks"
-    emergency_user: "{{ admin_user | default('admin') }}"    # Configurable username from inventory
+    emergency_user: "{{ grunt_user | default('grunt') }}"    # Configurable username from inventory
     
   pre_tasks:
     - name: Validate root connection for security setup
@@ -38,7 +38,7 @@
           
           Security Model:
           ├── Root User: SSH keys ONLY (automation access)
-          ├── Admin User: {{ emergency_user }} (password + SSH keys)
+          ├── Grunt User: {{ emergency_user }} (password + SSH keys)
           ├── SSH Port: {{ ansible_port }} → 22022 (secure port)
           └── Firewall: UFW enabled with strict rules
           
@@ -61,34 +61,34 @@
       when: ansible_ssh_private_key_file is defined
       tags: [ssh, keys, root]
       
-    # Phase 3: Create Admin Access User
-    - name: Create admin user ({{ emergency_user }})
+    # Phase 3: Create Grunt Access User
+    - name: Create grunt user ({{ emergency_user }})
       include_tasks: "{{ task_paths }}/sys/user/add-user.yml"
       vars:
         username: "{{ emergency_user }}"
-      tags: [users, admin]
+      tags: [users, grunt]
       
-    - name: Set admin user password
+    - name: Set grunt user password
       include_tasks: "{{ task_paths }}/sys/user/change-password.yml"
       vars:
         username: "{{ emergency_user }}"
-        password: "{{ admin_password }}"
-      tags: [users, admin, password]
+        password: "{{ grunt_password }}"
+      tags: [users, grunt, password]
       
-    - name: Add admin user to sudoers with NOPASSWD
+    - name: Add grunt user to sudoers with NOPASSWD
       include_tasks: "{{ task_paths }}/sys/user/add-sudoer.yml"
       vars:
         username: "{{ emergency_user }}"
         nopasswd_sudo: true
-      tags: [users, admin, sudo]
+      tags: [users, grunt, sudo]
       
-    - name: Install SSH public key for admin user
+    - name: Install SSH public key for grunt user
       include_tasks: "{{ task_paths }}/sys/ssh/install-public-key.yml"
       vars:
         target_user: "{{ emergency_user }}"
         pub_key_path: "{{ ansible_ssh_private_key_file }}.pub"
       when: ansible_ssh_private_key_file is defined
-      tags: [ssh, keys, admin]
+      tags: [ssh, keys, grunt]
       
     # Phase 4: Firewall Setup (Early Protection)
     - name: Install UFW firewall (smart installation)
@@ -114,7 +114,7 @@
       include_tasks: "{{ task_paths }}/sys/ssh/set-port.yml"
       tags: [ssh, security]
       
-    - name: Configure SSH security (root=keys-only, admin=both)
+    - name: Configure SSH security (root=keys-only, grunt=both)
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "{{ item.regexp }}"
@@ -159,7 +159,7 @@
           
           📋 Security Configuration:
              ├── Root Access: SSH keys ONLY (automation)
-             ├── Admin Access: {{ emergency_user }} (password + SSH keys)
+             ├── Grunt Access: {{ emergency_user }} (password + SSH keys)
              ├── SSH Port: {{ ansible_port }}
              ├── Firewall: UFW enabled with strict rules
              ├── Monitoring: fail2ban active
@@ -169,5 +169,5 @@
           
           🚀 Next Steps:
              • All automation continues as root (no connection switching)
-             • Admin access: ssh {{ emergency_user }}@{{ ansible_host }}:{{ ansible_port }}
+             • Grunt access: ssh {{ emergency_user }}@{{ ansible_host }}:{{ ansible_port }}
              • Deploy services: ./claudia base --install, ./claudia psql --install, etc.
