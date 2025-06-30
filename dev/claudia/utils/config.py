@@ -88,17 +88,53 @@ class InventoryManager:
     def __init__(self, config: ClaudiaConfig):
         self.config = config
 
-    def get_inventory_path(self, production: bool = False) -> str:
-        """Get the appropriate inventory file path"""
-        if production:
-            inventory_file = self.config.inventory_dir / "prod.yml"
+    def get_inventory_path(self, environment: str = None, custom_path: str = None) -> str:
+        """Get the appropriate inventory file path based on environment or custom path
+        
+        Args:
+            environment: Environment name ('dev', 'prod', 'ci') or None for default
+            custom_path: Custom inventory file path (overrides environment)
+            
+        Returns:
+            Path to inventory file as string
+        """
+        # Use custom path if provided
+        if custom_path:
+            inventory_file = Path(custom_path)
+            if not inventory_file.is_absolute():
+                # Make relative paths relative to project root
+                inventory_file = self.config.project_root / inventory_file
         else:
-            inventory_file = self.config.inventory_dir / "dev.yml"
+            # Determine environment-based inventory
+            if environment == 'prod':
+                inventory_file = self.config.inventory_dir / "prod.yml"
+            elif environment == 'ci':
+                inventory_file = self.config.inventory_dir / "ci.yml"
+            else:  # Default to dev
+                inventory_file = self.config.inventory_dir / "dev.yml"
 
         if not inventory_file.exists():
             error(f"Inventory file not found: {inventory_file}")
 
         return str(inventory_file)
+    
+    def get_environment_from_args(self, args) -> str:
+        """Determine environment from parsed arguments
+        
+        Args:
+            args: Parsed command line arguments
+            
+        Returns:
+            Environment name ('dev', 'prod', 'ci')
+        """
+        if hasattr(args, 'prod') and args.prod:
+            return 'prod'
+        elif hasattr(args, 'ci') and args.ci:
+            return 'ci'
+        elif hasattr(args, 'dev') and args.dev:
+            return 'dev'
+        else:
+            return 'dev'  # Default to dev
 
 
 # Compatibility alias for existing code

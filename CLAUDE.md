@@ -64,8 +64,13 @@ cd ansible-cloudy/
 - **Step 2 - Core**: `./claudia base --install` (basic server config)
 - **Step 3 - Services**: `./claudia psql --install`, `./claudia redis --install --port 6380 --memory 512`, `./claudia nginx --install --domain example.com --ssl` (deploy services as root)
 
-#### Production Setup
-- **Claudia CLI**: `./claudia security --install --prod`, `./claudia django --install --prod`, `./claudia redis --install --prod`
+#### Environment Selection & Configuration
+- **Development (default)**: `./claudia security --install` or `./claudia security --install --dev`
+- **Production**: `./claudia security --install --prod`, `./claudia django --install --prod`
+- **CI/CD**: `./claudia security --install --ci`, `./claudia redis --install --ci`
+- **Custom Inventory**: `./claudia security --install -i inventory/custom.yml`
+- **Custom Vault**: `./claudia security --install -e .vault/prod-secrets.yml`
+- **Combined**: `./claudia psql --install --prod -e .vault/prod-db.yml -H 192.168.1.100`
 
 #### Universal Parameter Support & Granular Operations
 - **PostgreSQL**: `./claudia psql --install --port 5544 --pgis`, `./claudia psql --adduser foo --password 1234`, `./claudia psql --list-users`
@@ -209,9 +214,13 @@ generic_servers:
 
 # Step 1: Security setup
 ./claudia security --install
+./claudia security --install --dev    # Development environment (default)
+./claudia security --install --prod   # Production environment
+./claudia security --install --ci     # CI/CD environment
 
 # Step 2: Core setup  
 ./claudia base --install
+./claudia base --install --prod
 
 # Step 3: Service deployment with parameters
 ./claudia psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
@@ -220,10 +229,20 @@ generic_servers:
 ./claudia nginx --install --domain example.com --ssl  # Nginx with SSL domain
 ./claudia mysql --install --port 3307 --root-password secret  # MySQL on custom port
 
-# Production deployment
+# Environment-specific deployments
 ./claudia security --install --prod
 ./claudia django --install --prod
 ./claudia redis --install --prod --memory 1024
+./claudia psql --install --ci
+
+# Custom inventory and vault files
+./claudia security --install -i inventory/staging.yml
+./claudia psql --install -e .vault/prod-secrets.yml
+./claudia django --install --prod -i inventory/web-servers.yml -e .vault/prod-web.yml
+
+# Target specific hosts
+./claudia security --install -H 192.168.1.100
+./claudia psql --install --prod -H 10.0.0.50 -e .vault/prod.yml
 
 # Granular operations (no recipe installation)
 ./claudia psql --adduser myuser --password secret123  # Add PostgreSQL user
@@ -236,6 +255,7 @@ generic_servers:
 # Dry runs and testing
 ./claudia redis --install --check --port 6380
 ./claudia nginx --install --check --domain example.com --ssl
+./claudia security --install --prod --check
 
 # Legacy syntax (not recommended - use universal parameters instead)
 # OLD: ./claudia redis --install -- -e "redis_port=6380" -e "redis_memory_mb=512"
@@ -262,6 +282,43 @@ generic_servers:
 - **cache/redis.yml**: Redis cache server
 - **lb/nginx.yml**: Nginx load balancer with SSL
 - **vpn/openvpn.yml**: OpenVPN server with Docker
+
+## Environment Configuration
+
+### Environment Selection
+Claudia supports multiple environments with flexible configuration options:
+
+**Built-in Environments:**
+- `--dev` (default): Development environment using `inventory/dev.yml`
+- `--prod`: Production environment using `inventory/prod.yml`
+- `--ci`: CI/CD environment using `inventory/ci.yml`
+
+**Custom Configuration:**
+- `-i path/to/inventory.yml`: Use custom inventory file
+- `-e path/to/vars.yml`: Load additional variables (e.g., vault files)
+- `-H 192.168.1.100`: Override target host IP address
+
+**Precedence Order:**
+1. Command line host override (`-H`) takes highest precedence
+2. Custom inventory file (`-i`) overrides environment selection
+3. Extra vars file (`-e`) adds/overrides variables
+4. Environment flags (`--dev`, `--prod`, `--ci`) select built-in inventories
+5. Default to development environment if nothing specified
+
+**Examples:**
+```bash
+# Use production with custom vault
+./claudia security --install --prod -e .vault/prod-secrets.yml
+
+# Use custom inventory with host override
+./claudia psql --install -i inventory/staging.yml -H 10.0.0.100
+
+# CI environment with custom variables
+./claudia redis --install --ci -e ci-overrides.yml
+
+# Development (default) with all options
+./claudia nginx --install --dev -i custom.yml -e secrets.yml -H 192.168.1.50
+```
 
 ## Architecture Overview
 
@@ -361,12 +418,19 @@ cd ansible-cloudy/
 ./claudia redis                 # Show Redis help and all available parameters
 ./claudia nginx                 # Show Nginx help and configuration options
 
+# Recipe execution with environment selection
+./claudia security --install                              # Dev environment (default)
+./claudia security --install --prod                       # Production environment
+./claudia security --install --ci                         # CI/CD environment
+./claudia security --install -i inventory/staging.yml     # Custom inventory
+./claudia security --install -e .vault/prod.yml          # Custom vault
+./claudia security --install --prod -e .vault/prod.yml -H 10.0.0.50  # All options
+
 # Recipe execution with universal parameters
-./claudia security --install                              # Security setup (root SSH keys + grunt user, firewall, port change)
 ./claudia openvpn --install                              # VPN server setup (OpenVPN with Docker)
-./claudia django --install                               # Web server setup (Django with Nginx/Apache/Supervisor)
+./claudia django --install --prod                        # Django in production
 ./claudia psql --install --port 5544 --pgis             # PostgreSQL with PostGIS on custom port
-./claudia redis --install --port 6380 --memory 512      # Redis with custom port and memory limit
+./claudia redis --install --ci --port 6380 --memory 512 # Redis in CI with custom settings
 ./claudia nginx --install --domain example.com --ssl    # Nginx with SSL domain configuration
 ./claudia mysql --install --port 3307 --root-password secret  # MySQL on custom port
 

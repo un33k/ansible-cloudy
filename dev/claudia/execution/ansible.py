@@ -50,6 +50,7 @@ class AnsibleRunner:
         extra_args: List[str],
         dry_run: bool = False,
         target_host: str = None,
+        extra_vars_file: str = None,
     ) -> int:
         """Run ansible-playbook with the specified recipe"""
 
@@ -63,6 +64,17 @@ class AnsibleRunner:
             inventory_path,
             str(self.config.recipes_dir / recipe_path),
         ]
+
+        # Add extra vars file if specified
+        if extra_vars_file:
+            extra_vars_path = Path(extra_vars_file)
+            if not extra_vars_path.is_absolute():
+                extra_vars_path = self.config.project_root / extra_vars_path
+            if extra_vars_path.exists():
+                cmd.extend(["-e", f"@{extra_vars_path}"])
+                info(f"📋 Loading extra vars from: {extra_vars_file}")
+            else:
+                warn(f"Extra vars file not found: {extra_vars_file}")
 
         # Add target host override if specified
         if target_host:
@@ -98,6 +110,7 @@ class AnsibleRunner:
         extra_args: List[str],
         dry_run: bool = False,
         target_host: str = None,
+        extra_vars_file: str = None,
     ) -> int:
         """Run ansible-playbook with a single task file"""
 
@@ -111,6 +124,17 @@ class AnsibleRunner:
             inventory_path,
             task_path,
         ]
+
+        # Add extra vars file if specified
+        if extra_vars_file:
+            extra_vars_path = Path(extra_vars_file)
+            if not extra_vars_path.is_absolute():
+                extra_vars_path = self.config.project_root / extra_vars_path
+            if extra_vars_path.exists():
+                cmd.extend(["-e", f"@{extra_vars_path}"])
+                info(f"📋 Loading extra vars from: {extra_vars_file}")
+            else:
+                warn(f"Extra vars file not found: {extra_vars_file}")
 
         # Add target host override if specified
         if target_host:

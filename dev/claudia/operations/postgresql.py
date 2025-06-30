@@ -33,7 +33,11 @@ class PostgreSQLOperations:
             from utils.connection_manager import ConnectionManager
             conn_manager = ConnectionManager(self.config)
             # Get host and port from inventory for connection info
-            inventory_path = self.inventory_manager.get_inventory_path(args.prod)
+            environment = self.inventory_manager.get_environment_from_args(args)
+            inventory_path = self.inventory_manager.get_inventory_path(
+                environment=environment,
+                custom_path=getattr(args, 'inventory_path', None)
+            )
             host, ansible_port = self._extract_host_and_port_from_inventory(inventory_path)
             if host and ansible_port:
                 conn_info = conn_manager.get_connection_info(host, ansible_port)
@@ -232,9 +236,13 @@ class PostgreSQLOperations:
         # Execute with automatic dependency resolution (security → base → psql)
         full_extra_args = extra_vars + [arg for arg in ansible_args if arg not in ['--port', '--pgis'] and not arg.isdigit()]
         
+        environment = self.inventory_manager.get_environment_from_args(args)
+        
         return self.dependency_manager.execute_with_dependencies(
             service_name="psql",
-            production=args.prod,
+            environment=environment,
+            custom_inventory=getattr(args, 'inventory_path', None),
+            extra_vars_file=getattr(args, 'extra_vars_file', None),
             extra_args=full_extra_args,
             dry_run=args.check,
             target_host=getattr(args, 'target_host', None),

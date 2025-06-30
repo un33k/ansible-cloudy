@@ -26,7 +26,9 @@ class DependencyManager:
     def execute_with_dependencies(
         self,
         service_name: str,
-        production: bool = False,
+        environment: str = 'dev',
+        custom_inventory: str = None,
+        extra_vars_file: str = None,
         extra_args: List[str] = None,
         dry_run: bool = False,
         target_host: str = None,
@@ -42,13 +44,19 @@ class DependencyManager:
         
         if not dependencies:
             warn(f"⚠️ No dependencies defined for {service_name}")
-            return self._execute_service_directly(service_name, production, extra_args, dry_run, target_host)
+            return self._execute_service_directly(
+                service_name, environment, custom_inventory, extra_vars_file,
+                extra_args, dry_run, target_host
+            )
 
         info(f"📋 Dependency chain: {' → '.join(dependencies)}")
 
         # Execute dependency chain
         for dep in dependencies:
-            result = self._execute_dependency(dep, production, extra_args, dry_run, target_host)
+            result = self._execute_dependency(
+                dep, environment, custom_inventory, extra_vars_file,
+                extra_args, dry_run, target_host
+            )
             if result != 0:
                 error(f"❌ Dependency '{dep}' failed - stopping execution")
                 return result
@@ -56,7 +64,10 @@ class DependencyManager:
 
         # Execute the main service
         info(f"🚀 Executing main service: {service_name}")
-        return self._execute_service_directly(service_name, production, extra_args, dry_run, target_host)
+        return self._execute_service_directly(
+            service_name, environment, custom_inventory, extra_vars_file,
+            extra_args, dry_run, target_host
+        )
 
     def _get_dependency_chain(self, service_name: str) -> List[str]:
         """Get the dependency chain for a service"""
@@ -92,7 +103,9 @@ class DependencyManager:
     def _execute_dependency(
         self,
         dependency: str,
-        production: bool,
+        environment: str,
+        custom_inventory: str,
+        extra_vars_file: str,
         extra_args: List[str],
         dry_run: bool,
         target_host: str = None,
@@ -100,23 +113,41 @@ class DependencyManager:
         """Execute a single dependency"""
         
         # Skip if already deployed (basic check)
-        if self._is_dependency_satisfied(dependency, production, target_host):
+        if self._is_dependency_satisfied(dependency, environment, custom_inventory, target_host):
             info(f"✓ Dependency '{dependency}' already satisfied")
             return 0
 
         info(f"🔧 Installing dependency: {dependency}")
         
         if dependency == "security":
-            return self._execute_security(production, extra_args, dry_run, target_host)
+            return self._execute_security(
+                environment, custom_inventory, extra_vars_file,
+                extra_args, dry_run, target_host
+            )
         elif dependency == "base":
-            return self._execute_base(production, extra_args, dry_run, target_host)
+            return self._execute_base(
+                environment, custom_inventory, extra_vars_file,
+                extra_args, dry_run, target_host
+            )
         else:
-            return self._execute_service_directly(dependency, production, extra_args, dry_run, target_host)
+            return self._execute_service_directly(
+                dependency, environment, custom_inventory, extra_vars_file,
+                extra_args, dry_run, target_host
+            )
 
     def _execute_security(
-        self, production: bool, extra_args: List[str], dry_run: bool, target_host: str = None
+        self,
+        environment: str,
+        custom_inventory: str,
+        extra_vars_file: str,
+        extra_args: List[str],
+        dry_run: bool,
+        target_host: str = None
     ) -> int:
         """Execute security setup using smart security runner"""
+        # Need to convert environment to production bool for backward compatibility
+        production = (environment == 'prod')
+        
         return self.smart_security.run_smart_security(
             production=production,
             extra_args=extra_args,
@@ -125,10 +156,19 @@ class DependencyManager:
         )
 
     def _execute_base(
-        self, production: bool, extra_args: List[str], dry_run: bool, target_host: str = None
+        self,
+        environment: str,
+        custom_inventory: str,
+        extra_vars_file: str,
+        extra_args: List[str],
+        dry_run: bool,
+        target_host: str = None
     ) -> int:
         """Execute base configuration"""
-        inventory_path = self.inventory_manager.get_inventory_path(production)
+        inventory_path = self.inventory_manager.get_inventory_path(
+            environment=environment,
+            custom_path=custom_inventory
+        )
         
         return self.ansible_runner.run_recipe(
             recipe_path="core/base.yml",
@@ -136,12 +176,15 @@ class DependencyManager:
             extra_args=extra_args,
             dry_run=dry_run,
             target_host=target_host,
+            extra_vars_file=extra_vars_file,
         )
 
     def _execute_service_directly(
         self,
         service_name: str,
-        production: bool,
+        environment: str,
+        custom_inventory: str,
+        extra_vars_file: str,
         extra_args: List[str],
         dry_run: bool,
         target_host: str = None,
@@ -156,7 +199,10 @@ class DependencyManager:
             error(f"Recipe not found for service: {service_name}")
             return 1
         
-        inventory_path = self.inventory_manager.get_inventory_path(production)
+        inventory_path = self.inventory_manager.get_inventory_path(
+            environment=environment,
+            custom_path=custom_inventory
+        )
         
         return self.ansible_runner.run_recipe(
             recipe_path=recipe_path,
@@ -164,24 +210,37 @@ class DependencyManager:
             extra_args=extra_args,
             dry_run=dry_run,
             target_host=target_host,
+            extra_vars_file=extra_vars_file,
         )
 
     def _is_dependency_satisfied(
-        self, dependency: str, production: bool, target_host: str = None
+        self,
+        dependency: str,
+        environment: str,
+        custom_inventory: str,
+        target_host: str = None
     ) -> bool:
         """Check if a dependency is already satisfied"""
         
         # For dry runs, always assume dependencies need to be checked
         if dependency == "security":
-            return self._is_security_configured(production, target_host)
+            return self._is_security_configured(environment, custom_inventory, target_host)
         elif dependency == "base":
-            return self._is_base_configured(production, target_host)
+            return self._is_base_configured(environment, custom_inventory, target_host)
         else:
             # For other services, we could add more sophisticated checking
             return False
 
-    def _is_security_configured(self, production: bool, target_host: str = None) -> bool:
+    def _is_security_configured(
+        self,
+        environment: str,
+        custom_inventory: str,
+        target_host: str = None
+    ) -> bool:
         """Check if security is already configured"""
+        # Convert environment to production bool for backward compatibility
+        production = (environment == 'prod')
+        
         # Use smart security detection
         connection_info = self.smart_security._smart_port_detection(production, target_host)
         
@@ -191,8 +250,13 @@ class DependencyManager:
         
         return False
 
-    def _is_base_configured(self, production: bool, target_host: str = None) -> bool:
+    def _is_base_configured(
+        self,
+        environment: str,
+        custom_inventory: str,
+        target_host: str = None
+    ) -> bool:
         """Check if base configuration is installed"""
         # Simple check: if security is configured and we can connect, base is likely done
         # In a more sophisticated implementation, we could check for specific markers
-        return self._is_security_configured(production, target_host)
+        return self._is_security_configured(environment, custom_inventory, target_host)

@@ -25,8 +25,8 @@ def create_parser() -> argparse.ArgumentParser:
         epilog=f"""
 {Colors.YELLOW}Examples:{Colors.NC}
   {Colors.GREEN}claudia security --install{Colors.NC}         Setup server security (run first!)
-  {Colors.GREEN}claudia base --install{Colors.NC}             Setup base configuration  
-  {Colors.GREEN}claudia psql --install{Colors.NC}             Execute PostgreSQL installation
+  {Colors.GREEN}claudia base --install --prod{Colors.NC}      Setup base config in production
+  {Colors.GREEN}claudia psql --install --ci{Colors.NC}        Install PostgreSQL in CI environment
   {Colors.GREEN}claudia psql --install --port 5544{Colors.NC} Install PostgreSQL on custom port
   {Colors.GREEN}claudia psql --install --pgis{Colors.NC}      Install PostgreSQL with PostGIS
   {Colors.GREEN}claudia psql --adduser foo --password 1234{Colors.NC}  Create PostgreSQL user
@@ -37,6 +37,13 @@ def create_parser() -> argparse.ArgumentParser:
   {Colors.GREEN}claudia dev validate{Colors.NC}               Run comprehensive validation
   {Colors.GREEN}claudia dev syntax{Colors.NC}                Quick syntax checking  
   {Colors.GREEN}claudia dev test{Colors.NC}                  Authentication testing
+
+{Colors.YELLOW}Environment Selection:{Colors.NC}
+  {Colors.GREEN}claudia security --install --dev{Colors.NC}   Use development environment (default)
+  {Colors.GREEN}claudia security --install --prod{Colors.NC}  Use production environment
+  {Colors.GREEN}claudia security --install --ci{Colors.NC}    Use CI environment
+  {Colors.GREEN}claudia security --install -i my-inventory.yml{Colors.NC}  Use custom inventory
+  {Colors.GREEN}claudia security --install -e vault/prod.yml{Colors.NC}    Use custom vault file
 
 {Colors.YELLOW}Advanced:{Colors.NC}
   {Colors.GREEN}claudia psql --install -- --tags postgresql{Colors.NC}  Pass args to ansible-playbook
@@ -61,12 +68,39 @@ def create_parser() -> argparse.ArgumentParser:
         nargs="?",
         help="Development subcommand (when using 'dev')",
     )
-    parser.add_argument(
+    # Environment selection arguments (mutually exclusive)
+    env_group = parser.add_mutually_exclusive_group()
+    env_group.add_argument(
         "--prod",
         "--production",
         action="store_true",
-        help="Use production inventory instead of test",
+        help="Use production environment (inventory/prod.yml)",
     )
+    env_group.add_argument(
+        "--dev",
+        "--development",
+        action="store_true",
+        help="Use development environment (inventory/dev.yml) [default]",
+    )
+    env_group.add_argument(
+        "--ci",
+        "--continuous-integration",
+        action="store_true",
+        help="Use CI environment (inventory/ci.yml)",
+    )
+    
+    # Inventory and extra vars arguments
+    parser.add_argument(
+        "-i", "--inventory",
+        dest="inventory_path",
+        help="Custom inventory file path (overrides environment selection)",
+    )
+    parser.add_argument(
+        "-e", "--extra-vars",
+        dest="extra_vars_file",
+        help="Extra variables file path (e.g., vault file)",
+    )
+    
     parser.add_argument(
         "--check",
         "--dry-run",

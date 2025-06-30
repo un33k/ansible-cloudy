@@ -251,12 +251,27 @@ class CommandRouter:
         if args.verbose:
             ansible_args.insert(0, "-v")
         
+        environment = self._get_environment(args)
+        
         exit_code = dependency_manager.execute_with_dependencies(
             service_name=service_name,
-            production=args.prod,
+            environment=environment,
+            custom_inventory=getattr(args, 'inventory_path', None),
+            extra_vars_file=getattr(args, 'extra_vars_file', None),
             extra_args=ansible_args,
             dry_run=args.check,
             target_host=getattr(args, 'target_host', None),
         )
         
         sys.exit(exit_code)
+    
+    def _get_environment(self, args):
+        """Get environment from parsed arguments"""
+        if hasattr(args, 'prod') and args.prod:
+            return 'prod'
+        elif hasattr(args, 'ci') and args.ci:
+            return 'ci'
+        elif hasattr(args, 'dev') and args.dev:
+            return 'dev'
+        else:
+            return 'dev'  # Default to dev
