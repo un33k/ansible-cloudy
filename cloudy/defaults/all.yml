@@ -1,0 +1,37 @@
+---
+# Global defaults for all services
+# These can be overridden by vault variables or playbook variables
+
+# === GLOBAL SYSTEM DEFAULTS ===
+default_locale: "en_US.UTF-8"
+default_timezone: "UTC"
+default_shell: "/bin/bash"
+
+# === GLOBAL USER DEFAULTS ===
+default_service_user: "www-data"
+default_service_group: "www-data"
+
+# === GLOBAL PATH DEFAULTS ===
+default_app_root: "/srv/www"
+default_backup_dir: "/var/backups"
+default_log_dir: "/var/log"
+
+# === GLOBAL NETWORK DEFAULTS ===
+default_listen_interface: "0.0.0.0"
+default_localhost: "127.0.0.1"
+
+# === GLOBAL SECURITY DEFAULTS ===
+default_umask: "0022"
+default_file_permissions: "0644"
+default_directory_permissions: "0755"
+default_sensitive_file_permissions: "0600"
+
+# === GLOBAL PERFORMANCE DEFAULTS ===
+default_worker_processes: "auto"
+default_worker_connections: 1024
+
+# === LOGGING DEFAULTS ===
+default_log_level: "info"
+default_log_format: "combined"
+default_log_rotation: "daily"
+default_log_retention_days: 14

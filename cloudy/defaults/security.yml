@@ -1,0 +1,109 @@
+---
+# Security Service Defaults
+# Variable naming convention: security_<setting>
+# These are overridden by vault_security_<setting> variables
+
+# === SSH DEFAULTS ===
+ssh_port_default: 22022         # Non-standard SSH port for security
+ssh_permit_root_login_default: "prohibit-password"
+ssh_password_authentication_default: "no"
+ssh_pubkey_authentication_default: "yes"
+ssh_challenge_response_authentication_default: "no"
+ssh_gssapi_authentication_default: "no"
+ssh_use_pam_default: "yes"
+ssh_x11_forwarding_default: "no"
+ssh_print_motd_default: "no"
+ssh_print_last_log_default: "yes"
+ssh_tcp_keep_alive_default: "yes"
+ssh_client_alive_interval_default: 120
+ssh_client_alive_count_max_default: 3
+ssh_max_auth_tries_default: 3
+ssh_max_sessions_default: 10
+ssh_login_grace_time_default: 60
+ssh_permit_empty_passwords_default: "no"
+ssh_strict_modes_default: "yes"
+ssh_protocol_default: 2
+
+# === FIREWALL DEFAULTS ===
+ufw_enabled_default: "yes"
+ufw_default_incoming_default: "deny"
+ufw_default_outgoing_default: "allow"
+ufw_default_forward_default: "deny"
+ufw_logging_default: "on"
+ufw_ipv6_default: "yes"
+
+# === FAIL2BAN DEFAULTS ===
+fail2ban_enabled_default: "yes"
+fail2ban_bantime_default: 3600
+fail2ban_findtime_default: 600
+fail2ban_maxretry_default: 3
+fail2ban_ignoreip_default: "127.0.0.1/8 ::1"
+fail2ban_backend_default: "systemd"
+
+# === SYSCTL SECURITY DEFAULTS ===
+sysctl_ip_forward_default: 0
+sysctl_send_redirects_default: 0
+sysctl_accept_source_route_default: 0
+sysctl_accept_redirects_default: 0
+sysctl_secure_redirects_default: 0
+sysctl_log_martians_default: 1
+sysctl_ignore_icmp_redirects_default: 1
+sysctl_ignore_send_redirects_default: 1
+sysctl_disable_ipv6_default: 0
+sysctl_tcp_syncookies_default: 1
+sysctl_tcp_rfc1337_default: 1
+sysctl_rp_filter_default: 1
+sysctl_tcp_timestamps_default: 0
+
+# === USER DEFAULTS ===
+admin_user_default: "admin"
+admin_shell_default: "/bin/bash"
+admin_groups_default: "sudo,adm,systemd-journal"
+admin_sudo_default: "ALL=(ALL) NOPASSWD:ALL"
+
+# === PASSWORD POLICY DEFAULTS ===
+password_min_length_default: 12
+password_min_classes_default: 3
+password_remember_default: 5
+password_max_age_default: 90
+password_min_age_default: 1
+password_warn_age_default: 7
+
+# === AUDIT DEFAULTS ===
+auditd_enabled_default: "yes"
+auditd_max_log_file_default: 8
+auditd_num_logs_default: 5
+auditd_space_left_action_default: "SYSLOG"
+auditd_admin_space_left_action_default: "halt"
+
+# === FILE PERMISSIONS DEFAULTS ===
+sensitive_files_permissions_default: "0600"
+log_files_permissions_default: "0640"
+config_files_permissions_default: "0644"
+script_files_permissions_default: "0755"
+
+# === SERVICE HARDENING DEFAULTS ===
+disable_unnecessary_services_default: "yes"
+services_to_disable_default:
+  - "bluetooth"
+  - "cups"
+  - "avahi-daemon"
+  - "isc-dhcp-server"
+  - "isc-dhcp-server6"
+  - "rpcbind"
+  - "rsync"
+
+# === KERNEL HARDENING DEFAULTS ===
+kernel_modules_blacklist_default:
+  - "dccp"
+  - "sctp"
+  - "rds"
+  - "tipc"
+  - "bluetooth"
+  - "usb-storage"
+
+# === PATHS DEFAULTS ===
+ssh_config_dir_default: "/etc/ssh"
+ssh_authorized_keys_dir_default: ".ssh"
+fail2ban_config_dir_default: "/etc/fail2ban"
+audit_log_dir_default: "/var/log/audit"

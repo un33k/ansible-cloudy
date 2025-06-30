@@ -7,14 +7,22 @@
   gather_facts: true
   become: true
   
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/redis.yml"
+  
   vars:
     task_paths: "../../../tasks"
-    # Redis Configuration
-    redis_port: "{{ port | default('6379') }}"
-    redis_interface: "{{ interface | default('0.0.0.0') }}"
-    redis_memory: "{{ redis_memory_mb | default(0) }}"  # 0 = auto-calculate
-    redis_memory_divider: "{{ memory_divider | default(8) }}"
-    redis_password: "{{ password | default('') }}"
+    
+    # Apply defaults with vault override pattern
+    redis_port: "{{ vault_redis_port | default(redis_port_default) }}"
+    redis_bind: "{{ vault_redis_bind | default(redis_bind_default) }}"
+    redis_maxmemory_mb: "{{ vault_redis_maxmemory_mb | default(redis_maxmemory_mb_default) }}"
+    redis_requirepass: "{{ vault_redis_password | default(redis_requirepass_default) }}"
+    redis_loglevel: "{{ vault_redis_loglevel | default(redis_loglevel_default) }}"
+    redis_logfile: "{{ vault_redis_logfile | default(redis_logfile_default) }}"
+    redis_dir: "{{ vault_redis_dir | default(redis_dir_default) }}"
+    redis_appendonly: "{{ vault_redis_appendonly | default(redis_appendonly_default) }}"
     
     # Setup flags
     run_generic_setup: "{{ generic | default(true) }}"
@@ -31,8 +39,8 @@
           🚀 Starting Redis Cache Server Setup
           Target: {{ inventory_hostname }} ({{ ansible_host }})
           Port: {{ redis_port }}
-          Interface: {{ redis_interface }}
-          Memory: {{ 'Auto-calculate' if redis_memory == 0 else redis_memory + 'MB' }}
+          Bind: {{ redis_bind }}
+          Memory: {{ redis_maxmemory_mb }}MB
           
   tasks:
     # Generic Server Setup - Include core tasks
@@ -60,8 +68,8 @@
     - name: Configure Redis memory
       include_tasks: "{{ task_paths }}/sys/redis/configure-memory.yml"
       vars:
-        memory: "{{ redis_memory }}"
-        divider: "{{ redis_memory_divider }}"
+        memory: "{{ redis_maxmemory_mb }}"
+        divider: 0
       tags: [redis, memory]
       
     - name: Configure Redis port
@@ -73,14 +81,14 @@
     - name: Configure Redis interface
       include_tasks: "{{ task_paths }}/sys/redis/configure-interface.yml"
       vars:
-        interface: "{{ redis_interface }}"
+        interface: "{{ redis_bind }}"
       tags: [redis, interface]
       
     - name: Configure Redis password
       include_tasks: "{{ task_paths }}/sys/redis/configure-password.yml"
       vars:
-        password: "{{ redis_password }}"
-      when: redis_password != ""
+        password: "{{ redis_requirepass }}"
+      when: redis_requirepass != ""
       tags: [redis, password]
       
     # Firewall Configuration
@@ -99,10 +107,10 @@
           🎉 ✅ REDIS CACHE SERVER SETUP COMPLETED SUCCESSFULLY!
           📋 Configuration Summary:
              ├── Port: {{ redis_port }}
-             ├── Interface: {{ redis_interface }}
-             ├── Memory: {{ 'Auto-calculated from system memory' if redis_memory == 0 else redis_memory + 'MB' }}
-             ├── Password: {{ 'Set' if redis_password != '' else 'None' }}
-             ├── Firewall: {{ 'Port ' + redis_port + ' allowed' if setup_firewall else 'Not configured' }}
+             ├── Bind: {{ redis_bind }}
+             ├── Memory: {{ redis_maxmemory_mb }}MB
+             ├── Password: {{ 'Set' if redis_requirepass != '' else 'None' }}
+             ├── Firewall: {{ 'Port ' + (redis_port | string) + ' allowed' if setup_firewall else 'Not configured' }}
              └── Status: Running and ready for connections
           
           🚀 Redis cache server is ready for use!
@@ -110,8 +118,8 @@
           📖 Connection Information:
           - Host: {{ ansible_host }}
           - Port: {{ redis_port }}
-          - Auth: {{ 'Required (password set)' if redis_password != '' else 'None' }}
-          - Interface: {{ redis_interface }}
+          - Auth: {{ 'Required (password set)' if redis_requirepass != '' else 'None' }}
+          - Bind: {{ redis_bind }}
           
           📖 Next Steps:
           1. Test connection: redis-cli -h {{ ansible_host }} -p {{ redis_port }}

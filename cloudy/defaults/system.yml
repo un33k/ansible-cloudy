@@ -1,0 +1,98 @@
+---
+# System-level Defaults
+# Variable naming convention: system_<setting>
+# These are overridden by vault_system_<setting> variables
+
+# === HOSTNAME DEFAULTS ===
+system_hostname_default: "server"
+system_domain_default: "local"
+
+# === LOCALE DEFAULTS ===
+system_locale_default: "en_US.UTF-8"
+system_language_default: "en_US.UTF-8"
+system_timezone_default: "UTC"
+
+# === PACKAGE MANAGEMENT DEFAULTS ===
+system_update_cache_valid_time_default: 3600
+system_upgrade_dist_default: "no"
+system_autoremove_default: "yes"
+system_autoclean_default: "yes"
+
+# === SWAP DEFAULTS ===
+system_swap_size_mb_default: 2048
+system_swappiness_default: 10
+system_vfs_cache_pressure_default: 50
+
+# === SYSTEM LIMITS DEFAULTS ===
+system_file_max_default: 65535
+system_nofile_soft_default: 65535
+system_nofile_hard_default: 65535
+system_nproc_soft_default: 65535
+system_nproc_hard_default: 65535
+
+# === NETWORK DEFAULTS ===
+system_tcp_keepalive_time_default: 600
+system_tcp_keepalive_intvl_default: 60
+system_tcp_keepalive_probes_default: 3
+system_tcp_fin_timeout_default: 30
+system_tcp_tw_reuse_default: 1
+system_tcp_max_syn_backlog_default: 1024
+system_net_core_somaxconn_default: 1024
+system_net_ipv4_tcp_max_tw_buckets_default: 1440000
+system_net_ipv4_ip_local_port_range_default: "1024 65535"
+
+# === KERNEL DEFAULTS ===
+system_kernel_panic_default: 10
+system_kernel_panic_on_oops_default: 1
+system_kernel_sysrq_default: 0
+system_kernel_core_uses_pid_default: 1
+system_kernel_msgmnb_default: 65536
+system_kernel_msgmax_default: 65536
+system_kernel_shmmax_default: 68719476736
+system_kernel_shmall_default: 4294967296
+
+# === LOGGING DEFAULTS ===
+system_rsyslog_enabled_default: "yes"
+system_journald_enabled_default: "yes"
+system_journald_storage_default: "persistent"
+system_journald_compress_default: "yes"
+system_journald_max_use_default: "1G"
+system_journald_max_file_size_default: "100M"
+system_journald_max_files_default: 10
+
+# === CRON DEFAULTS ===
+system_cron_enabled_default: "yes"
+system_anacron_enabled_default: "yes"
+system_cron_allow_users_default: ["root"]
+
+# === NTP DEFAULTS ===
+system_ntp_enabled_default: "yes"
+system_ntp_servers_default:
+  - "0.pool.ntp.org"
+  - "1.pool.ntp.org"
+  - "2.pool.ntp.org"
+  - "3.pool.ntp.org"
+
+# === MONITORING DEFAULTS ===
+system_monitoring_enabled_default: "yes"
+system_collectd_enabled_default: "no"
+system_netdata_enabled_default: "no"
+system_prometheus_node_exporter_enabled_default: "no"
+
+# === BACKUP DEFAULTS ===
+system_backup_enabled_default: "yes"
+system_backup_dir_default: "/var/backups"
+system_backup_retention_days_default: 30
+system_backup_compression_default: "gzip"
+
+# === USER MANAGEMENT DEFAULTS ===
+system_default_shell_default: "/bin/bash"
+system_default_umask_default: "022"
+system_password_hash_rounds_default: 5000
+
+# === PATHS DEFAULTS ===
+system_tmp_dir_default: "/tmp"
+system_var_tmp_dir_default: "/var/tmp"
+system_home_dir_default: "/home"
+system_opt_dir_default: "/opt"
+system_srv_dir_default: "/srv"

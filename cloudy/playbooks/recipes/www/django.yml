@@ -7,12 +7,20 @@
   gather_facts: true
   become: true
   
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/nginx.yml"
+    - "../../../defaults/system.yml"
+  
   vars:
     task_paths: "../../../tasks"
     # Web Server Configuration
     webserver_type: "{{ webserver | default('gunicorn') }}"  # apache or gunicorn
-    webserver_port: "{{ webserver_port | default('8181') }}"
-    domain_name: "{{ domain_name | default(inventory_hostname) }}"
+    webserver_port: "{{ port | default('8181') }}"
+    nginx_domain: "{{ domain | default(nginx_domain) }}"
+    
+    # Variable mapping for backward compatibility
+    domain_name: "{{ nginx_domain }}"  # Deprecated, use nginx_domain
     
     # Setup flags
     run_generic_setup: "{{ generic | default(true) }}"
@@ -32,7 +40,7 @@
           🚀 Starting Django Web Server Setup
           Target: {{ inventory_hostname }} ({{ ansible_host }})
           Web Server: {{ webserver_type }}
-          Domain: {{ domain_name }}
+          Domain: {{ nginx_domain }}
           Port: {{ webserver_port }}
           
   tasks:

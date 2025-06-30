@@ -1,31 +1,39 @@
-# Database Server Variables (replaces [DBSERVER] section)
+# Database Server Variables
+# Uses standardized variable naming convention
 
 # PostgreSQL Configuration
-pg_version: "17"
-pg_port: 5432
-pg_listen_addresses: "localhost"
-pg_max_connections: 100
-pg_shared_buffers: "256MB"
+postgresql_version: "17"
+postgresql_port: 5432
+postgresql_listen_addresses: "localhost"
+postgresql_max_connections: 100
+postgresql_shared_buffers: "256MB"
 
 # Database Users & Databases
-pg_databases: []
+postgresql_databases: []
   # - name: myapp
   #   owner: myapp_user
   #   encoding: UTF8
-  #   locale: en_US.UTF-8
+  #   lc_collate: en_US.UTF-8
+  #   lc_ctype: en_US.UTF-8
 
-pg_users: []
+postgresql_users: []
   # - name: myapp_user
   #   password: "{{ vault_db_password }}"
-  #   privileges: ALL
+  #   role_attr_flags: CREATEDB,NOSUPERUSER
   #   database: myapp
-
+  #   priv: ALL
 
 # Redis Configuration (if on same server)
 redis_port: 6379
 redis_password: "{{ vault_redis_password | default('') }}"
-redis_maxmemory: "256mb"
+redis_memory_mb: 256
 
 # PostGIS Configuration
 postgis_enabled: false
 postgis_version: "3.4"
+
+# Backward compatibility mappings
+pg_version: "{{ postgresql_version }}"
+pg_port: "{{ postgresql_port }}"
+pg_databases: "{{ postgresql_databases }}"
+pg_users: "{{ postgresql_users }}"

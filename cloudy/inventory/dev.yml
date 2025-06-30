@@ -63,41 +63,62 @@ all:
       hostname: test-server.example.com
       ansible_ssh_private_key_file: ~/.ssh/id_rsa
       
-      # Service-specific configs (when testing individual services)
-      domain_name: test-server.example.com
+      # Service-specific configs (using standardized variable names)
       
-      # PostgreSQL Configuration
+      # Nginx Configuration
+      nginx_domain: test-server.example.com
+      nginx_protocol: https
+      nginx_ssl_enabled: true
+      nginx_upstream_servers:
+        - "127.0.0.1:8000"
+      
+      # PostgreSQL Configuration (standardized names)
       postgresql_version: "17"
+      postgresql_port: 5432
       postgis_version: "3"
-      database_port: 2345
       setup_postgis: true
       
       # PostgreSQL Databases to Create
-      pg_databases:
+      postgresql_databases:
         - name: myapp_db
           owner: myapp_user
           encoding: UTF8
-          locale: en_US.UTF-8
+          lc_collate: en_US.UTF-8
+          lc_ctype: en_US.UTF-8
         - name: gis_db
           owner: gis_user
           encoding: UTF8
-          locale: en_US.UTF-8
+          lc_collate: en_US.UTF-8
+          lc_ctype: en_US.UTF-8
       
       # PostgreSQL Users to Create
-      pg_users:
+      postgresql_users:
         - name: myapp_user
           password: "{{ vault_postgres_password | default('changeme') }}"
           database: myapp_db
-          privileges: ALL
+          priv: ALL
+          role_attr_flags: CREATEDB,NOSUPERUSER
         - name: gis_user
           password: "{{ vault_postgres_password | default('changeme') }}"
           database: gis_db
-          privileges: ALL
+          priv: ALL
+          role_attr_flags: CREATEDB,NOSUPERUSER
         - name: readonly_user
           password: "{{ vault_postgres_password | default('changeme') }}"
+          role_attr_flags: NOSUPERUSER
       
-      # Other Services
+      # Redis Configuration (standardized names)
       redis_memory_mb: 512
       redis_port: 6379
-      webserver: gunicorn
+      redis_password: "{{ vault_redis_password | default('') }}"
+      redis_persistence_enabled: true
+      
+      # PgBouncer Configuration (if needed)
+      pgbouncer_port: 6432
+      pgbouncer_backend_host: localhost
+      pgbouncer_backend_port: 5432
+      pgbouncer_default_pool_size: 25
+      
+      # Web Server Configuration
+      webserver_type: gunicorn
       webserver_port: 8181

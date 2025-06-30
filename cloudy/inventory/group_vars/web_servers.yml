@@ -1,22 +1,23 @@
-# Web Server Variables (replaces [WEBSERVER] section)
+# Web Server Variables
+# Uses standardized variable naming convention
 
 # Web Server Choice
-webserver: "nginx"  # nginx, apache, or both
+webserver_type: "nginx"  # nginx, apache, or both
 webserver_port: 80
-webserver_ssl_port: 443
 
 # Domain Configuration
-domain_name: "example.com"
-server_aliases: []
+nginx_domain: "example.com"
+nginx_server_aliases: []
   # - www.example.com
   # - api.example.com
 
 # SSL Configuration
-ssl_enabled: true
-ssl_cert_path: "/etc/ssl/certs"
-ssl_key_path: "/etc/ssl/private"
+nginx_ssl_enabled: true
+nginx_ssl_cert_dir: "/etc/nginx/ssl"
+nginx_ssl_certificate: "{{ nginx_ssl_cert_dir }}/{{ nginx_domain }}.crt"
+nginx_ssl_certificate_key: "{{ nginx_ssl_cert_dir }}/{{ nginx_domain }}.key"
 letsencrypt_enabled: false
-letsencrypt_email: "admin@{{ domain_name }}"
+letsencrypt_email: "admin@{{ nginx_domain }}"
 
 # Nginx Specific
 nginx_worker_processes: "auto"
@@ -46,13 +47,13 @@ supervisor_programs: []
 
 # PgBouncer Configuration (Connection Pooling)
 pgbouncer_enabled: true
-pgbouncer_listen_port: "{{ vault_pgbouncer_port | default(6432) }}"
+pgbouncer_port: "{{ vault_pgbouncer_port | default(6432) }}"
 pgbouncer_listen_address: "127.0.0.1"  # Local only on web servers
 
 # Backend Database Connection
-pgbouncer_database_host: "{{ database_host | default('db.internal') }}"
-pgbouncer_database_port: "{{ vault_postgresql_port | default(5432) }}"
-pgbouncer_database_name: "{{ database_name | default('postgres') }}"
+pgbouncer_backend_host: "{{ database_host | default('db.internal') }}"
+pgbouncer_backend_port: "{{ vault_postgresql_port | default(5432) }}"
+pgbouncer_default_database: "{{ database_name | default('postgres') }}"
 pgbouncer_database_user: "{{ database_user | default('postgres') }}"
 
 # Connection Pool Settings
@@ -65,3 +66,11 @@ pgbouncer_reserve_pool_size: 5      # Reserve connections for super users
 # Timeouts
 pgbouncer_server_idle_timeout: 600  # Close idle server connections after 10 min
 pgbouncer_query_wait_timeout: 60    # Cancel queries waiting too long
+
+# Backward compatibility mappings
+domain_name: "{{ nginx_domain }}"
+ssl_enabled: "{{ nginx_ssl_enabled }}"
+pgbouncer_listen_port: "{{ pgbouncer_port }}"
+pgbouncer_database_host: "{{ pgbouncer_backend_host }}"
+pgbouncer_database_port: "{{ pgbouncer_backend_port }}"
+pgbouncer_database_name: "{{ pgbouncer_default_database }}"

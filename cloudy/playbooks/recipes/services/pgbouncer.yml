@@ -9,22 +9,29 @@
   gather_facts: true
   become: true
   
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/postgresql.yml"
+    - "../../../defaults/pgbouncer.yml"
+  
   vars:
     task_paths: "../../../tasks"
-    # PgBouncer Configuration
-    pgbouncer_listen_port: "{{ vault_pgbouncer_port | default(6432) }}"
-    pgbouncer_listen_addr: "127.0.0.1"  # Local only on web server
+    # Override defaults with CLI parameters
+    pgbouncer_port: "{{ port | default(pgbouncer_port) }}"
+    pgbouncer_backend_host: "{{ database_host | default(pgbouncer_backend_host) }}"
+    pgbouncer_backend_port: "{{ database_port | default(postgresql_port) }}"
+    pgbouncer_default_database: "{{ database_name | default(pgbouncer_default_database) }}"
+    pgbouncer_default_pool_size: "{{ pool_size | default(pgbouncer_default_pool_size) }}"
+    pgbouncer_max_db_connections: "{{ max_db_connections | default(pgbouncer_max_db_connections) }}"
+    pgbouncer_max_client_conn: "{{ max_client_connections | default(pgbouncer_max_client_conn) }}"
     
-    # Backend Database Configuration
-    pgbouncer_db_host: "{{ database_host | default('db.internal') }}"
-    pgbouncer_db_port: "{{ vault_postgresql_port | default(5432) }}"
-    pgbouncer_db_name: "{{ database_name | default('postgres') }}"
+    # Variable mapping for backward compatibility
+    pgbouncer_listen_port: "{{ pgbouncer_port }}"  # Deprecated
+    pgbouncer_listen_addr: "{{ pgbouncer_listen_address }}"
+    pgbouncer_db_host: "{{ pgbouncer_backend_host }}"  # Deprecated
+    pgbouncer_db_port: "{{ pgbouncer_backend_port }}"  # Deprecated
+    pgbouncer_db_name: "{{ pgbouncer_default_database }}"  # Deprecated
     pgbouncer_db_user: "{{ database_user | default('postgres') }}"
-    
-    # Pool Settings (conservative defaults for web servers)
-    pgbouncer_default_pool_size: "{{ pool_size | default(5) }}"
-    pgbouncer_max_db_connections: "{{ max_db_connections | default(10) }}"
-    pgbouncer_max_client_conn: "{{ max_client_connections | default(100) }}"
     
   pre_tasks:
     # Ensure proper secure connection
@@ -46,9 +53,9 @@
           Target: {{ inventory_hostname }} ({{ ansible_host }})
           
           📋 Configuration:
-          ├── Listen: localhost:{{ pgbouncer_listen_port }}
-          ├── Backend: {{ pgbouncer_db_host }}:{{ pgbouncer_db_port }}
-          ├── Database: {{ pgbouncer_db_name }}
+          ├── Listen: localhost:{{ pgbouncer_port }}
+          ├── Backend: {{ pgbouncer_backend_host }}:{{ pgbouncer_backend_port }}
+          ├── Database: {{ pgbouncer_default_database }}
           ├── Pool Size: {{ pgbouncer_default_pool_size }} (max {{ pgbouncer_max_db_connections }})
           └── Max Clients: {{ pgbouncer_max_client_conn }}
           
@@ -62,9 +69,9 @@
     - name: Configure PgBouncer
       include_tasks: "{{ task_paths }}/services/pgbouncer/configure.yml"
       vars:
-        database_host: "{{ pgbouncer_db_host }}"
-        database_port: "{{ pgbouncer_db_port }}"
-        database_name: "{{ pgbouncer_db_name }}"
+        database_host: "{{ pgbouncer_backend_host }}"
+        database_port: "{{ pgbouncer_backend_port }}"
+        database_name: "{{ pgbouncer_default_database }}"
         database_user: "{{ pgbouncer_db_user }}"
         database_password: "{{ vault_postgres_password }}"
         pool_size: "{{ pgbouncer_default_pool_size }}"
@@ -89,7 +96,7 @@
     - name: Perform health check
       include_tasks: "{{ task_paths }}/services/pgbouncer/health-check.yml"
       vars:
-        database_name: "{{ pgbouncer_db_name }}"
+        database_name: "{{ pgbouncer_default_database }}"
         database_user: "{{ pgbouncer_db_user }}"
         database_password: "{{ vault_postgres_password }}"
       tags: [pgbouncer, health]
@@ -109,8 +116,8 @@
           📋 Configuration Summary:
              ├── Installation: Web server (local pooling)
              ├── Status: Active and accepting connections
-             ├── Listen: localhost:{{ pgbouncer_listen_port }}
-             ├── Backend: {{ pgbouncer_db_host }}:{{ pgbouncer_db_port }}
+             ├── Listen: localhost:{{ pgbouncer_port }}
+             ├── Backend: {{ pgbouncer_backend_host }}:{{ pgbouncer_backend_port }}
              ├── Pool Size: {{ pgbouncer_default_pool_size }} × {{ pgbouncer_max_db_connections }} = {{ pgbouncer_default_pool_size | int * pgbouncer_max_db_connections | int }} max
              └── Mode: Transaction pooling (most efficient)
           
@@ -119,8 +126,8 @@
           📖 Application Configuration:
           Update your application database connection to:
           - Host: localhost (or 127.0.0.1)
-          - Port: {{ pgbouncer_listen_port }}
-          - Database: {{ pgbouncer_db_name }}
+          - Port: {{ pgbouncer_port }}
+          - Database: {{ pgbouncer_default_database }}
           - User: {{ pgbouncer_db_user }}
           
           Example Django settings:
@@ -128,14 +135,14 @@
               'default': {
                   'ENGINE': 'django.db.backends.postgresql',
                   'HOST': 'localhost',
-                  'PORT': '{{ pgbouncer_listen_port }}',
-                  'NAME': '{{ pgbouncer_db_name }}',
+                  'PORT': '{{ pgbouncer_port }}',
+                  'NAME': '{{ pgbouncer_default_database }}',
                   'USER': '{{ pgbouncer_db_user }}',
                   'PASSWORD': os.environ.get('DB_PASSWORD'),
               }
           }
           
           📖 Monitoring:
-          - Check pools: psql -h localhost -p {{ pgbouncer_listen_port }} -U postgres pgbouncer -c "SHOW POOLS;"
-          - Check clients: psql -h localhost -p {{ pgbouncer_listen_port }} -U postgres pgbouncer -c "SHOW CLIENTS;"
-          - Check stats: psql -h localhost -p {{ pgbouncer_listen_port }} -U postgres pgbouncer -c "SHOW STATS;"
+          - Check pools: psql -h localhost -p {{ pgbouncer_port }} -U postgres pgbouncer -c "SHOW POOLS;"
+          - Check clients: psql -h localhost -p {{ pgbouncer_port }} -U postgres pgbouncer -c "SHOW CLIENTS;"
+          - Check stats: psql -h localhost -p {{ pgbouncer_port }} -U postgres pgbouncer -c "SHOW STATS;"

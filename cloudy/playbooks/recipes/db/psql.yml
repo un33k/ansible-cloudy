@@ -9,14 +9,22 @@
   gather_facts: true
   become: true
   
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/postgresql.yml"
+  
   vars:
     task_paths: "../../../tasks"
     # PostgreSQL configuration
     setup_postgresql: true
     setup_postgis: false
-    postgresql_version: "17"
-    database_port: "{{ vault_postgresql_port | default(5432) }}"
-    postgis_version: "3"
+    
+    # Apply defaults with vault override pattern
+    pg_version: "{{ vault_pg_version | default(pg_version_default) }}"
+    pg_port: "{{ vault_pg_port | default(pg_port_default) }}"
+    pg_databases: "{{ vault_pg_databases | default([]) }}"
+    pg_users: "{{ vault_pg_users | default([]) }}"
+    pg_postgis_version: "{{ vault_pg_postgis_version | default(pg_postgis_version_default) }}"
     
   pre_tasks:
     # Ensure proper secure connection
@@ -35,9 +43,9 @@
           └── 🔄 PostgreSQL Installation (current phase)
           
           🗄️  Database Configuration:
-          ├── PostgreSQL: v{{ postgresql_version }}
-          ├── Port: {{ database_port }}
-          ├── PostGIS: {{ 'Yes (v' + postgis_version + ')' if setup_postgis else 'No' }}
+          ├── PostgreSQL: v{{ pg_version }}
+          ├── Port: {{ pg_port }}
+          ├── PostGIS: {{ 'Yes (v' + pg_postgis_version + ')' if setup_postgis else 'No' }}
           └── Firewall: PostgreSQL port configured
           
   tasks:
@@ -53,23 +61,18 @@
       
     - name: Install PostgreSQL server
       include_tasks: "{{ task_paths }}/db/postgresql/install.yml"
-      vars:
-        pg_version: "{{ postgresql_version }}"
       when: setup_postgresql | bool
       tags: [postgresql, install]
       
     - name: Install PostGIS extension
       include_tasks: "{{ task_paths }}/db/postgresql/install-postgis.yml"
       vars:
-        pg_version: "{{ postgresql_version }}"
-        postgis_version: "{{ postgis_version }}"
+        postgis_version: "{{ pg_postgis_version }}"
       when: setup_postgresql | bool and setup_postgis | bool
       tags: [postgresql, postgis, install]
       
     - name: Configure PostgreSQL port
       include_tasks: "{{ task_paths }}/db/postgresql/configure-port.yml"
-      vars:
-        pg_port: "{{ database_port }}"
       when: setup_postgresql | bool
       tags: [postgresql, config]
       
@@ -107,8 +110,6 @@
     # Firewall Configuration
     - name: Allow PostgreSQL through firewall
       include_tasks: "{{ task_paths }}/sys/firewall/allow-postgresql.yml"
-      vars:
-        pg_port: "{{ database_port }}"
       when: setup_postgresql | bool
       tags: [firewall, postgresql]
       
@@ -119,14 +120,14 @@
           🎉 ✅ POSTGRESQL SERVER SETUP COMPLETED SUCCESSFULLY!
           📋 Configuration Summary:
              ├── Server: {{ inventory_hostname }} ({{ ansible_host }})
-             ├── PostgreSQL: v{{ postgresql_version }} installed on port {{ database_port }}
-             ├── PostGIS: {{ 'v' + postgis_version + ' extension installed' if setup_postgis else 'Not installed' }}
+             ├── PostgreSQL: v{{ pg_version }} installed on port {{ pg_port }}
+             ├── PostGIS: {{ 'v' + pg_postgis_version + ' extension installed' if setup_postgis else 'Not installed' }}
              ├── Databases: {{ pg_databases | length if pg_databases is defined else 0 }} created
              ├── Users: {{ pg_users | length if pg_users is defined else 0 }} created
-             └── Firewall: PostgreSQL port {{ database_port }} configured
+             └── Firewall: PostgreSQL port {{ pg_port }} configured
           
           🚀 PostgreSQL server is ready for applications!
-             └── Connection: psql -h {{ ansible_host }} -p {{ database_port }} -U postgres
+             └── Connection: psql -h {{ ansible_host }} -p {{ pg_port }} -U postgres
              
   handlers:
     - name: restart postgresql
