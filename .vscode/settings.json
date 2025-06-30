@@ -10,6 +10,11 @@
   "ansible.validation.enabled": true,
   "ansible.validation.lint.enabled": true,
   "ansible.validation.lint.path": "dev/.ansible-lint.yml",
+  "ansible.playbook.path": "cloudy/playbooks",
+  "ansible.ansiblePath": "ansible",
+  "ansible.workspaceFolders": [
+    "cloudy"
+  ],
   "files.associations": {
     "*.yml": "ansible",
     "*.yaml": "ansible"

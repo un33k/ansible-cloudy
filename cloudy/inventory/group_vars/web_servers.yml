@@ -26,4 +26,4 @@ supervisor_programs: []
 pgbouncer_enabled: true
 
 # Backend Database Connection (usually set per environment)
-pgbouncer_backend_host: "db.internal"  # Override per environment
+pgbouncer_backend_host: "pg.internal"  # Override per environment

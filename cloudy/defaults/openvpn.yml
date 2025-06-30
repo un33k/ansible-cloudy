@@ -1,0 +1,47 @@
+---
+# OpenVPN Service Defaults
+# Variable naming convention: openvpn_<setting>
+# These are overridden by vault_openvpn_<setting> variables
+
+# === CONNECTION DEFAULTS ===
+openvpn_port_default: 1194          # OpenVPN standard port
+openvpn_proto_default: "udp"        # UDP is faster, TCP is more reliable
+openvpn_interface_default: "tun0"   # TUN interface for routing
+
+# === SECURITY DEFAULTS ===
+openvpn_passphrase_default: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=32') }}"  # Random if not set
+openvpn_cipher_default: "AES-256-CBC"
+openvpn_auth_default: "SHA256"
+openvpn_dh_bits_default: 2048
+openvpn_key_size_default: 256
+
+# === NETWORK DEFAULTS ===
+openvpn_subnet_default: "10.8.0.0"
+openvpn_subnet_mask_default: "255.255.255.0"
+openvpn_dns_default: "8.8.8.8"
+openvpn_dns_secondary_default: "8.8.4.4"
+openvpn_push_redirect_gateway_default: "yes"
+openvpn_push_dhcp_options_default: "yes"
+
+# === CLIENT DEFAULTS ===
+openvpn_max_clients_default: 100
+openvpn_keepalive_default: "10 120"
+openvpn_comp_lzo_default: "yes"
+openvpn_persist_key_default: "yes"
+openvpn_persist_tun_default: "yes"
+
+# === LOGGING DEFAULTS ===
+openvpn_log_level_default: 3
+openvpn_status_log_default: "/var/log/openvpn-status.log"
+openvpn_log_append_default: "yes"
+
+# === DOCKER DEFAULTS ===
+openvpn_docker_image_default: "kylemanna/openvpn"
+openvpn_docker_volume_default: "/docker/openvpn"
+openvpn_docker_restart_policy_default: "unless-stopped"
+
+# === PATHS DEFAULTS ===
+openvpn_config_dir_default: "/etc/openvpn"
+openvpn_easy_rsa_dir_default: "/etc/openvpn/easy-rsa"
+openvpn_keys_dir_default: "/etc/openvpn/keys"
+openvpn_ccd_dir_default: "/etc/openvpn/ccd"

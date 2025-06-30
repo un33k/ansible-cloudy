@@ -9,7 +9,7 @@
   
   vars_files:
     - "../../../defaults/all.yml"
-    - "../../../defaults/vpn.yml"
+    - "../../../defaults/openvpn.yml"
   
   vars:
     task_paths: "../../../tasks"
@@ -67,7 +67,7 @@
       
     # OpenVPN Installation
     - name: Install OpenVPN Docker container
-      include_tasks: "{{ task_paths }}/services/vpn/docker-install.yml"
+      include_tasks: "{{ task_paths }}/services/openvpn/docker-install.yml"
       vars:
         domain: "{{ vpn_domain }}"
         port: "{{ vpn_port }}"
@@ -78,7 +78,7 @@
       tags: [openvpn, install]
       
     - name: Configure OpenVPN systemd service
-      include_tasks: "{{ task_paths }}/services/vpn/docker-configure.yml"
+      include_tasks: "{{ task_paths }}/services/openvpn/docker-configure.yml"
       vars:
         domain: "{{ vpn_domain }}"
         port: "{{ vpn_port }}"
@@ -102,10 +102,10 @@
           
           📖 Next Steps:
           1. Create client certificates:
-             ansible-playbook -i inventory/hosts.yml --extra-vars="client_name=myclient domain={{ vpn_domain }}" --tags=create-client tasks/services/vpn/create-client.yml
+             ansible-playbook -i inventory/hosts.yml --extra-vars="client_name=myclient domain={{ vpn_domain }}" --tags=create-client tasks/services/openvpn/create-client.yml
           
           2. List clients:
-             ansible-playbook -i inventory/hosts.yml --extra-vars="domain={{ vpn_domain }}" --tags=list-clients tasks/services/vpn/list-clients.yml
+             ansible-playbook -i inventory/hosts.yml --extra-vars="domain={{ vpn_domain }}" --tags=list-clients tasks/services/openvpn/list-clients.yml
           
           3. Connect with client:
              Use the downloaded .ovpn file with your OpenVPN client
