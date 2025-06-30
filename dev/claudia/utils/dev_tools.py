@@ -132,7 +132,7 @@ class DevTools:
         vault_file = self.config.project_root / ".vault" / "dev.yml"
         if vault_file.exists():
             cmd.extend(["-e", f"@{vault_file}"])
-            print(f"{Colors.BLUE}🔐 Loading vault credentials from: {vault_file}{Colors.NC}")
+            print(f"{Colors.BLUE}🔐 Loading vault credentials from: .vault/dev.yml{Colors.NC}")
         
         cmd.extend(ansible_args)
         
