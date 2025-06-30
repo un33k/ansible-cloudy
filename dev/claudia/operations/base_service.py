@@ -9,7 +9,7 @@ from pathlib import Path
 from abc import ABC, abstractmethod
 
 from utils.colors import Colors, error, info
-from utils.config import AliConfig, InventoryManager
+from utils.config import ClaudiaConfig, InventoryManager
 from execution.ansible import AnsibleRunner
 from discovery.service_scanner import ServiceScanner
 from operations.recipes import RecipeFinder, RecipeHelpParser
@@ -18,7 +18,7 @@ from operations.recipes import RecipeFinder, RecipeHelpParser
 class BaseServiceOperations(ABC):
     """Base class for all service operations"""
 
-    def __init__(self, config: AliConfig, service_name: str):
+    def __init__(self, config: ClaudiaConfig, service_name: str):
         self.config = config
         self.service_name = service_name
         self.inventory_manager = InventoryManager(config)

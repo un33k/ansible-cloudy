@@ -8,14 +8,14 @@ from typing import List, Dict, Any
 from pathlib import Path
 
 from utils.colors import info, warn, error
-from utils.config import AliConfig, InventoryManager
+from utils.config import ClaudiaConfig, InventoryManager
 from execution.ansible import AnsibleRunner, SmartSecurityRunner
 
 
 class DependencyManager:
     """Manages service dependencies and automatic prerequisite execution"""
 
-    def __init__(self, config: AliConfig):
+    def __init__(self, config: ClaudiaConfig):
         self.config = config
         self.inventory_manager = InventoryManager(config)
         self.ansible_runner = AnsibleRunner(config)

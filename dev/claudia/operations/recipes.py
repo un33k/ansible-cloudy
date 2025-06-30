@@ -1,19 +1,19 @@
 """
-Recipe discovery, management, and help generation for Ali CLI
+Recipe discovery, management, and help generation for Claudia CLI
 """
 
 import glob
 import yaml
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-from utils.config import AliConfig
+from utils.config import ClaudiaConfig
 from utils.colors import Colors, error, warn
 
 
 class RecipeFinder:
     """Find and manage recipe files"""
 
-    def __init__(self, config: AliConfig):
+    def __init__(self, config: ClaudiaConfig):
         self.config = config
         self._recipe_cache = None
 
@@ -72,7 +72,7 @@ class RecipeFinder:
 class RecipeHelpParser:
     """Parse recipe files to extract help information automatically"""
 
-    def __init__(self, config: AliConfig):
+    def __init__(self, config: ClaudiaConfig):
         self.config = config
 
     def parse_recipe_help(self, recipe_path: Path) -> Dict[str, Any]:
@@ -271,7 +271,7 @@ class RecipeHelpParser:
             )
 
 
-def list_recipes(config: AliConfig) -> None:
+def list_recipes(config: ClaudiaConfig) -> None:
     """List all available recipes"""
     finder = RecipeFinder(config)
     recipes = finder.get_all_recipes()

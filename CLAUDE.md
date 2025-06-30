@@ -22,6 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **File size limits**: Keep ALL files under 200 LOC, target 100 LOC maximum
 - **Modular design**: Each component handles one responsibility (discovery, operations, execution, etc.)
 - **Auto-discovery**: Services and operations automatically discovered from filesystem structure
+- **Modular refactoring**: Large modules split into focused sub-modules (e.g., ansible/, postgresql/, dev_tools/)
 
 ### Development Workflow
 1. **Use Claudia CLI**: `./claudia [service] --install` for recipe operations
@@ -102,7 +103,7 @@ cd ansible-cloudy/
 
 **Security Features**:
 - ✅ **Root with SSH keys**: All operations use root with key authentication
-- ✅ **Optional grunt user**: Created only if `vault_grunt_user` is defined - for service processes
+- ✅ **Optional admin user**: Created only if `vault_admin_user` is defined - for service processes
 - ✅ **Firewall**: UFW configured with custom SSH port
 - ✅ **Simple**: Single connection context, no user switching
 
@@ -112,7 +113,7 @@ cd ansible-cloudy/
 
 **⚠️ CRITICAL - Sudo Password Requirements**:
 
-Ansible requires sudo password configuration for privileged operations after switching from root to grunt user. There are two ways to provide this:
+Ansible requires sudo password configuration for privileged operations after switching from root to admin user. There are two ways to provide this:
 
 #### Method 1: Inventory Configuration (Recommended)
 Add the sudo password directly in your inventory file:
@@ -121,7 +122,7 @@ Add the sudo password directly in your inventory file:
 generic_servers:
   hosts:
     test-generic:
-      grunt_password: secure123        # Login password  
+      admin_password: secure123        # Login password  
       ansible_become_pass: secure123   # Sudo password
 ```
 
@@ -153,27 +154,27 @@ all:
 generic_servers:
   hosts:
     test-generic:
-      grunt_password: secure123        # Login password  
+      admin_password: secure123        # Login password  
       ansible_become_pass: secure123   # Sudo password
 ```
 
 **How SSH Key Installation Works**:
 1. **Initial connection**: Uses `root` + SSH key (if available) or password fallback
-2. **Create grunt user**: Sets up grunt user with password
-3. **Install SSH key**: Copies the public key (`~/.ssh/id_rsa.pub`) to grunt user's `~/.ssh/authorized_keys`
-4. **Switch connection**: Changes to grunt user with SSH key authentication
+2. **Create admin user**: Sets up admin user with password
+3. **Install SSH key**: Copies the public key (`~/.ssh/id_rsa.pub`) to admin user's `~/.ssh/authorized_keys`
+4. **Switch connection**: Changes to admin user with SSH key authentication
 5. **Secure server**: Disables root login and password authentication
 
 **Why This is Needed**:
 - Initial connection uses `root` with SSH key authentication (preferred) or password fallback
-- After grunt user creation and SSH key installation, connection switches to grunt user
+- After admin user creation and SSH key installation, connection switches to admin user
 - Grunt user requires sudo password for privileged operations (firewall, system config, etc.)
-- The `grunt_password` is for SSH login, `ansible_become_pass` is for sudo operations
+- The `admin_password` is for SSH login, `ansible_become_pass` is for sudo operations
 - SSH keys provide secure, passwordless authentication after setup
 
 **Complete Secure Workflow Example**:
 ```bash
-# 1. Setup secure server (root SSH keys + grunt user, firewall, port change)
+# 1. Setup secure server (root SSH keys + admin user, firewall, port change)
 ./claudia security --install
 
 # 2. Deploy base configuration
@@ -274,7 +275,7 @@ generic_servers:
 ```
 
 #### Recipe Categories
-- **core/security.yml**: Initial server security (grunt user, SSH keys, firewall, disable root)
+- **core/security.yml**: Initial server security (admin user, SSH keys, firewall, disable root)
 - **core/base.yml**: Basic server configuration (hostname, git, timezone, swap)
 - **db/psql.yml**: PostgreSQL database server
 - **db/postgis.yml**: PostgreSQL with PostGIS extensions
@@ -353,8 +354,8 @@ all:
         production-web:
           ansible_host: 10.10.10.100
           hostname: web.example.com
-          grunt_user: admin
-          grunt_password: secure123
+          admin_user: admin
+          admin_password: secure123
           ssh_port: 22022
 ```
 
@@ -385,6 +386,36 @@ Example recipe structure:
 - **Python**: ≥3.8 (for Ansible)
 - **SSH Access**: To target servers
 - **Development tools**: VS Code with Ansible extension recommended
+
+## Test Suite
+
+Claudia includes a comprehensive pytest-based test suite:
+
+```bash
+# Run all tests
+cd dev/claudia
+python -m pytest
+
+# Run with coverage
+python -m pytest --cov=. --cov-report=html
+
+# Run specific test file
+python -m pytest tests/test_config.py
+
+# Run with verbose output
+python -m pytest -v
+
+# Use the test runner script
+./run_tests.py
+```
+
+**Test Structure:**
+- `tests/conftest.py` - Shared fixtures and test configuration
+- `tests/test_config.py` - Configuration and inventory manager tests
+- `tests/test_vault_loader.py` - Vault auto-loading tests
+- `tests/test_argument_parser.py` - CLI argument parsing tests
+- `tests/test_port_manager.py` - SSH port detection tests
+- `tests/test_dev_tools.py` - Development tools tests
 
 ## Ansible Migration Commands
 
@@ -444,17 +475,17 @@ cd ansible-cloudy/
 ### Ansible Security Features
 - ✅ **Safe Authentication Flow**: UFW firewall configured before SSH port changes
 - ✅ **SSH Key Management**: Automated public key installation and validation
-- ✅ **Connection Transition**: Seamless root-to-grunt user switching
+- ✅ **Connection Transition**: Seamless root-to-admin user switching
 - ✅ **Firewall Integration**: Port 22022 opened before SSH service restart
 - ✅ **Sudo Configuration**: NOPASSWD sudo access for admin operations
-- ✅ **Root Login Disable**: Safely disabled after grunt user verification
+- ✅ **Root Login Disable**: Safely disabled after admin user verification
 
 ### Ansible Inventory Configuration
 The `inventory/test-recipes.yml` file configures connection parameters:
 ```yaml
 all:
   vars:
-    ansible_user: admin          # Connect as grunt user (after setup)
+    ansible_user: admin          # Connect as admin user (after setup)
     ansible_ssh_pass: secure123  # Admin password
     ansible_port: 22022          # Custom SSH port
     ansible_host_key_checking: false
@@ -465,8 +496,8 @@ all:
         test-generic:
           ansible_host: 10.10.10.198
           hostname: test-generic.example.com
-          grunt_user: admin
-          grunt_password: secure123
+          admin_user: admin
+          admin_password: secure123
 ```
 
 ### Ansible Output Control
@@ -542,10 +573,10 @@ ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbooks/recipes/db
 ---
 # === AUTHENTICATION CREDENTIALS ===
 vault_root_password: "your_root_password_here"
-vault_grunt_password: "your_grunt_password_here"
+vault_admin_password: "your_admin_password_here"
 
 # === CONNECTION CONFIGURATION ===
-vault_grunt_user: "admin"
+vault_admin_user: "admin"
 vault_ssh_port: 22022
 
 # === GLOBAL SERVER CONFIGURATION ===
@@ -571,7 +602,7 @@ git_user_full_name: "{{ vault_git_user_full_name | default('John Doe') }}"
 git_user_email: "{{ vault_git_user_email | default('jdoe@example.com') }}"
 timezone: "{{ vault_timezone | default('America/New_York') }}"
 locale: "{{ vault_locale | default('en_US.UTF-8') }}"
-ansible_user: "{{ vault_grunt_user | default('admin') }}"
+ansible_user: "{{ vault_admin_user | default('admin') }}"
 ansible_port: "{{ vault_ssh_port | default(22) }}"
 ```
 
@@ -584,7 +615,7 @@ ansible_port: "{{ vault_ssh_port | default(22) }}"
 
 #### **Simplified Authentication Architecture**
 
-**🎯 Design Goal**: Root SSH key authentication for ALL operations. Optional grunt user ONLY for service processes.
+**🎯 Design Goal**: Root SSH key authentication for ALL operations. Optional admin user ONLY for service processes.
 
 #### **Phase 1: Initial Security Setup**
 ```bash
@@ -595,7 +626,7 @@ ansible_port: "{{ vault_ssh_port | default(22) }}"
 # What happens:
 # 1. Connects as root with vault_root_password
 # 2. Installs SSH keys for root user
-# 3. Optionally creates grunt user (only if vault_grunt_user is defined)
+# 3. Optionally creates admin user (only if vault_admin_user is defined)
 # 4. Configures firewall and secure SSH port
 # 5. Disables root password authentication
 ```
@@ -633,32 +664,32 @@ Every service recipe automatically validates:
 
 ### **🤖 Optional Grunt Service User**
 
-The grunt user is **completely optional** and only created if you define it in vault:
+The admin user is **completely optional** and only created if you define it in vault:
 
 ```yaml
 # .vault/dev.yml
-vault_grunt_user: "myservice"    # Uncomment to enable grunt user creation
-vault_grunt_password: "secret"
+vault_admin_user: "myservice"    # Uncomment to enable admin user creation
+vault_admin_password: "secret"
 ```
 
-**When to use grunt user:**
+**When to use admin user:**
 - ✅ Running web applications (nginx, apache, etc.)
 - ✅ Database processes that don't need root
 - ✅ Application containers and services
 - ✅ Isolating service permissions
 
-**When NOT to use grunt user:**
+**When NOT to use admin user:**
 - ❌ System administration tasks (always use root)
 - ❌ Installing packages and services (use root)
 - ❌ Firewall and network configuration (use root)
 - ❌ SSH and security management (use root)
 
-**Default behavior:** If `vault_grunt_user` is not defined, all operations run as root with SSH keys.
+**Default behavior:** If `vault_admin_user` is not defined, all operations run as root with SSH keys.
 
 ### Security Best Practices
 
 1. **Never commit credentials** - Add vault files to .gitignore
-2. **Use strong passwords** - Generate secure credentials for grunt user (if used)
+2. **Use strong passwords** - Generate secure credentials for admin user (if used)
 3. **Environment separation** - Different vault files for dev/prod
 4. **Regular rotation** - Update credentials periodically
 5. **Follow authentication flow** - Always run security setup first

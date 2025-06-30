@@ -1,5 +1,5 @@
 """
-Terminal color utilities for Ali CLI
+Terminal color utilities for Claudia CLI
 """
 
 import sys

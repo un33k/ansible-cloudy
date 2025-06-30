@@ -1,23 +1,24 @@
 """
-Development tools for Claudia CLI
-Integrates with existing validation scripts and linting configurations
+Validation Tools
+
+Handles various validation operations including syntax, linting, and spell checking.
 """
 
 import subprocess
 import sys
-import os
 from pathlib import Path
-from .colors import Colors, error, info
+from typing import Tuple, List
+
+from ..colors import Colors, error, info
 
 
-class DevTools:
-    """Development and validation tools for Claudia"""
+class ValidationTools:
+    """Handles all validation operations"""
     
     def __init__(self, config):
         self.config = config
         self.dev_dir = config.project_root / "dev"
         self.claudia_dir = self.dev_dir / "claudia"
-        self._check_obsolete_vault_env()
     
     def validate_precommit(self) -> int:
         """Run essential pre-commit validation suite"""
@@ -104,104 +105,6 @@ class DevTools:
         except Exception as e:
             error(f"Failed to run syntax check: {e}")
             return 1
-    
-    def test(self, ansible_args=None) -> int:
-        """Run authentication flow test"""
-        from utils.colors import Colors
-        
-        print(f"\n{Colors.CYAN}🔍 Starting Authentication Test{Colors.NC}")
-        
-        if ansible_args is None:
-            ansible_args = []
-        
-        test_playbook = self.dev_dir / "test-auth.yml"
-        if not test_playbook.exists():
-            error(f"Test playbook not found: {test_playbook}")
-            return 1
-        
-        # Use ansible-playbook directly for the auth test
-        inventory_path = self.config.inventory_dir / "dev.yml"
-        
-        cmd = [
-            "ansible-playbook",
-            "-i", str(inventory_path),
-            str(test_playbook)
-        ]
-        
-        # Automatically load vault file if it exists
-        vault_file = self.config.project_root / ".vault" / "dev.yml"
-        if vault_file.exists():
-            cmd.extend(["-e", f"@{vault_file}"])
-            print(f"{Colors.BLUE}🔐 Loading vault credentials from: .vault/dev.yml{Colors.NC}")
-        
-        cmd.extend(ansible_args)
-        
-        print(f"{Colors.YELLOW}Running authentication tests...{Colors.NC}\n")
-        
-        try:
-            # Run with completely suppressed output except for failures
-            result = subprocess.run(
-                cmd, 
-                cwd=self.config.project_root,
-                capture_output=True,
-                text=True,
-                env={**dict(os.environ), "ANSIBLE_CALLBACK_WHITELIST": "null"}
-            )
-            
-            # Display results after playbook completes
-            if result.returncode == 0:
-                self._display_test_results()
-                return 0
-            else:
-                print(f"\n{Colors.RED}❌ Authentication test failed with exit code {result.returncode}{Colors.NC}")
-                # Show stderr for debugging failed tests
-                if result.stderr:
-                    print(f"{Colors.YELLOW}Error details:{Colors.NC}")
-                    print(result.stderr)
-                return result.returncode
-                
-        except Exception as e:
-            error(f"Failed to run authentication test: {e}")
-            return 1
-    
-    def _display_test_results(self):
-        """Display formatted test results after playbook completion"""
-        from utils.colors import Colors
-        
-        # For now, display a success summary. In a full implementation,
-        # we could parse the ansible facts or use a callback plugin
-        print(f"""
-{Colors.CYAN}═══════════════════════════════════════════════════════════════{Colors.NC}
-{Colors.GREEN}🎉 ✅ AUTHENTICATION SETUP TEST COMPLETED SUCCESSFULLY!{Colors.NC}
-{Colors.CYAN}═══════════════════════════════════════════════════════════════{Colors.NC}
-
-{Colors.BLUE}📋 Connection Test Results:{Colors.NC}
-├── {Colors.GREEN}✅ Server reachable{Colors.NC}
-├── {Colors.GREEN}✅ Authentication successful{Colors.NC}
-├── {Colors.GREEN}✅ SSH connection established{Colors.NC}
-└── {Colors.GREEN}✅ Playbook execution completed{Colors.NC}
-
-{Colors.BLUE}👤 Grunt User Configuration:{Colors.NC}
-├── {Colors.GREEN}✅ User created successfully{Colors.NC}
-├── {Colors.GREEN}✅ Home directory configured{Colors.NC}
-├── {Colors.GREEN}✅ SSH keys installed{Colors.NC}
-├── {Colors.GREEN}✅ Sudo access verified{Colors.NC}
-└── {Colors.GREEN}✅ Groups configured{Colors.NC}
-
-{Colors.BLUE}🔒 Security Configuration:{Colors.NC}
-├── {Colors.GREEN}✅ Firewall (UFW) installed{Colors.NC}
-├── {Colors.GREEN}✅ SSH port configured{Colors.NC}
-├── {Colors.GREEN}✅ Firewall rules applied{Colors.NC}
-└── {Colors.GREEN}✅ Admin SSH access ready{Colors.NC}
-
-{Colors.BLUE}🚀 Next Steps:{Colors.NC}
-├── Run {Colors.GREEN}'./claudia security --install'{Colors.NC} for full security setup
-├── This will restart SSH service on the configured port
-└── After setup, connect using grunt user with SSH keys
-
-{Colors.GREEN}⚡ Status: AUTHENTICATION FRAMEWORK VALIDATED ✅{Colors.NC}
-""")
-        print(f"{Colors.YELLOW}💡 Note: Run with --verbose (-v) to see detailed task output{Colors.NC}")
     
     def lint(self) -> int:
         """Run ansible linting with dev configuration"""
@@ -346,38 +249,3 @@ class DevTools:
         except Exception as e:
             error(f"Failed to run yamllint: {e}")
             return 1
-    
-    def _check_obsolete_vault_env(self):
-        """Check for obsolete vault environment variables and warn user"""
-        vault_env_vars = [
-            'ANSIBLE_VAULT_PASSWORD_FILE',
-            'ANSIBLE_VAULT_PASSWORD_FILE_DEV',
-            'ANSIBLE_VAULT_PASSWORD_FILE_CI', 
-            'ANSIBLE_VAULT_PASSWORD_FILE_PROD'
-        ]
-        
-        found_vars = []
-        for var in vault_env_vars:
-            if var in os.environ:
-                found_vars.append(var)
-        
-        if found_vars:
-            print(f"\n{Colors.YELLOW}⚠️  OBSOLETE VAULT ENVIRONMENT VARIABLES DETECTED{Colors.NC}")
-            print(f"{Colors.YELLOW}Ansible Cloudy now uses simple .vault/ files instead of encrypted vaults.{Colors.NC}")
-            print(f"{Colors.YELLOW}The following environment variables are no longer needed:{Colors.NC}\n")
-            
-            for var in found_vars:
-                value = os.environ[var]
-                print(f"  {Colors.RED}${var}{Colors.NC} = {value}")
-            
-            print(f"\n{Colors.CYAN}To fix this:{Colors.NC}")
-            print(f"  1. Remove these lines from your shell profile (~/.bashrc, ~/.zshrc):")
-            for var in found_vars:
-                print(f"     {Colors.RED}export {var}=...{Colors.NC}")
-            print(f"  2. Restart your terminal or run: {Colors.GREEN}unset {' '.join(found_vars)}{Colors.NC}")
-            print(f"  3. Use simple vault files: {Colors.GREEN}./claudia psql --install -- -e @.vault/my-dev.yml{Colors.NC}\n")
-            
-            print(f"{Colors.YELLOW}For now, temporarily unsetting these variables...{Colors.NC}")
-            for var in found_vars:
-                os.environ.pop(var, None)
-            print(f"{Colors.GREEN}✅ Variables unset for this session.{Colors.NC}\n")

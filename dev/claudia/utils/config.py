@@ -135,7 +135,3 @@ class InventoryManager:
             return 'dev'
         else:
             return 'dev'  # Default to dev
-
-
-# Compatibility alias for existing code
-AliConfig = ClaudiaConfig
