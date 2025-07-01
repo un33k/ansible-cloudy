@@ -9,9 +9,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11"]  # Test with Python 3.11 only for faster CI
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v4
@@ -37,23 +39,26 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
     
-    - name: Setup environment with bootstrap
+    - name: Setup environment
       run: |
-        # Run bootstrap with auto-yes to avoid prompts
-        ./bootstrap.sh -y || true
+        # Create virtual environment directly (skip pyenv in CI)
+        python -m venv .venv
+        source .venv/bin/activate
         
-        # If pyenv was installed, source bashrc and run bootstrap again
-        if [ ! -d ".venv" ]; then
-          export PYENV_ROOT="$HOME/.pyenv"
-          export PATH="$PYENV_ROOT/bin:$PATH"
-          eval "$(pyenv init -)" || true
-          ./bootstrap.sh -y
-        fi
+        # Upgrade pip and install dependencies
+        pip install --upgrade pip
+        pip install -e ".[dev]"
+        
+        # Create cli command symlinks
+        cp dev/bin/claudia-venv .venv/bin/claudia
+        chmod +x .venv/bin/claudia
+        cd .venv/bin && ln -sf claudia cli && cd ../..
         
         # Verify environment
-        source .venv/bin/activate
         python --version
+        pip --version
         ansible --version
+        which cli
     
     - name: Run syntax validation
       run: |
