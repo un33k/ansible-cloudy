@@ -917,3 +917,232 @@ Based on usage patterns, these variables are prime candidates for CLI option pro
    - `vault_backup_retention_days` → `--backup-retention`
 
 This comprehensive test plan now includes all features, commands, options, and variables available in Ansible Cloudy. Use it to ensure complete functionality and identify opportunities for CLI enhancement.
+
+## Appendix B: Docker-Based End-to-End Testing Framework
+
+### Overview
+
+This section describes the Docker-based E2E testing framework for running comprehensive tests locally using Docker Desktop. This approach enables full testing of Ansible Cloudy on real Linux systems without the complexity of cloud infrastructure.
+
+### Architecture
+
+The E2E testing framework uses Docker Compose to orchestrate multiple containers simulating real server environments:
+
+```
+test/
+├── e2e/
+│   ├── docker-compose.yml      # Multi-container test environment
+│   ├── Dockerfile.ubuntu       # Ubuntu test image
+│   ├── Dockerfile.debian       # Debian test image
+│   ├── run-e2e-tests.sh       # Main test orchestrator
+│   ├── inventory/
+│   │   ├── docker-single.yml   # Single container tests
+│   │   ├── docker-multi.yml    # Multi-container tests
+│   │   └── docker-full.yml     # Full stack tests
+│   ├── scenarios/
+│   │   ├── 01-security-base.sh # Core setup tests
+│   │   ├── 02-database.sh      # PostgreSQL tests
+│   │   ├── 03-web-stack.sh     # Web application tests
+│   │   ├── 04-cache.sh         # Redis tests
+│   │   ├── 05-advanced.sh      # pgvector, nodejs, etc.
+│   │   └── 06-full-stack.sh    # Complete deployment
+│   └── vault/
+│       └── test-secrets.yml    # Test credentials
+```
+
+### Test Execution Modes
+
+1. **Quick Tests** (~5 minutes)
+   - Core security and base setup
+   - Single service deployments
+   - Basic functionality verification
+
+2. **Standard Tests** (~15 minutes)
+   - All quick tests
+   - Multiple service types
+   - Integration testing
+
+3. **Full Tests** (~30 minutes)
+   - Complete test suite
+   - Multi-server scenarios
+   - Performance validation
+
+### Running E2E Tests
+
+#### Prerequisites
+```bash
+# Ensure Docker Desktop is running
+docker --version
+docker compose version
+
+# Setup test environment
+cd ansible-cloudy
+./bootstrap.sh
+source .venv/bin/activate
+```
+
+#### Basic Usage
+```bash
+# Run quick tests
+./test/e2e/run-e2e-tests.sh --quick
+
+# Run standard tests
+./test/e2e/run-e2e-tests.sh --standard
+
+# Run full test suite
+./test/e2e/run-e2e-tests.sh --full
+
+# Run specific scenario
+./test/e2e/run-e2e-tests.sh --scenario 02-database
+
+# Run with specific OS
+./test/e2e/run-e2e-tests.sh --os debian --quick
+
+# Keep containers running after tests
+./test/e2e/run-e2e-tests.sh --quick --keep
+
+# Generate HTML report
+./test/e2e/run-e2e-tests.sh --full --report
+```
+
+### Test Scenarios
+
+#### Scenario 01: Security & Base
+- Tests two-phase authentication
+- SSH key installation
+- Firewall configuration
+- Base system setup
+
+#### Scenario 02: Database Services
+- PostgreSQL installation
+- PostGIS extension
+- pgvector deployment
+- Database operations
+
+#### Scenario 03: Web Stack
+- Nginx installation
+- Django deployment
+- Node.js with PM2
+- SSL configuration
+
+#### Scenario 04: Cache Services
+- Redis deployment
+- Memory configuration
+- Persistence testing
+- Password security
+
+#### Scenario 05: Advanced Services
+- PgBouncer connection pooling
+- OpenVPN server
+- Monitoring setup
+- Backup configuration
+
+#### Scenario 06: Full Stack
+- Complete multi-tier deployment
+- Service integration
+- Load balancing
+- High availability
+
+### Container Configuration
+
+The test containers are configured to closely match real servers:
+
+- **Ubuntu 22.04 LTS** (primary test OS)
+- **Debian 12** (secondary test OS)
+- **systemd** enabled for service management
+- **SSH daemon** for Ansible connectivity
+- **Privileged mode** for system operations
+- **Persistent volumes** for data testing
+
+### Test Validation
+
+Each test scenario includes:
+
+1. **Pre-flight checks** - Container health, SSH connectivity
+2. **Service deployment** - Ansible playbook execution
+3. **Functional testing** - Service-specific validation
+4. **Idempotency check** - Re-run verification
+5. **Clean state test** - Service removal and cleanup
+
+### Debugging Tests
+
+```bash
+# Run with debug output
+./test/e2e/run-e2e-tests.sh --debug --scenario 01-security-base
+
+# Connect to test container
+docker exec -it ansible-cloudy-test-server-01 bash
+
+# View test logs
+docker logs ansible-cloudy-test-server-01
+
+# Check service status in container
+docker exec ansible-cloudy-test-server-01 systemctl status postgresql
+```
+
+### CI/CD Integration
+
+While the full E2E suite runs locally, a minimal smoke test runs in GitHub Actions:
+
+```yaml
+# .github/workflows/test.yml
+name: Quick Tests
+on: [push, pull_request]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Syntax validation
+        run: |
+          ./bootstrap.sh -y
+          source .venv/bin/activate
+          cli dev syntax
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Smoke test
+        run: ./test/ci/smoke-test.sh
+```
+
+### Best Practices
+
+1. **Run tests before commits** - Use quick mode for rapid feedback
+2. **Full tests before releases** - Ensure comprehensive validation
+3. **Keep containers clean** - Use `--cleanup` to remove old containers
+4. **Monitor resources** - Full tests require ~4GB RAM
+5. **Parallel execution** - Tests run in parallel where possible
+6. **Incremental testing** - Start with quick, escalate to full
+
+### Troubleshooting
+
+#### Container Connection Issues
+```bash
+# Reset Docker networking
+docker network prune
+docker compose -f test/e2e/docker-compose.yml down -v
+```
+
+#### SSH Authentication Failures
+```bash
+# Check container SSH service
+docker exec ansible-cloudy-test-server-01 service ssh status
+
+# Verify test credentials
+cat test/e2e/vault/test-secrets.yml
+```
+
+#### Performance Issues
+```bash
+# Increase Docker resources
+# Docker Desktop > Preferences > Resources
+# Recommended: 4 CPUs, 8GB RAM
+
+# Run tests sequentially
+./test/e2e/run-e2e-tests.sh --sequential
+```
+
+This Docker-based E2E testing framework provides comprehensive validation of Ansible Cloudy deployments in realistic Linux environments while maintaining simplicity for both local development and CI/CD pipelines.

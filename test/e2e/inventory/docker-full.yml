@@ -1,0 +1,112 @@
+# docker-full.yml - Full stack test inventory
+all:
+  vars:
+    # Initial connection settings
+    ansible_user: root
+    ansible_ssh_pass: testpass123
+    ansible_port: 22
+    ansible_host_key_checking: false
+    
+    # Docker environment indicator
+    is_docker_test: true
+    
+    # Common test settings
+    vault_root_password: testpass123
+    vault_admin_user: admin
+    vault_admin_password: adminpass123
+    vault_ssh_port: 22022
+    
+    # System settings
+    vault_timezone: UTC
+    vault_git_user_full_name: "Test User"
+    vault_git_user_email: "test@example.com"
+    
+    # Production-like settings
+    production_mode: true
+    enable_monitoring: true
+    enable_backups: true
+    
+  children:
+    # Single server for standalone testing
+    standalone_servers:
+      hosts:
+        test-server-01:
+          ansible_host: 172.20.0.10
+          vault_hostname: standalone-01
+          vault_domain: test.local
+          vault_enable_ssl: false  # Disabled for Docker testing
+          
+          # All-in-one settings
+          vault_install_postgresql: true
+          vault_install_redis: true
+          vault_install_nginx: true
+          vault_app_type: django
+          
+          # Service passwords
+          vault_postgres_password: pgpass123
+          vault_redis_password: redispass123
+          vault_pg_port: 5432
+          vault_redis_port: 6379
+    
+    # Multi-tier deployment
+    web_tier:
+      hosts:
+        web-01:
+          ansible_host: 172.20.0.21
+          vault_hostname: web-01
+          pgbouncer_backend_host: 172.20.0.31
+          pgbouncer_backend_port: 5432
+        web-02:
+          ansible_host: 172.20.0.22
+          vault_hostname: web-02
+          pgbouncer_backend_host: 172.20.0.31
+          pgbouncer_backend_port: 5432
+    
+    db_tier:
+      hosts:
+        db-01:
+          ansible_host: 172.20.0.31
+          vault_hostname: db-01
+          vault_postgres_password: pgpass123
+          vault_pg_listen_addresses: "*"
+          vault_pg_max_connections: 200
+          vault_pg_shared_buffers_mb: 512
+          
+          # Enable extensions
+          vault_install_postgis: true
+          vault_install_pgvector: true
+          vault_pgvector_dimensions: 1536
+    
+    cache_tier:
+      hosts:
+        cache-01:
+          ansible_host: 172.20.0.41
+          vault_hostname: cache-01
+          vault_redis_password: redispass123
+          vault_redis_bind: "0.0.0.0"
+          vault_redis_maxmemory_mb: 512
+          vault_redis_appendonly: "yes"
+    
+    lb_tier:
+      hosts:
+        lb-01:
+          ansible_host: 172.20.0.51
+          vault_hostname: lb-01
+          vault_nginx_domain: test.local
+          vault_enable_ssl: false
+          nginx_upstream_servers:
+            - "172.20.0.21:80"
+            - "172.20.0.22:80"
+          
+          # DDoS protection
+          vault_nginx_rate_limit_general: "10r/s"
+          vault_nginx_ddos_protection_enabled: true
+    
+    # All servers groups
+    all_servers:
+      children:
+        standalone_servers:
+        web_tier:
+        db_tier:
+        cache_tier:
+        lb_tier:
