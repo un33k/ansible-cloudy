@@ -9,6 +9,9 @@
 - **⚡ Universal Parameters**: `./claudia redis --install --port 6380 --memory 512` instead of complex Ansible variables
 - **🔄 Granular Operations**: Service-specific tasks like `./claudia psql --adduser foo --password 1234`
 - **🛡️ Production-Ready**: Secure defaults, comprehensive validation, and enterprise-grade security model
+- **🚀 New Deployment Flavors**: pgvector for AI/ML, Node.js with PM2, standalone all-in-one deployments
+- **⚙️ Production Hardening**: Kernel security, SSH hardening, audit logging, DDoS protection
+- **🔌 Connection Pooling**: PgBouncer integration for optimal database performance
 
 ## Quick Start
 
@@ -44,10 +47,16 @@ pip install ansible
 ./claudia psql --install --ci                         # Use CI environment
 ./claudia psql --install -i custom-inventory.yml      # Use custom inventory file
 
+# New deployment flavors
+./claudia pgvector --install --dimensions 1536        # PostgreSQL with AI/ML embeddings
+./claudia nodejs --install --app-name api --pm2      # Node.js with PM2 process manager
+./claudia standalone --install --app-type django     # All-in-one server deployment
+
 # Granular operations (no recipe installation)
 ./claudia psql --adduser myuser --password secret123  # Add PostgreSQL user
 ./claudia redis --configure-port 6379                 # Change Redis port
 ./claudia nginx --setup-ssl example.com               # Setup SSL for domain
+./claudia pgbouncer --configure-port 6433            # Configure connection pooler
 ```
 
 ## 🏗️ Architecture Overview
@@ -62,11 +71,13 @@ The **Claudia CLI** is the heart of Ansible Cloudy, providing:
 - **📊 Clean Output**: Shows only changes and failures by default
 
 ### Service Categories
-- **Core**: `security`, `base` - Foundation server setup
-- **Database**: `psql`, `postgis` - PostgreSQL with spatial extensions
-- **Web**: `django`, `nginx` - Web applications and load balancing
-- **Cache**: `redis` - High-performance caching
+- **Core**: `security`, `base` - Foundation server setup with production hardening
+- **Database**: `psql`, `postgis`, `pgvector` - PostgreSQL with spatial and AI/ML extensions
+- **Web**: `django`, `nodejs`, `nginx` - Web applications and load balancing
+- **Cache**: `redis` - High-performance caching with persistence
+- **Connection Pooling**: `pgbouncer` - Database connection optimization
 - **VPN**: `openvpn` - Secure remote access
+- **Standalone**: `standalone` - All-in-one server deployment
 - **Development**: `dev` - Validation and testing tools
 
 ### Security Model
@@ -75,6 +86,10 @@ The **Claudia CLI** is the heart of Ansible Cloudy, providing:
 - **🔥 Smart Firewall**: UFW automatically configured with service-specific ports
 - **🚪 Custom SSH Port**: Default port 22022 with seamless migration
 - **🛡️ Enterprise Hardening**: Fail2ban, connection limits, secure SSH configuration
+- **🔒 Kernel Security**: Hardened sysctl parameters, ASLR, secure shared memory
+- **📝 Audit Logging**: Comprehensive audit trail with auditd and logrotate
+- **🚫 DDoS Protection**: Rate limiting, connection throttling, SYN flood protection
+- **🔐 Secure Ciphers**: Modern encryption algorithms, disabled weak protocols
 
 ### 📊 Output Control
 ```bash
@@ -100,11 +115,12 @@ ansible-cloudy/
 ├── cloudy/                   # Ansible automation core
 │   ├── playbooks/recipes/    # High-level deployment recipes
 │   │   ├── core/            # security.yml, base.yml
-│   │   ├── db/              # psql.yml, postgis.yml
-│   │   ├── www/             # django.yml
+│   │   ├── db/              # psql.yml, postgis.yml, pgvector.yml
+│   │   ├── www/             # django.yml, nodejs.yml
 │   │   ├── cache/           # redis.yml
-│   │   ├── lb/              # nginx.yml
-│   │   └── vpn/             # openvpn.yml
+│   │   ├── lb/              # nginx.yml, pgbouncer.yml
+│   │   ├── vpn/             # openvpn.yml
+│   │   └── standalone/      # all-in-one.yml
 │   ├── tasks/                # Granular, reusable task files
 │   │   ├── sys/             # System operations (SSH, firewall, users)
 │   │   ├── db/              # Database automation (PostgreSQL)
@@ -238,6 +254,55 @@ ansible_port: "{{ vault_ssh_port | default(22022) }}"
 ./claudia openvpn --install
 ```
 
+### PostgreSQL with pgvector for AI/ML
+```bash
+# View pgvector configuration options
+./claudia pgvector
+
+# Install PostgreSQL with pgvector extension
+./claudia pgvector --install --dimensions 1536 --index-type hnsw
+
+# Production deployment with custom settings
+./claudia pgvector --install --prod --port 5433 --create-examples
+```
+
+### Node.js Application Deployment
+```bash
+# View Node.js deployment options
+./claudia nodejs
+
+# Deploy Node.js application with PM2
+./claudia nodejs --install --app-repo https://github.com/user/app.git
+
+# Production deployment with domain and SSL
+./claudia nodejs --install --prod --domain api.example.com --ssl --pm2-instances 4
+```
+
+### Standalone All-in-One Server
+```bash
+# View standalone deployment options
+./claudia standalone
+
+# Deploy complete stack on single server
+./claudia standalone --install --app-type django --domain example.com --ssl
+
+# Custom configuration with specific components
+./claudia standalone --install --with-postgresql --with-redis --pg-port 5433
+```
+
+### Database Connection Pooling with PgBouncer
+```bash
+# Install PgBouncer on web servers
+./claudia pgbouncer --install
+
+# Configure with custom settings
+./claudia pgbouncer --install --port 6433 --pool-size 30
+
+# Granular operations
+./claudia pgbouncer --configure-port 6433
+./claudia pgbouncer --set-pool-size 50
+```
+
 ## 🧪 Development & Validation
 
 Ansible Cloudy includes comprehensive development tools:
@@ -274,6 +339,7 @@ source .venv/bin/activate         # Activate development environment
 - **📋 [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)**: Technical architecture and implementation details
 - **🛠️ [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: Development tools and CLI implementation guide
 - **🔐 [docs/SECRETS.md](docs/SECRETS.md)**: Ansible Vault configuration and credential management
+- **📝 [CHANGELOG.md](CHANGELOG.md)**: Version history and release notes
 
 ## 🎯 Key Benefits
 
@@ -284,6 +350,10 @@ source .venv/bin/activate         # Activate development environment
 - **🏗️ Modern Tooling**: Industry-standard Ansible with intelligent Python CLI layer
 - **📈 Production Ready**: Secure defaults, comprehensive validation, vault integration
 - **🔧 Developer Friendly**: Granular operations, modular architecture, extensive documentation
+- **🚀 AI/ML Ready**: PostgreSQL with pgvector for embedding storage and similarity search
+- **⚡ High Performance**: Connection pooling, optimized configurations, resource-aware tuning
+- **🎯 Deployment Flexibility**: Single server standalone or distributed multi-tier architectures
+- **🔒 Security First**: Kernel hardening, audit logging, DDoS protection built-in
 
 ## 🤝 Contributing
 

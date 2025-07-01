@@ -474,11 +474,19 @@ claudia psql --install --port 5544 --pgis             # PostgreSQL with PostGIS 
 claudia redis --install --ci --port 6380 --memory 512 # Redis in CI with custom settings
 claudia nginx --install --domain example.com --ssl    # Nginx with SSL domain configuration
 
+# New production-ready deployment flavors
+claudia pgvector --install --dimensions 1536          # PostgreSQL with AI/ML vector embeddings
+claudia nodejs --install --app-name api --pm2        # Node.js with PM2 process manager
+claudia standalone --install --app-type django       # All-in-one server deployment
+claudia pgbouncer --install --pool-size 30           # Connection pooling for PostgreSQL
+
 # Granular operations (service-specific tasks)
 claudia psql --adduser myuser --password secret123    # Add PostgreSQL user
 claudia psql --adddb myapp --owner myuser             # Add database with owner
 claudia redis --configure-port 6380                   # Change Redis port
 claudia nginx --setup-ssl example.com                 # Setup SSL for specific domain
+claudia pgbouncer --configure-port 6433               # Configure connection pooler port
+claudia pgbouncer --set-pool-size 50                  # Update connection pool size
 ```
 
 ### Ansible Security Features
@@ -488,6 +496,11 @@ claudia nginx --setup-ssl example.com                 # Setup SSL for specific d
 - ✅ **Firewall Integration**: Port 22022 opened before SSH service restart
 - ✅ **Sudo Configuration**: NOPASSWD sudo access for admin operations
 - ✅ **Root Login Disable**: Safely disabled after admin user verification
+- ✅ **Kernel Hardening**: Production-ready sysctl parameters, ASLR, secure shared memory
+- ✅ **SSH Hardening**: Modern ciphers, rate limiting, disabled weak protocols
+- ✅ **Audit Logging**: Comprehensive audit trail with auditd and automatic rotation
+- ✅ **DDoS Protection**: Nginx rate limiting, connection throttling, SYN flood protection
+- ✅ **Automatic Updates**: Unattended security patches with smart reboot windows
 
 ### Ansible Inventory Configuration
 The `inventory/test-recipes.yml` file configures connection parameters:

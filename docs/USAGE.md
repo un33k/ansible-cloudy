@@ -85,6 +85,46 @@ Complete reference for the **Claudia CLI** - an intelligent command-line interfa
 ./claudia openvpn --install                            # Deploy OpenVPN server
 ```
 
+#### AI/ML Database Services
+```bash
+# PostgreSQL with pgvector for embeddings
+./claudia pgvector                                      # Show pgvector configuration
+./claudia pgvector --install                           # Install with defaults (1536 dimensions)
+./claudia pgvector --install --dimensions 768 --index-type hnsw  # Custom dimensions and HNSW index
+./claudia pgvector --install --prod --create-examples  # Production with example schemas
+```
+
+#### Node.js Application Deployment
+```bash
+# Node.js with PM2 process manager
+./claudia nodejs                                        # Show Node.js deployment options
+./claudia nodejs --install                             # Deploy sample Node.js app
+./claudia nodejs --install --app-repo https://github.com/user/app.git  # Deploy from Git
+./claudia nodejs --install --prod --domain api.example.com --ssl --pm2-instances 4  # Production deployment
+```
+
+#### All-in-One Standalone Server
+```bash
+# Complete stack on single server
+./claudia standalone                                    # Show standalone options
+./claudia standalone --install                         # Deploy complete Django stack
+./claudia standalone --install --app-type nodejs      # Deploy complete Node.js stack
+./claudia standalone --install --domain example.com --ssl --production  # Production deployment
+```
+
+#### Database Connection Pooling
+```bash
+# PgBouncer for optimal database connections
+./claudia pgbouncer                                     # Show PgBouncer configuration
+./claudia pgbouncer --install                          # Install with defaults
+./claudia pgbouncer --install --port 6433 --pool-size 30  # Custom configuration
+
+# Granular PgBouncer operations
+./claudia pgbouncer --configure-port 6433              # Change port
+./claudia pgbouncer --set-pool-size 50                # Update pool size
+./claudia pgbouncer --restart                          # Restart service
+```
+
 #### Simple Vault Configuration
 ```bash
 # Copy vault template for your environment
@@ -177,11 +217,12 @@ Available with any service command:
 | **Category** | **Commands** | **Count** |
 |-------------|-------------|-----------|
 | **Core** | security, base | 2 |
-| **Database** | psql, postgis | 2 |
-| **Web** | django, nginx | 2 |
-| **Services** | redis, openvpn | 2 |
+| **Database** | psql, postgis, pgvector | 3 |
+| **Web** | django, nodejs, nginx | 3 |
+| **Services** | redis, openvpn, pgbouncer | 3 |
+| **Standalone** | standalone | 1 |
 | **Development** | validate, syntax, lint, test, spell | 5 |
-| **Total** | | **13 commands** |
+| **Total** | | **17 commands** |
 
 ## Prerequisites & Setup
 
