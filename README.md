@@ -138,11 +138,11 @@ ansible-cloudy/
 │   │   └── utils/           # Configuration and utilities
 │   └── validate.py         # Development validation tools
 └── docs/                   # Project documentation
-    ├── CONTRIBUTING.md     # Development guidelines
-    ├── USAGE.md           # Complete usage guide
-    ├── IMPLEMENTATION_PLAN.md  # Technical implementation details
-    ├── DEVELOPMENT.md     # Development tools and CLI implementation guide
-    └── SECRETS.md         # Ansible Vault configuration and credential management
+    ├── getting-started/    # New user guides
+    ├── architecture/       # System design docs
+    ├── development/        # Developer guides
+    ├── operations/         # User guides
+    └── reference/          # Technical reference
 ```
 
 ## ⚙️ Configuration
@@ -193,11 +193,12 @@ ansible_ssh_pass: "{{ vault_root_password }}"
 ansible_port: 22
 ```
 
-**Phase 2 - Service Operations** (Admin + SSH Keys):
+**Phase 2 - Service Operations** (Root + SSH Keys):
 ```yaml
 # After security setup - inventory configuration
-ansible_user: "{{ vault_admin_user | default('admin') }}"
-ansible_port: "{{ vault_ssh_port | default(22022) }}"
+ansible_user: "{{ vault_ansible_user }}"
+ansible_port: "{{ vault_ssh_port }}"
+# Now using SSH keys only, no passwords
 ```
 
 ## 🎯 Workflow Examples
@@ -333,13 +334,24 @@ cli dev spell               # Spell check documentation
 
 ## 📚 Documentation
 
-- **📖 [docs/USAGE.md](docs/USAGE.md)**: Complete step-by-step tutorials and troubleshooting
-- **🔧 [CLAUDE.md](CLAUDE.md)**: Developer reference and Claudia CLI command documentation  
-- **🤝 [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)**: Development guidelines and contribution workflow
-- **📋 [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)**: Technical architecture and implementation details
-- **🛠️ [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: Development tools and CLI implementation guide
-- **🔐 [docs/SECRETS.md](docs/SECRETS.md)**: Ansible Vault configuration and credential management
-- **📝 [CHANGELOG.md](CHANGELOG.md)**: Version history and release notes
+### Quick Access
+- **🚀 [Quick Start](docs/getting-started/quickstart.md)** - Get up and running in 5 minutes
+- **📦 [Installation Guide](docs/getting-started/installation.md)** - Detailed setup instructions
+- **📖 [Command Reference](docs/operations/commands.md)** - All available commands
+- **🍱 [Deployment Recipes](docs/operations/recipes.md)** - Pre-built deployment patterns
+
+### In-Depth Guides
+- **🏗️ [Architecture Overview](docs/architecture/overview.md)** - How Ansible Cloudy works
+- **🔐 [Authentication Flow](docs/architecture/authentication-flow.md)** - Security model explained
+- **⚙️ [Configuration Guide](docs/operations/configuration.md)** - Vault and inventory setup
+- **🛠️ [Development Guide](docs/development/guide.md)** - Contributing to the project
+
+### Reference
+- **📊 [Variable Reference](docs/reference/variables.md)** - All configurable variables
+- **🔧 [Troubleshooting](docs/reference/troubleshooting.md)** - Common issues and solutions
+- **📝 [Changelog](docs/reference/changelog.md)** - Version history
+
+See the complete **[Documentation Index](docs/README.md)** for all available guides.
 
 ## 🎯 Key Benefits
 
