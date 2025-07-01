@@ -1,0 +1,196 @@
+---
+# cloudy/tasks/lb/nginx/configure-production.yml
+# Apply production configuration to Nginx load balancer
+
+- name: Create Nginx cache directory
+  file:
+    path: /var/cache/nginx
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Create Nginx SSL directory
+  file:
+    path: /etc/nginx/ssl
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Generate DH parameters for SSL
+  openssl_dhparam:
+    path: /etc/nginx/dhparam.pem
+    size: 2048
+  notify: reload nginx
+
+- name: Backup original Nginx configuration
+  copy:
+    src: /etc/nginx/nginx.conf
+    dest: /etc/nginx/nginx.conf.original
+    remote_src: yes
+    force: no
+  ignore_errors: yes
+
+- name: Apply production Nginx configuration
+  template:
+    src: nginx/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  notify: reload nginx
+
+- name: Configure DDoS protection
+  template:
+    src: nginx/ddos-protection.conf.j2
+    dest: /etc/nginx/conf.d/00-ddos-protection.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload nginx
+
+- name: Configure monitoring endpoints
+  template:
+    src: nginx/monitoring.conf.j2
+    dest: /etc/nginx/conf.d/10-monitoring.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload nginx
+
+- name: Create custom error pages directory
+  file:
+    path: /usr/share/nginx/html
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create custom error pages
+  template:
+    src: "nginx/error-pages/{{ item }}.j2"
+    dest: "/usr/share/nginx/html/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - 404.html
+    - 50x.html
+    - 429.html
+    - maintenance.html
+  ignore_errors: yes
+
+- name: Configure fail2ban for Nginx
+  template:
+    src: nginx/fail2ban-jail.conf.j2
+    dest: /etc/fail2ban/jail.d/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nginx_fail2ban_enabled | default(true)
+  notify: restart fail2ban
+
+- name: Create fail2ban filter for Nginx rate limiting
+  template:
+    src: nginx/fail2ban-filter.conf.j2
+    dest: /etc/fail2ban/filter.d/nginx-rate-limit.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nginx_fail2ban_enabled | default(true)
+  notify: restart fail2ban
+
+- name: Configure logrotate for Nginx
+  template:
+    src: nginx/logrotate.j2
+    dest: /etc/logrotate.d/nginx
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Set up GeoIP database (if enabled)
+  package:
+    name:
+      - geoip-bin
+      - geoip-database
+    state: present
+  when: nginx_geoip_enabled | default(false)
+
+- name: Configure kernel parameters for high performance
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  loop:
+    - { name: 'net.core.somaxconn', value: '65535' }
+    - { name: 'net.ipv4.tcp_max_syn_backlog', value: '65535' }
+    - { name: 'net.ipv4.ip_local_port_range', value: '1024 65535' }
+    - { name: 'net.ipv4.tcp_tw_reuse', value: '1' }
+    - { name: 'net.ipv4.tcp_fin_timeout', value: '30' }
+    - { name: 'net.core.netdev_max_backlog', value: '65535' }
+    - { name: 'net.ipv4.tcp_keepalive_time', value: '300' }
+    - { name: 'net.ipv4.tcp_keepalive_intvl', value: '30' }
+    - { name: 'net.ipv4.tcp_keepalive_probes', value: '3' }
+
+- name: Configure file descriptor limits for Nginx
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: "{{ item }}"
+  loop:
+    - "www-data soft nofile 65535"
+    - "www-data hard nofile 65535"
+    - "nginx soft nofile 65535"
+    - "nginx hard nofile 65535"
+
+- name: Create Nginx systemd override directory
+  file:
+    path: /etc/systemd/system/nginx.service.d
+    state: directory
+    mode: '0755'
+
+- name: Configure Nginx systemd overrides
+  copy:
+    dest: /etc/systemd/system/nginx.service.d/override.conf
+    content: |
+      [Service]
+      LimitNOFILE=65535
+      PrivateTmp=true
+      NoNewPrivileges=true
+      
+      # Restart configuration
+      Restart=on-failure
+      RestartSec=5s
+      StartLimitInterval=600
+      StartLimitBurst=5
+  notify:
+    - reload systemd
+    - restart nginx
+
+- name: Test Nginx configuration
+  command: nginx -t
+  register: nginx_config_test
+  changed_when: false
+
+- name: Generate Nginx performance report
+  shell: |
+    echo "=== Nginx Production Configuration ===" > /root/nginx-report.txt
+    echo "Generated: $(date)" >> /root/nginx-report.txt
+    echo "" >> /root/nginx-report.txt
+    echo "Nginx Version:" >> /root/nginx-report.txt
+    nginx -v 2>&1 | tee -a /root/nginx-report.txt
+    echo "" >> /root/nginx-report.txt
+    echo "Compiled Modules:" >> /root/nginx-report.txt
+    nginx -V 2>&1 | grep -o -- '--with[^ ]*' | tee -a /root/nginx-report.txt
+    echo "" >> /root/nginx-report.txt
+    echo "Worker Processes: $(grep worker_processes /etc/nginx/nginx.conf | awk '{print $2}' | tr -d ';')" >> /root/nginx-report.txt
+    echo "Worker Connections: $(grep worker_connections /etc/nginx/nginx.conf | awk '{print $2}' | tr -d ';')" >> /root/nginx-report.txt
+    echo "" >> /root/nginx-report.txt
+    echo "SSL Configuration:" >> /root/nginx-report.txt
+    echo "  Protocols: $(grep ssl_protocols /etc/nginx/nginx.conf | cut -d' ' -f2-)" >> /root/nginx-report.txt
+    echo "  DH Params: $([ -f /etc/nginx/dhparam.pem ] && echo 'Generated' || echo 'Not found')" >> /root/nginx-report.txt
+  args:
+    creates: /root/nginx-report.txt

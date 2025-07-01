@@ -1,0 +1,57 @@
+---
+# cloudy/tasks/sys/security/auto-updates.yml
+# Configure automatic security updates
+
+- name: Install unattended-upgrades package
+  apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+    update_cache: yes
+
+- name: Configure unattended-upgrades
+  template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+
+- name: Configure auto-upgrades schedule
+  template:
+    src: 20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Configure apt periodic updates
+  template:
+    src: 10periodic.j2
+    dest: /etc/apt/apt.conf.d/10periodic
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable unattended-upgrades service
+  systemd:
+    name: unattended-upgrades
+    enabled: yes
+    state: started
+
+- name: Create directory for update logs
+  file:
+    path: /var/log/unattended-upgrades
+    state: directory
+    owner: root
+    group: adm
+    mode: '0750'
+
+- name: Configure email notifications for updates
+  lineinfile:
+    path: /etc/apt/apt.conf.d/50unattended-upgrades
+    regexp: '^//Unattended-Upgrade::Mail'
+    line: 'Unattended-Upgrade::Mail "{{ update_notification_email | default("root") }}";'
+  when: update_notification_email is defined

@@ -1,0 +1,21 @@
+# {{ ansible_managed }}
+# Cloudy auditd configuration
+
+log_file = /var/log/audit/audit.log
+log_format = ENRICHED
+log_group = adm
+priority_boost = 4
+flush = INCREMENTAL_ASYNC
+freq = 50
+max_log_file = {{ audit_max_log_file | default(50) }}
+num_logs = {{ audit_num_logs | default(5) }}
+max_log_file_action = {{ audit_max_log_file_action | default('ROTATE') }}
+space_left = {{ audit_space_left | default(75) }}
+space_left_action = {{ audit_space_left_action | default('SYSLOG') }}
+admin_space_left = {{ audit_admin_space_left | default(50) }}
+admin_space_left_action = {{ audit_admin_space_left_action | default('SUSPEND') }}
+disk_full_action = {{ audit_disk_full_action | default('SUSPEND') }}
+disk_error_action = {{ audit_disk_error_action | default('SUSPEND') }}
+dispatcher = /sbin/audispd
+name_format = HOSTNAME
+max_restarts = 10

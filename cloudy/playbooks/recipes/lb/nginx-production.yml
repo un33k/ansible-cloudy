@@ -1,0 +1,325 @@
+# Recipe: Production Nginx Load Balancer with Enterprise Features
+# Purpose: Production-grade Nginx with SSL, caching, rate limiting, and monitoring
+# Usage: ./claudia nginx --install --prod --domain example.com --ssl
+
+---
+- name: Production Nginx Load Balancer Setup
+  hosts: service_targets
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/nginx.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    production_mode: true
+    
+    # Core configuration
+    nginx_domain: "{{ domain | default(nginx_domain_default) }}"
+    nginx_ssl_enabled: "{{ ssl | default(nginx_ssl_enabled_default) }}"
+    nginx_backends: "{{ backends | default([]) }}"
+    
+    # Production settings
+    nginx_worker_processes: "{{ vault_nginx_worker_processes | default('auto') }}"
+    nginx_worker_connections: "{{ vault_nginx_worker_connections | default(2048) }}"
+    nginx_worker_rlimit_nofile: "{{ vault_nginx_worker_rlimit_nofile | default(65535) }}"
+    
+    # Rate limiting
+    nginx_rate_limit_general: "{{ vault_nginx_rate_limit_general | default('10r/s') }}"
+    nginx_rate_limit_api: "{{ vault_nginx_rate_limit_api | default('20r/s') }}"
+    nginx_rate_limit_auth: "{{ vault_nginx_rate_limit_auth | default('5r/m') }}"
+    
+    # Cache settings
+    nginx_cache_size: "{{ vault_nginx_cache_size | default('10m') }}"
+    nginx_cache_max_size: "{{ vault_nginx_cache_max_size | default('1g') }}"
+    nginx_cache_inactive: "{{ vault_nginx_cache_inactive | default('60m') }}"
+    
+    # SSL settings
+    nginx_ssl_certificate: "/etc/nginx/ssl/{{ nginx_domain }}.crt"
+    nginx_ssl_certificate_key: "/etc/nginx/ssl/{{ nginx_domain }}.key"
+    nginx_ssl_dhparam: "/etc/nginx/dhparam.pem"
+    
+    # Monitoring
+    enable_monitoring: "{{ vault_nginx_enable_monitoring | default(true) }}"
+    nginx_fail2ban_enabled: "{{ vault_nginx_fail2ban_enabled | default(true) }}"
+    
+    # DDoS protection
+    nginx_ddos_protection_enabled: "{{ vault_nginx_ddos_protection_enabled | default(true) }}"
+    
+  pre_tasks:
+    # Ensure proper secure connection
+    - name: Validate secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
+    
+    - name: Display production Nginx setup information
+      debug:
+        msg: |
+          🚀 Starting Production Nginx Load Balancer Setup
+          Target: {{ inventory_hostname }} ({{ ansible_host }})
+          
+          📋 Configuration:
+          ├── Domain: {{ nginx_domain }}
+          ├── SSL: {{ 'Enabled' if nginx_ssl_enabled else 'Disabled' }}
+          ├── Backends: {{ nginx_backends | length }} servers
+          ├── Workers: {{ nginx_worker_processes }} ({{ nginx_worker_connections }} connections each)
+          ├── Rate Limiting: Enabled
+          ├── Caching: Enabled ({{ nginx_cache_max_size }} max)
+          ├── DDoS Protection: {{ 'Enabled' if nginx_ddos_protection_enabled else 'Disabled' }}
+          └── Monitoring: {{ 'Enabled' if enable_monitoring else 'Disabled' }}
+          
+  tasks:
+    # Nginx Installation
+    - name: Install Nginx web server
+      include_tasks: "{{ task_paths }}/web/nginx/install.yml"
+      tags: [nginx, install]
+    
+    # Install additional packages for production
+    - name: Install production dependencies
+      apt:
+        name:
+          - nginx-module-geoip
+          - fail2ban
+          - certbot
+          - python3-certbot-nginx
+          - apache2-utils  # For htpasswd
+        state: present
+      tags: [nginx, dependencies]
+    
+    # Production Configuration
+    - name: Apply production Nginx configuration
+      include_tasks: "{{ task_paths }}/lb/nginx/configure-production.yml"
+      when: production_mode | bool
+      tags: [nginx, production, config]
+    
+    # SSL Configuration
+    - name: Setup SSL certificates (self-signed for now)
+      command: |
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout {{ nginx_ssl_certificate_key }} \
+        -out {{ nginx_ssl_certificate }} \
+        -subj "/C=US/ST=State/L=City/O=Organization/CN={{ nginx_domain }}"
+      args:
+        creates: "{{ nginx_ssl_certificate }}"
+      when: nginx_ssl_enabled | bool
+      tags: [nginx, ssl]
+    
+    - name: Set SSL certificate permissions
+      file:
+        path: "{{ item }}"
+        owner: root
+        group: root
+        mode: '0600'
+      loop:
+        - "{{ nginx_ssl_certificate }}"
+        - "{{ nginx_ssl_certificate_key }}"
+      when: nginx_ssl_enabled | bool
+      tags: [nginx, ssl]
+    
+    # Site Configuration
+    - name: Create production site configuration
+      template:
+        src: nginx/site-production.conf.j2
+        dest: "/etc/nginx/sites-available/{{ nginx_domain }}.conf"
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        site_name: "{{ nginx_domain }}"
+        nginx_server_name: "{{ nginx_domain }}"
+        nginx_root: "/var/www/{{ nginx_domain }}"
+      notify: reload nginx
+      tags: [nginx, site]
+    
+    - name: Enable site configuration
+      file:
+        src: "/etc/nginx/sites-available/{{ nginx_domain }}.conf"
+        dest: "/etc/nginx/sites-enabled/{{ nginx_domain }}.conf"
+        state: link
+      notify: reload nginx
+      tags: [nginx, site]
+    
+    - name: Disable default site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: reload nginx
+      tags: [nginx, site]
+    
+    # Create web root
+    - name: Create web root directory
+      file:
+        path: "/var/www/{{ nginx_domain }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+      tags: [nginx, site]
+    
+    # Monitoring Setup
+    - name: Install Nginx Prometheus exporter
+      get_url:
+        url: https://github.com/nginxinc/nginx-prometheus-exporter/releases/download/v0.11.0/nginx-prometheus-exporter_0.11.0_linux_amd64.tar.gz
+        dest: /tmp/nginx-exporter.tar.gz
+      when: enable_monitoring | bool
+      tags: [nginx, monitoring]
+    
+    - name: Extract and install Nginx exporter
+      unarchive:
+        src: /tmp/nginx-exporter.tar.gz
+        dest: /usr/local/bin
+        remote_src: yes
+        owner: root
+        group: root
+        mode: '0755'
+      when: enable_monitoring | bool
+      tags: [nginx, monitoring]
+    
+    - name: Create Nginx exporter systemd service
+      template:
+        src: nginx/nginx-exporter.service.j2
+        dest: /etc/systemd/system/nginx-exporter.service
+        owner: root
+        group: root
+        mode: '0644'
+      when: enable_monitoring | bool
+      notify:
+        - reload systemd
+        - restart nginx-exporter
+      tags: [nginx, monitoring]
+    
+    # Firewall Configuration
+    - name: Allow HTTP through firewall
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-http.yml"
+      tags: [firewall, http]
+    
+    - name: Allow HTTPS through firewall
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-https.yml"
+      when: nginx_ssl_enabled | bool
+      tags: [firewall, https]
+    
+    - name: Allow Nginx exporter port
+      ufw:
+        rule: allow
+        port: "9113"
+        proto: tcp
+        comment: "Nginx Prometheus exporter"
+      when: enable_monitoring | bool
+      tags: [firewall, monitoring]
+    
+    # Performance Testing
+    - name: Run Nginx performance test
+      shell: |
+        ab -n 1000 -c 10 -k http://localhost/ 2>&1 | grep -E "Requests per second|Time per request|Transfer rate" || true
+      register: nginx_performance
+      changed_when: false
+      tags: [nginx, benchmark]
+    
+    # Health Check
+    - name: Verify Nginx is running
+      uri:
+        url: "http://localhost/health"
+        status_code: 200
+      retries: 3
+      delay: 5
+      tags: [nginx, validation]
+    
+  post_tasks:
+    - name: Generate Nginx production report
+      shell: |
+        echo "=== Nginx Production Report ===" > /root/nginx-production-report.txt
+        echo "Generated: $(date)" >> /root/nginx-production-report.txt
+        echo "" >> /root/nginx-production-report.txt
+        
+        # Version and modules
+        echo "Nginx Version:" >> /root/nginx-production-report.txt
+        nginx -v 2>&1 | tee -a /root/nginx-production-report.txt
+        echo "" >> /root/nginx-production-report.txt
+        
+        # Configuration
+        echo "Configuration:" >> /root/nginx-production-report.txt
+        echo "  Domain: {{ nginx_domain }}" >> /root/nginx-production-report.txt
+        echo "  SSL: {{ 'Enabled' if nginx_ssl_enabled else 'Disabled' }}" >> /root/nginx-production-report.txt
+        echo "  Workers: {{ nginx_worker_processes }}" >> /root/nginx-production-report.txt
+        echo "  Connections/Worker: {{ nginx_worker_connections }}" >> /root/nginx-production-report.txt
+        echo "  Max Open Files: {{ nginx_worker_rlimit_nofile }}" >> /root/nginx-production-report.txt
+        echo "" >> /root/nginx-production-report.txt
+        
+        # Security features
+        echo "Security Features:" >> /root/nginx-production-report.txt
+        echo "  Rate Limiting: Enabled" >> /root/nginx-production-report.txt
+        echo "  DDoS Protection: {{ 'Enabled' if nginx_ddos_protection_enabled else 'Disabled' }}" >> /root/nginx-production-report.txt
+        echo "  Fail2ban: {{ 'Enabled' if nginx_fail2ban_enabled else 'Disabled' }}" >> /root/nginx-production-report.txt
+        echo "  SSL Protocols: TLSv1.2 TLSv1.3" >> /root/nginx-production-report.txt
+        echo "" >> /root/nginx-production-report.txt
+        
+        # Performance test
+        echo "Performance Baseline:" >> /root/nginx-production-report.txt
+        echo "{{ nginx_performance.stdout }}" >> /root/nginx-production-report.txt
+      when: production_mode | bool
+      tags: [nginx, report]
+    
+    - name: Display Nginx production completion summary
+      debug:
+        msg: |
+          🎉 ✅ PRODUCTION NGINX LOAD BALANCER SETUP COMPLETED!
+          
+          📋 Configuration Summary:
+             ├── Server: {{ inventory_hostname }} ({{ ansible_host }})
+             ├── Domain: {{ nginx_domain }}
+             ├── SSL: {{ 'Enabled (HTTPS)' if nginx_ssl_enabled else 'Disabled (HTTP only)' }}
+             ├── Backends: {{ nginx_backends | join(', ') if nginx_backends else 'None configured yet' }}
+             └── Status: Running and configured
+          
+          🔒 Production Features:
+             ├── Rate Limiting: General ({{ nginx_rate_limit_general }}), API ({{ nginx_rate_limit_api }})
+             ├── DDoS Protection: {{ 'Active' if nginx_ddos_protection_enabled else 'Disabled' }}
+             ├── Caching: Enabled ({{ nginx_cache_max_size }} max size)
+             ├── Security Headers: HSTS, CSP, X-Frame-Options, etc.
+             ├── Monitoring: {{ 'Prometheus exporter on :9113' if enable_monitoring else 'Disabled' }}
+             └── Fail2ban: {{ 'Protecting against abusive IPs' if nginx_fail2ban_enabled else 'Disabled' }}
+          
+          📊 Performance:
+          {{ nginx_performance.stdout | indent(10) if nginx_performance is defined else 'N/A' }}
+          
+          📊 Reports:
+             ├── Configuration: /root/nginx-report.txt
+             └── Production: /root/nginx-production-report.txt
+          
+          🚀 Production Load Balancer Ready!
+             ├── HTTP: http://{{ nginx_domain }}
+             ├── HTTPS: https://{{ nginx_domain }}
+             └── Status: http://{{ ansible_host }}/nginx_status (internal only)
+             
+          📝 Next Steps:
+             1. Configure backend servers in site configuration
+             2. Set up Let's Encrypt for real SSL certificates
+             3. Monitor metrics at http://{{ ansible_host }}:9113/metrics
+             4. Review logs: /var/log/nginx/
+             
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded
+        
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+        
+    - name: restart fail2ban
+      service:
+        name: fail2ban
+        state: restarted
+        
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+        
+    - name: restart nginx-exporter
+      service:
+        name: nginx-exporter
+        state: restarted
+        enabled: yes

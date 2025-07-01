@@ -1,0 +1,221 @@
+# Recipe: Production PostgreSQL Database Server with Enterprise Features
+# Purpose: Production-grade PostgreSQL with security hardening, monitoring, and backups
+# Usage: ./claudia psql --install --prod [--pgis] [--port 5432]
+
+---
+# PostgreSQL Production Setup
+- name: Production PostgreSQL Database Server Setup
+  hosts: service_targets
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/postgresql.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    # PostgreSQL configuration
+    setup_postgresql: true
+    setup_postgis: false
+    production_mode: true
+    
+    # Apply defaults with vault override pattern
+    pg_version: "{{ vault_pg_version | default(pg_version_default) }}"
+    pg_port: "{{ vault_pg_port | default(pg_port_default) }}"
+    pg_databases: "{{ vault_pg_databases | default([]) }}"
+    pg_users: "{{ vault_pg_users | default([]) }}"
+    pg_postgis_version: "{{ vault_pg_postgis_version | default(pg_postgis_version_default) }}"
+    
+    # Production settings
+    pg_max_connections: "{{ vault_pg_max_connections | default(200) }}"
+    pg_monitoring_enabled: "{{ vault_pg_monitoring_enabled | default(true) }}"
+    enable_backups: "{{ vault_pg_enable_backups | default(true) }}"
+    pg_ssl: "{{ vault_pg_ssl | default('on') }}"
+    pg_allow_remote_connections: "{{ vault_pg_allow_remote_connections | default(true) }}"
+    
+  pre_tasks:
+    # Ensure proper secure connection
+    - name: Validate secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
+    
+    - name: Display Production PostgreSQL setup information
+      debug:
+        msg: |
+          🗄️  Production PostgreSQL Database Server Setup
+          Target: {{ inventory_hostname }} ({{ ansible_host }})
+          
+          📋 Prerequisites:
+          ├── ✅ Security Setup (run separately: ./claudia security --install --prod)
+          ├── ✅ Base Configuration (run separately: ./claudia base --install)
+          └── 🔄 PostgreSQL Installation (current phase)
+          
+          🗄️  Database Configuration:
+          ├── PostgreSQL: v{{ pg_version }}
+          ├── Port: {{ pg_port }}
+          ├── PostGIS: {{ 'Yes (v' + pg_postgis_version + ')' if setup_postgis else 'No' }}
+          ├── SSL: {{ pg_ssl }}
+          ├── Max Connections: {{ pg_max_connections }}
+          ├── Monitoring: {{ 'Enabled' if pg_monitoring_enabled else 'Disabled' }}
+          ├── Backups: {{ 'Enabled' if enable_backups else 'Disabled' }}
+          └── Remote Access: {{ 'Allowed' if pg_allow_remote_connections else 'Local only' }}
+          
+  tasks:
+    # =============================================================================
+    # POSTGRESQL DATABASE SETUP
+    # =============================================================================
+      
+    # PostgreSQL Setup
+    - name: Install PostgreSQL repository
+      include_tasks: "{{ task_paths }}/db/postgresql/install-repo.yml"
+      when: setup_postgresql | bool
+      tags: [postgresql, repo]
+      
+    - name: Install PostgreSQL server
+      include_tasks: "{{ task_paths }}/db/postgresql/install.yml"
+      when: setup_postgresql | bool
+      tags: [postgresql, install]
+      
+    - name: Install PostGIS extension
+      include_tasks: "{{ task_paths }}/db/postgresql/install-postgis.yml"
+      vars:
+        postgis_version: "{{ pg_postgis_version }}"
+      when: setup_postgresql | bool and setup_postgis | bool
+      tags: [postgresql, postgis, install]
+      
+    - name: Configure PostgreSQL port
+      include_tasks: "{{ task_paths }}/db/postgresql/configure-port.yml"
+      when: setup_postgresql | bool
+      tags: [postgresql, config]
+      
+    # Production Configuration
+    - name: Apply production PostgreSQL configuration
+      include_tasks: "{{ task_paths }}/db/postgresql/configure-production.yml"
+      when: setup_postgresql | bool and production_mode | bool
+      tags: [postgresql, production, config]
+      
+    # Backup Configuration
+    - name: Configure PostgreSQL backups
+      include_tasks: "{{ task_paths }}/db/postgresql/configure-backups.yml"
+      when: setup_postgresql | bool and enable_backups | bool
+      tags: [postgresql, backup]
+      
+    # Database and User Creation
+    - name: Create PostgreSQL databases
+      include_tasks: "{{ task_paths }}/db/postgresql/create-database.yml"
+      vars:
+        database: "{{ item.name }}"
+        owner: "{{ item.owner }}"
+        encoding: "{{ item.encoding | default('UTF8') }}"
+        locale: "{{ item.locale | default('en_US.UTF-8') }}"
+      loop: "{{ pg_databases }}"
+      when: setup_postgresql | bool and pg_databases is defined
+      tags: [postgresql, databases]
+      
+    - name: Create PostgreSQL users
+      include_tasks: "{{ task_paths }}/db/postgresql/create-user.yml"
+      vars:
+        username: "{{ item.name }}"
+        password: "{{ item.password }}"
+        connection_limit: "{{ item.connection_limit | default(-1) }}"
+      loop: "{{ pg_users }}"
+      when: setup_postgresql | bool and pg_users is defined
+      tags: [postgresql, users]
+      
+    - name: Grant PostgreSQL privileges
+      include_tasks: "{{ task_paths }}/db/postgresql/grant-privileges.yml"
+      vars:
+        database: "{{ item.database }}"
+        username: "{{ item.name }}"
+        privileges: "{{ item.privileges | default('ALL') }}"
+      loop: "{{ pg_users }}"
+      when: setup_postgresql | bool and pg_users is defined and item.database is defined
+      tags: [postgresql, privileges]
+      
+    # Monitoring Setup
+    - name: Enable pg_stat_statements extension
+      postgresql_ext:
+        name: pg_stat_statements
+        db: postgres
+        state: present
+      become_user: postgres
+      when: setup_postgresql | bool and pg_monitoring_enabled | bool
+      tags: [postgresql, monitoring]
+      
+    # Firewall Configuration
+    - name: Allow PostgreSQL through firewall
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-postgresql.yml"
+      when: setup_postgresql | bool
+      tags: [firewall, postgresql]
+      
+    # Performance Validation
+    - name: Run PostgreSQL performance check
+      shell: |
+        sudo -u postgres psql -c "SELECT name, setting, unit FROM pg_settings WHERE name IN ('shared_buffers', 'effective_cache_size', 'work_mem', 'maintenance_work_mem', 'max_connections');"
+      register: pg_performance_settings
+      changed_when: false
+      tags: [postgresql, validation]
+      
+  post_tasks:
+    - name: Generate PostgreSQL production report
+      shell: |
+        echo "=== PostgreSQL Production Report ===" > /root/postgresql-report.txt
+        echo "Generated: $(date)" >> /root/postgresql-report.txt
+        echo "" >> /root/postgresql-report.txt
+        echo "Version: $(sudo -u postgres psql -t -c 'SELECT version();')" >> /root/postgresql-report.txt
+        echo "Port: {{ pg_port }}" >> /root/postgresql-report.txt
+        echo "Data Directory: $(sudo -u postgres psql -t -c 'SHOW data_directory;')" >> /root/postgresql-report.txt
+        echo "" >> /root/postgresql-report.txt
+        echo "Performance Settings:" >> /root/postgresql-report.txt
+        sudo -u postgres psql -c "SELECT name, setting, unit FROM pg_settings WHERE name IN ('shared_buffers', 'effective_cache_size', 'work_mem', 'max_connections');" >> /root/postgresql-report.txt
+        echo "" >> /root/postgresql-report.txt
+        echo "Security Settings:" >> /root/postgresql-report.txt
+        echo "SSL: $(sudo -u postgres psql -t -c 'SHOW ssl;')" >> /root/postgresql-report.txt
+        echo "Password Encryption: $(sudo -u postgres psql -t -c 'SHOW password_encryption;')" >> /root/postgresql-report.txt
+        echo "" >> /root/postgresql-report.txt
+        echo "Backup Configuration:" >> /root/postgresql-report.txt
+        echo "Archive Mode: $(sudo -u postgres psql -t -c 'SHOW archive_mode;')" >> /root/postgresql-report.txt
+        echo "Archive Command: $(sudo -u postgres psql -t -c 'SHOW archive_command;')" >> /root/postgresql-report.txt
+        echo "" >> /root/postgresql-report.txt
+        echo "Monitoring:" >> /root/postgresql-report.txt
+        echo "Extensions: $(sudo -u postgres psql -t -c 'SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL;')" >> /root/postgresql-report.txt
+      when: production_mode | bool
+      
+    - name: Display PostgreSQL production completion summary
+      debug:
+        msg: |
+          🎉 ✅ PRODUCTION POSTGRESQL SETUP COMPLETED SUCCESSFULLY!
+          
+          📋 Configuration Summary:
+             ├── Server: {{ inventory_hostname }} ({{ ansible_host }})
+             ├── PostgreSQL: v{{ pg_version }} on port {{ pg_port }}
+             ├── PostGIS: {{ 'v' + pg_postgis_version + ' extension installed' if setup_postgis else 'Not installed' }}
+             ├── Databases: {{ pg_databases | length if pg_databases is defined else 0 }} created
+             ├── Users: {{ pg_users | length if pg_users is defined else 0 }} created
+             └── Firewall: PostgreSQL port {{ pg_port }} configured
+          
+          🔒 Production Features:
+             ├── SSL: {{ pg_ssl }}
+             ├── Authentication: SCRAM-SHA-256
+             ├── Performance: Tuned for {{ ansible_memtotal_mb }}MB RAM
+             ├── Monitoring: pg_stat_statements enabled
+             ├── Backups: {{ 'Configured with WAL archiving' if enable_backups else 'Not configured' }}
+             └── Report: /root/postgresql-report.txt
+          
+          📊 Performance Settings:
+          {{ pg_performance_settings.stdout if pg_performance_settings is defined else 'N/A' }}
+          
+          🚀 PostgreSQL Production Server Ready!
+             ├── Local: psql -h localhost -p {{ pg_port }} -U postgres
+             └── Remote: psql -h {{ ansible_host }} -p {{ pg_port }} -U <user> -d <database>
+             
+  handlers:
+    - name: restart postgresql
+      service:
+        name: postgresql
+        state: restarted
+        
+    - name: reload postgresql
+      service:
+        name: postgresql
+        state: reloaded

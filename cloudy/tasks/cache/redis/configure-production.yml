@@ -1,0 +1,196 @@
+---
+# cloudy/tasks/cache/redis/configure-production.yml
+# Apply production configuration to Redis
+
+- name: Create Redis configuration directory
+  file:
+    path: /etc/redis
+    state: directory
+    owner: redis
+    group: redis
+    mode: '0755'
+
+- name: Create Redis data directory
+  file:
+    path: "{{ redis_dir | default('/var/lib/redis') }}"
+    state: directory
+    owner: redis
+    group: redis
+    mode: '0750'
+
+- name: Create Redis log directory
+  file:
+    path: /var/log/redis
+    state: directory
+    owner: redis
+    group: redis
+    mode: '0750'
+
+- name: Create Redis run directory
+  file:
+    path: /var/run/redis
+    state: directory
+    owner: redis
+    group: redis
+    mode: '0755'
+
+- name: Backup original Redis configuration
+  copy:
+    src: /etc/redis/redis.conf
+    dest: /etc/redis/redis.conf.original
+    remote_src: yes
+    force: no
+  ignore_errors: yes
+
+- name: Apply production Redis configuration
+  template:
+    src: redis/redis.conf.j2
+    dest: /etc/redis/redis.conf
+    owner: redis
+    group: redis
+    mode: '0640'
+    backup: yes
+  notify: restart redis
+
+- name: Create Redis ACL file (Redis 6+)
+  template:
+    src: redis/users.acl.j2
+    dest: /etc/redis/users.acl
+    owner: redis
+    group: redis
+    mode: '0640'
+  when: 
+    - redis_version | default('7') | int >= 6
+    - redis_acl_enabled | default(false)
+  notify: restart redis
+
+- name: Configure Redis systemd service override
+  file:
+    path: /etc/systemd/system/redis.service.d
+    state: directory
+    mode: '0755'
+
+- name: Create Redis systemd service override for production
+  copy:
+    dest: /etc/systemd/system/redis.service.d/override.conf
+    content: |
+      [Service]
+      # Production overrides
+      LimitNOFILE=65535
+      PrivateTmp=yes
+      NoNewPrivileges=yes
+      ReadWritePaths={{ redis_dir | default('/var/lib/redis') }} /var/log/redis /var/run/redis
+      ProtectSystem=strict
+      ProtectHome=yes
+      
+      # OOM Score adjustment
+      OOMScoreAdjust=-900
+      
+      # Restart policy
+      Restart=on-failure
+      RestartSec=5s
+  notify:
+    - reload systemd
+    - restart redis
+
+- name: Configure kernel parameters for Redis
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  loop:
+    - { name: 'vm.overcommit_memory', value: '1' }
+    - { name: 'net.core.somaxconn', value: '65535' }
+    - { name: 'net.ipv4.tcp_max_syn_backlog', value: '65535' }
+
+- name: Disable transparent huge pages
+  shell: |
+    echo never > /sys/kernel/mm/transparent_hugepage/enabled
+    echo never > /sys/kernel/mm/transparent_hugepage/defrag
+  changed_when: false
+
+- name: Make transparent huge pages setting persistent
+  copy:
+    dest: /etc/rc.local
+    content: |
+      #!/bin/sh -e
+      echo never > /sys/kernel/mm/transparent_hugepage/enabled
+      echo never > /sys/kernel/mm/transparent_hugepage/defrag
+      exit 0
+    mode: '0755'
+
+- name: Configure Redis logrotate
+  template:
+    src: redis/logrotate.j2
+    dest: /etc/logrotate.d/redis
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Set Redis file descriptor limit
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: "{{ item }}"
+  loop:
+    - "redis soft nofile 65535"
+    - "redis hard nofile 65535"
+
+- name: Create Redis backup directory
+  file:
+    path: /var/backups/redis
+    state: directory
+    owner: redis
+    group: redis
+    mode: '0750'
+
+- name: Create Redis backup script
+  template:
+    src: redis/backup.sh.j2
+    dest: /usr/local/bin/redis-backup.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Schedule Redis backups
+  cron:
+    name: "Redis backup"
+    user: redis
+    job: "/usr/local/bin/redis-backup.sh"
+    hour: "{{ redis_backup_hour | default('3') }}"
+    minute: "{{ redis_backup_minute | default('0') }}"
+    state: present
+
+- name: Test Redis configuration
+  command: redis-server /etc/redis/redis.conf --test-memory 1
+  register: redis_config_test
+  changed_when: false
+  failed_when: false
+
+- name: Verify Redis configuration syntax
+  command: redis-cli --version
+  register: redis_version_check
+  changed_when: false
+
+- name: Generate Redis performance report
+  shell: |
+    echo "=== Redis Production Configuration ===" > /root/redis-report.txt
+    echo "Generated: $(date)" >> /root/redis-report.txt
+    echo "" >> /root/redis-report.txt
+    echo "Redis Version: $(redis-cli --version)" >> /root/redis-report.txt
+    echo "" >> /root/redis-report.txt
+    echo "Memory Settings:" >> /root/redis-report.txt
+    echo "  Max Memory: {{ redis_maxmemory | default(redis_memory_mb + 'mb') }}" >> /root/redis-report.txt
+    echo "  Eviction Policy: {{ redis_maxmemory_policy | default('noeviction') }}" >> /root/redis-report.txt
+    echo "" >> /root/redis-report.txt
+    echo "Persistence:" >> /root/redis-report.txt
+    echo "  AOF: {{ redis_appendonly | default('yes') }}" >> /root/redis-report.txt
+    echo "  RDB: Enabled with save rules" >> /root/redis-report.txt
+    echo "" >> /root/redis-report.txt
+    echo "Security:" >> /root/redis-report.txt
+    echo "  Protected Mode: {{ redis_protected_mode | default('yes') }}" >> /root/redis-report.txt
+    echo "  Password: {{ 'Configured' if redis_requirepass is defined else 'Not configured' }}" >> /root/redis-report.txt
+    echo "  Bind: {{ redis_bind | default('127.0.0.1 ::1') }}" >> /root/redis-report.txt
+  args:
+    creates: /root/redis-report.txt

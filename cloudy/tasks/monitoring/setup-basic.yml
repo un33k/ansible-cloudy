@@ -1,0 +1,187 @@
+---
+# cloudy/tasks/monitoring/setup-basic.yml
+# Setup basic monitoring for standalone server
+
+- name: Install monitoring tools
+  apt:
+    name:
+      - htop
+      - iotop
+      - iftop
+      - ncdu
+      - dstat
+      - sysstat
+      - net-tools
+    state: present
+    update_cache: yes
+
+- name: Enable sysstat collection
+  lineinfile:
+    path: /etc/default/sysstat
+    regexp: '^ENABLED='
+    line: 'ENABLED="true"'
+  notify: restart sysstat
+
+- name: Create monitoring script
+  copy:
+    dest: /usr/local/bin/check-services.sh
+    content: |
+      #!/bin/bash
+      # Service health check script
+      
+      echo "=== Service Status Check ==="
+      echo "Date: $(date)"
+      echo ""
+      
+      # Check services
+      for service in postgresql redis-server nginx supervisor; do
+          if systemctl is-active --quiet $service; then
+              echo "✓ $service: Running"
+          else
+              echo "✗ $service: Not running"
+          fi
+      done
+      
+      echo ""
+      echo "=== Resource Usage ==="
+      # Memory
+      free -h | grep -E "^Mem|^Swap"
+      
+      echo ""
+      # Disk
+      df -h | grep -E "^Filesystem|/$"
+      
+      echo ""
+      # Load average
+      echo "Load Average: $(uptime | awk -F'load average:' '{print $2}')"
+      
+      echo ""
+      # Top processes by CPU
+      echo "Top CPU processes:"
+      ps aux --sort=-%cpu | head -6 | awk '{printf "%-20s %5s %5s %s\n", $11, $2, $3, $4}'
+      
+      echo ""
+      # Top processes by Memory
+      echo "Top Memory processes:"
+      ps aux --sort=-%mem | head -6 | awk '{printf "%-20s %5s %5s %s\n", $11, $2, $3, $4}'
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create monitoring cron job
+  cron:
+    name: "System monitoring report"
+    job: "/usr/local/bin/check-services.sh > /var/log/monitoring-report.log 2>&1"
+    minute: "*/15"
+    user: root
+
+- name: Setup disk usage alert
+  copy:
+    dest: /usr/local/bin/disk-alert.sh
+    content: |
+      #!/bin/bash
+      # Disk usage alert script
+      
+      THRESHOLD=80
+      
+      df -H | grep -vE '^Filesystem|tmpfs|cdrom|udev' | awk '{ print $5 " " $1 }' | while read output; do
+        usage=$(echo $output | awk '{ print $1}' | sed 's/%//g')
+        partition=$(echo $output | awk '{ print $2 }')
+        
+        if [ $usage -ge $THRESHOLD ]; then
+          echo "WARNING: Disk usage on $partition is ${usage}%" | logger -t disk-alert
+          echo "WARNING: Disk usage on $partition is ${usage}%"
+        fi
+      done
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Schedule disk usage check
+  cron:
+    name: "Disk usage check"
+    job: "/usr/local/bin/disk-alert.sh"
+    hour: "*/6"
+    minute: "0"
+    user: root
+
+- name: Create service restart helper
+  copy:
+    dest: /usr/local/bin/restart-all-services.sh
+    content: |
+      #!/bin/bash
+      # Restart all services in correct order
+      
+      echo "Restarting all services..."
+      
+      # Database first
+      {% if install_postgresql | default(false) %}
+      echo "Restarting PostgreSQL..."
+      systemctl restart postgresql
+      sleep 2
+      {% endif %}
+      
+      # Cache
+      {% if install_redis | default(false) %}
+      echo "Restarting Redis..."
+      systemctl restart redis-server
+      sleep 2
+      {% endif %}
+      
+      # Application
+      {% if app_type == 'django' %}
+      echo "Restarting Django app..."
+      supervisorctl restart all
+      {% elif app_type == 'nodejs' %}
+      echo "Restarting Node.js app..."
+      su - {{ app_name }} -c "pm2 restart all"
+      {% endif %}
+      sleep 2
+      
+      # Web server
+      {% if install_nginx | default(false) %}
+      echo "Restarting Nginx..."
+      systemctl restart nginx
+      {% endif %}
+      
+      echo "All services restarted."
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install Node exporter for Prometheus (optional)
+  get_url:
+    url: https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz
+    dest: /tmp/node_exporter.tar.gz
+  when: enable_prometheus_monitoring | default(false)
+
+- name: Extract and install Node exporter
+  unarchive:
+    src: /tmp/node_exporter.tar.gz
+    dest: /usr/local/bin
+    remote_src: yes
+    extra_opts:
+      - --strip-components=1
+      - --wildcards
+      - '*/node_exporter'
+  when: enable_prometheus_monitoring | default(false)
+
+- name: Create Node exporter systemd service
+  copy:
+    dest: /etc/systemd/system/node_exporter.service
+    content: |
+      [Unit]
+      Description=Node Exporter
+      After=network.target
+      
+      [Service]
+      Type=simple
+      ExecStart=/usr/local/bin/node_exporter
+      Restart=on-failure
+      
+      [Install]
+      WantedBy=multi-user.target
+  when: enable_prometheus_monitoring | default(false)
+  notify:
+    - reload systemd
+    - start node_exporter

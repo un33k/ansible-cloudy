@@ -1,0 +1,44 @@
+// {{ ansible_managed }}
+// Cloudy automatic updates configuration
+
+Unattended-Upgrade::Allowed-Origins {
+    "${distro_id}:${distro_codename}";
+    "${distro_id}:${distro_codename}-security";
+    "${distro_id}ESMApps:${distro_codename}-apps-security";
+    "${distro_id}ESM:${distro_codename}-infra-security";
+{% if auto_update_all_packages | default(false) %}
+    "${distro_id}:${distro_codename}-updates";
+{% endif %}
+};
+
+// List of packages to not update
+Unattended-Upgrade::Package-Blacklist {
+{% for package in update_blacklist | default([]) %}
+    "{{ package }}";
+{% endfor %}
+};
+
+// Remove unused kernel packages
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "{{ remove_unused_kernels | default('true') }}";
+
+// Remove unused dependencies
+Unattended-Upgrade::Remove-Unused-Dependencies "{{ remove_unused_deps | default('false') }}";
+
+// Automatic reboot settings
+Unattended-Upgrade::Automatic-Reboot "{{ auto_reboot | default('false') }}";
+Unattended-Upgrade::Automatic-Reboot-WithUsers "{{ auto_reboot_with_users | default('false') }}";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ auto_reboot_time | default('02:00') }}";
+
+// Send email notifications
+Unattended-Upgrade::Mail "{{ update_notification_email | default('root') }}";
+Unattended-Upgrade::MailReport "{{ update_mail_report | default('on-change') }}";
+
+// Limit CPU usage
+Unattended-Upgrade::MinimalSteps "{{ update_minimal_steps | default('true') }}";
+
+// Logging
+Unattended-Upgrade::SyslogEnable "true";
+Unattended-Upgrade::SyslogFacility "daemon";
+
+// Development releases
+Unattended-Upgrade::DevRelease "{{ update_dev_release | default('false') }}";

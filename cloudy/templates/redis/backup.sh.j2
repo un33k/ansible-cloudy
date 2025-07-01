@@ -1,0 +1,101 @@
+#!/bin/bash
+# {{ ansible_managed }}
+# Redis Backup Script - Cloudy
+
+set -euo pipefail
+
+# Configuration
+BACKUP_DIR="/var/backups/redis"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+REDIS_CLI="/usr/bin/redis-cli"
+REDIS_PORT="{{ redis_port | default(redis_port_default) }}"
+REDIS_DATA_DIR="{{ redis_dir | default('/var/lib/redis') }}"
+RETENTION_DAYS={{ redis_backup_retention_days | default(7) }}
+LOG_FILE="/var/log/redis/backup.log"
+
+{% if redis_requirepass is defined %}
+export REDISCLI_AUTH="{{ redis_requirepass }}"
+{% endif %}
+
+# Ensure backup directory exists
+mkdir -p "$BACKUP_DIR"
+
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+# Start backup
+log "Starting Redis backup..."
+
+# Check Redis is running
+if ! $REDIS_CLI -p $REDIS_PORT ping > /dev/null 2>&1; then
+    log "ERROR: Redis is not running or not accessible"
+    exit 1
+fi
+
+# Get Redis info
+REDIS_VERSION=$($REDIS_CLI -p $REDIS_PORT INFO server | grep redis_version | cut -d: -f2 | tr -d '\r')
+USED_MEMORY=$($REDIS_CLI -p $REDIS_PORT INFO memory | grep used_memory_human | cut -d: -f2 | tr -d '\r')
+
+log "Redis version: $REDIS_VERSION, Memory usage: $USED_MEMORY"
+
+# Method 1: BGSAVE for RDB snapshot
+log "Initiating background save (BGSAVE)..."
+$REDIS_CLI -p $REDIS_PORT BGSAVE
+
+# Wait for background save to complete
+while [ $($REDIS_CLI -p $REDIS_PORT LASTSAVE) -eq $($REDIS_CLI -p $REDIS_PORT LASTSAVE) ]; do
+    sleep 1
+done
+
+# Copy RDB file
+if [ -f "$REDIS_DATA_DIR/dump.rdb" ]; then
+    cp "$REDIS_DATA_DIR/dump.rdb" "$BACKUP_DIR/dump_${TIMESTAMP}.rdb"
+    log "RDB backup saved: $BACKUP_DIR/dump_${TIMESTAMP}.rdb"
+else
+    log "WARNING: RDB file not found"
+fi
+
+# Method 2: Copy AOF file if enabled
+if [ -f "$REDIS_DATA_DIR/appendonly.aof" ]; then
+    cp "$REDIS_DATA_DIR/appendonly.aof" "$BACKUP_DIR/appendonly_${TIMESTAMP}.aof"
+    log "AOF backup saved: $BACKUP_DIR/appendonly_${TIMESTAMP}.aof"
+fi
+
+# Compress backups
+log "Compressing backup files..."
+cd "$BACKUP_DIR"
+tar -czf "redis_backup_${TIMESTAMP}.tar.gz" *_${TIMESTAMP}.* 2>/dev/null || true
+rm -f *_${TIMESTAMP}.rdb *_${TIMESTAMP}.aof
+
+# Create backup metadata
+cat > "redis_backup_${TIMESTAMP}.info" << EOF
+Backup Date: $(date)
+Redis Version: $REDIS_VERSION
+Memory Usage: $USED_MEMORY
+Port: $REDIS_PORT
+Data Directory: $REDIS_DATA_DIR
+Files: redis_backup_${TIMESTAMP}.tar.gz
+EOF
+
+log "Backup completed: redis_backup_${TIMESTAMP}.tar.gz"
+
+# Cleanup old backups
+log "Cleaning up old backups..."
+find "$BACKUP_DIR" -name "redis_backup_*.tar.gz" -type f -mtime +$RETENTION_DAYS -delete
+find "$BACKUP_DIR" -name "redis_backup_*.info" -type f -mtime +$RETENTION_DAYS -delete
+
+# Report backup status
+BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/redis_backup_*.tar.gz 2>/dev/null | wc -l)
+BACKUP_SIZE=$(du -sh "$BACKUP_DIR" | cut -f1)
+
+log "Backup complete. Total backups: $BACKUP_COUNT, Total size: $BACKUP_SIZE"
+
+# Optional: Sync to remote location
+{% if redis_backup_remote_enabled | default(false) %}
+log "Syncing to remote backup location..."
+rsync -av "$BACKUP_DIR/redis_backup_${TIMESTAMP}.*" {{ redis_backup_remote_location }}/
+{% endif %}
+
+exit 0

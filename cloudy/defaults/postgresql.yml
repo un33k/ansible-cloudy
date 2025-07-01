@@ -6,6 +6,7 @@
 # === VERSION DEFAULTS ===
 pg_version_default: "17"        # Current stable version
 pg_postgis_version_default: "3.4"
+pgvector_version_default: "v0.5.1"  # Current stable pgvector
 
 # === CONNECTION DEFAULTS ===
 pg_port_default: 5432           # PostgreSQL standard port

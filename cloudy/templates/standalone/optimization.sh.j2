@@ -1,0 +1,140 @@
+#!/bin/bash
+# {{ ansible_managed }}
+# Standalone Server Optimization Script
+
+set -euo pipefail
+
+echo "=== Starting Standalone Server Optimization ==="
+echo "Date: $(date)"
+
+# System Information
+TOTAL_RAM=$(free -m | awk '/^Mem:/{print $2}')
+CPU_CORES=$(nproc)
+
+echo "System: ${TOTAL_RAM}MB RAM, ${CPU_CORES} CPU cores"
+
+# Calculate optimal memory allocation
+# Reserve 20% for system, distribute rest among services
+SYSTEM_RESERVED=$((TOTAL_RAM * 20 / 100))
+AVAILABLE_RAM=$((TOTAL_RAM - SYSTEM_RESERVED))
+
+{% if install_postgresql %}
+# PostgreSQL: 25% of available RAM
+PG_SHARED_BUFFERS=$((AVAILABLE_RAM * 25 / 100))
+PG_EFFECTIVE_CACHE=$((AVAILABLE_RAM * 50 / 100))
+
+echo "Optimizing PostgreSQL..."
+sudo -u postgres psql -c "ALTER SYSTEM SET shared_buffers = '${PG_SHARED_BUFFERS}MB';"
+sudo -u postgres psql -c "ALTER SYSTEM SET effective_cache_size = '${PG_EFFECTIVE_CACHE}MB';"
+sudo -u postgres psql -c "ALTER SYSTEM SET work_mem = '${((AVAILABLE_RAM * 5 / 100) / {{ pg_max_connections | default(100) }})}MB';"
+sudo -u postgres psql -c "ALTER SYSTEM SET maintenance_work_mem = '$((AVAILABLE_RAM * 5 / 100))MB';"
+systemctl reload postgresql
+{% endif %}
+
+{% if install_redis %}
+# Redis: 20% of available RAM
+REDIS_MEMORY=$((AVAILABLE_RAM * 20 / 100))
+
+echo "Optimizing Redis..."
+redis-cli -p {{ redis_port }} {% if redis_password %}-a {{ redis_password }}{% endif %} CONFIG SET maxmemory ${REDIS_MEMORY}mb
+redis-cli -p {{ redis_port }} {% if redis_password %}-a {{ redis_password }}{% endif %} CONFIG SET maxmemory-policy allkeys-lru
+redis-cli -p {{ redis_port }} {% if redis_password %}-a {{ redis_password }}{% endif %} CONFIG REWRITE
+{% endif %}
+
+# Nginx: Optimize worker processes
+echo "Optimizing Nginx..."
+sed -i "s/worker_processes.*/worker_processes ${CPU_CORES};/" /etc/nginx/nginx.conf
+nginx -t && systemctl reload nginx
+
+# Application optimization based on type
+{% if app_type == 'django' %}
+# Django/Gunicorn: 2-4 workers per CPU core
+GUNICORN_WORKERS=$((CPU_CORES * 2))
+echo "Optimizing Django/Gunicorn (${GUNICORN_WORKERS} workers)..."
+sed -i "s/--workers [0-9]*/--workers ${GUNICORN_WORKERS}/" /etc/supervisor/conf.d/*.conf
+supervisorctl reread
+supervisorctl update
+{% elif app_type == 'nodejs' %}
+# Node.js/PM2: One instance per CPU core
+echo "Optimizing Node.js/PM2 (${CPU_CORES} instances)..."
+su - {{ app_name }} -c "cd {{ app_path }} && pm2 scale {{ app_name }} ${CPU_CORES}"
+su - {{ app_name }} -c "pm2 save"
+{% endif %}
+
+# System-wide optimizations
+echo "Applying system optimizations..."
+
+# Swappiness for database server
+sysctl -w vm.swappiness=10
+
+# File descriptor limits
+ulimit -n 65535
+
+# TCP optimizations
+sysctl -w net.core.somaxconn=65535
+sysctl -w net.ipv4.tcp_max_syn_backlog=65535
+sysctl -w net.ipv4.tcp_fin_timeout=30
+sysctl -w net.ipv4.tcp_keepalive_time=300
+
+# Transparent huge pages (disable for databases)
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+# Save sysctl settings
+sysctl -p
+
+echo ""
+echo "=== Optimization Complete ==="
+echo ""
+echo "Memory Allocation:"
+echo "  System Reserved: ${SYSTEM_RESERVED}MB"
+{% if install_postgresql %}
+echo "  PostgreSQL: ${PG_SHARED_BUFFERS}MB shared buffers"
+{% endif %}
+{% if install_redis %}
+echo "  Redis: ${REDIS_MEMORY}MB max memory"
+{% endif %}
+echo "  Application: Remaining RAM"
+echo ""
+echo "Worker Processes:"
+echo "  Nginx: ${CPU_CORES} workers"
+{% if app_type == 'django' %}
+echo "  Gunicorn: ${GUNICORN_WORKERS} workers"
+{% elif app_type == 'nodejs' %}
+echo "  PM2: ${CPU_CORES} instances"
+{% endif %}
+
+# Create optimization report
+cat > /root/optimization-report.txt << EOF
+Optimization Report - $(date)
+============================
+
+System Resources:
+- Total RAM: ${TOTAL_RAM}MB
+- CPU Cores: ${CPU_CORES}
+
+Memory Allocation:
+- System Reserved: ${SYSTEM_RESERVED}MB (20%)
+{% if install_postgresql %}
+- PostgreSQL: ${PG_SHARED_BUFFERS}MB shared_buffers, ${PG_EFFECTIVE_CACHE}MB effective_cache_size
+{% endif %}
+{% if install_redis %}
+- Redis: ${REDIS_MEMORY}MB maxmemory
+{% endif %}
+
+Process Configuration:
+- Nginx: ${CPU_CORES} worker processes
+{% if app_type == 'django' %}
+- Gunicorn: ${GUNICORN_WORKERS} workers
+{% elif app_type == 'nodejs' %}
+- PM2: ${CPU_CORES} instances in cluster mode
+{% endif %}
+
+Kernel Parameters Applied:
+- vm.swappiness = 10
+- net.core.somaxconn = 65535
+- Transparent Huge Pages = disabled
+EOF
+
+echo ""
+echo "Optimization report saved to: /root/optimization-report.txt"

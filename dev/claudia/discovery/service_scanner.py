@@ -54,6 +54,14 @@ class ServiceScanner:
             if len(rel_path.parts) == 2:  # category/service.yml
                 category, filename = rel_path.parts
                 service_name = filename[:-4]  # Remove .yml extension
+                
+                # Normalize special cases
+                if service_name == "all-in-one" and category == "standalone":
+                    service_name = "standalone"
+                elif service_name.endswith("-production"):
+                    # Keep production recipes with their full name
+                    pass
+                    
                 recipes[service_name] = str(rel_path)
 
         return recipes
@@ -79,10 +87,16 @@ class ServiceScanner:
         # Map database services
         if category == "db" and service == "postgresql":
             return "psql"
+        elif category == "db" and service == "pgvector":
+            return "pgvector"
         elif category == "services" and service == "redis":
             return "redis"
         elif category == "web" and service == "nginx":
             return "nginx"
+        elif category == "www" and service == "nodejs":
+            return "nodejs"
+        elif category == "standalone" and service == "all-in-one":
+            return "standalone"
         else:
             return service
 

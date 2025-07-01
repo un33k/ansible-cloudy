@@ -1,0 +1,50 @@
+---
+# Node.js Service Defaults
+# Variable naming convention: node_<setting> or npm_<setting>
+# These are overridden by vault_<setting> variables
+
+# === VERSION DEFAULTS ===
+node_version_default: "18"           # LTS version
+npm_registry_default: "https://registry.npmjs.org/"
+
+# === APPLICATION DEFAULTS ===
+app_name_default: "nodejs-app"
+app_path_default: "/var/www/nodejs-app"
+app_port_default: 3000
+app_env_default: "production"
+app_branch_default: "main"
+
+# === PM2 DEFAULTS ===
+pm2_instances_default: "max"         # Use all CPU cores
+pm2_exec_mode_default: "cluster"     # Cluster mode for load balancing
+pm2_max_memory_default: "1G"         # Restart if memory exceeds this
+pm2_memory_limit_default: "2G"       # Hard memory limit
+pm2_watch_default: false             # Don't watch files in production
+
+# === NGINX DEFAULTS ===
+nginx_setup_default: true            # Setup Nginx reverse proxy
+nginx_domain_default: "localhost"
+nginx_ssl_enabled_default: false
+
+# === NODE.JS RUNTIME DEFAULTS ===
+node_max_old_space_size_default: 4096  # Max memory for V8 (MB)
+node_args_default: 
+  - "--optimize-for-size"
+  - "--gc-interval=100"
+
+# === LOGGING DEFAULTS ===
+log_level_default: "info"
+log_rotate_size_default: "100M"
+log_rotate_keep_default: 7
+
+# === SECURITY DEFAULTS ===
+app_user_shell_default: "/bin/bash"
+app_user_system_default: true
+
+# === PERFORMANCE DEFAULTS ===
+cluster_workers_default: 0           # 0 = auto (number of CPUs)
+
+# === HEALTH CHECK DEFAULTS ===
+health_check_interval_default: 30000
+health_check_timeout_default: 3000
+health_check_max_fails_default: 3

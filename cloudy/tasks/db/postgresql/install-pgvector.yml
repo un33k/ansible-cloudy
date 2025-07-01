@@ -1,0 +1,96 @@
+---
+# cloudy/tasks/db/postgresql/install-pgvector.yml
+# Install pgvector extension for PostgreSQL vector operations
+
+- name: Install build dependencies for pgvector
+  apt:
+    name:
+      - build-essential
+      - postgresql-server-dev-{{ pg_version }}
+      - git
+      - make
+      - gcc
+    state: present
+    update_cache: yes
+
+- name: Check if pgvector is already installed
+  shell: |
+    sudo -u postgres psql -t -c "SELECT 1 FROM pg_available_extensions WHERE name = 'vector';" | grep -q 1
+  register: pgvector_check
+  changed_when: false
+  failed_when: false
+
+- name: Clone pgvector repository
+  git:
+    repo: https://github.com/pgvector/pgvector.git
+    dest: /tmp/pgvector
+    version: "{{ pgvector_version | default('v0.5.1') }}"
+    force: yes
+  when: pgvector_check.rc != 0
+
+- name: Build and install pgvector
+  shell: |
+    cd /tmp/pgvector
+    make clean
+    make
+    make install
+  when: pgvector_check.rc != 0
+
+- name: Create pgvector extension in postgres database
+  postgresql_ext:
+    name: vector
+    db: postgres
+    state: present
+  become_user: postgres
+
+- name: Create pgvector extension in template database
+  postgresql_ext:
+    name: vector
+    db: template1
+    state: present
+  become_user: postgres
+
+- name: Create pgvector extension in specified databases
+  postgresql_ext:
+    name: vector
+    db: "{{ item.name }}"
+    state: present
+  become_user: postgres
+  loop: "{{ pg_databases }}"
+  when: 
+    - pg_databases is defined
+    - item.extensions is defined
+    - "'vector' in item.extensions or 'pgvector' in item.extensions"
+
+- name: Verify pgvector installation
+  postgresql_query:
+    db: postgres
+    query: "SELECT extversion FROM pg_extension WHERE extname = 'vector';"
+  become_user: postgres
+  register: pgvector_version_check
+
+- name: Display pgvector version
+  debug:
+    msg: "pgvector version {{ pgvector_version_check.query_result[0].extversion }} installed successfully"
+  when: pgvector_version_check.query_result is defined and pgvector_version_check.query_result|length > 0
+
+- name: Create example vector table for testing
+  postgresql_query:
+    db: postgres
+    query: |
+      CREATE TABLE IF NOT EXISTS vector_test (
+        id bigserial PRIMARY KEY,
+        embedding vector(3)
+      );
+      INSERT INTO vector_test (embedding) VALUES 
+        ('[1,2,3]'), 
+        ('[4,5,6]') 
+      ON CONFLICT DO NOTHING;
+  become_user: postgres
+  when: pg_create_test_data | default(false)
+
+- name: Cleanup build directory
+  file:
+    path: /tmp/pgvector
+    state: absent
+  when: pgvector_check.rc != 0

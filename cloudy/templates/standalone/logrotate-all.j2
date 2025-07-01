@@ -1,0 +1,86 @@
+# {{ ansible_managed }}
+# Logrotate configuration for standalone server
+
+# PostgreSQL logs
+{% if install_postgresql %}
+/var/log/postgresql/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 postgres postgres
+    sharedscripts
+    postrotate
+        # Signal PostgreSQL to reopen log files
+        if [ -f /var/run/postgresql/{{ pg_version }}-main.pid ]; then
+            kill -USR1 $(head -1 /var/run/postgresql/{{ pg_version }}-main.pid) 2>/dev/null || true
+        fi
+    endscript
+}
+{% endif %}
+
+# Redis logs
+{% if install_redis %}
+/var/log/redis/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 redis redis
+    sharedscripts
+    postrotate
+        if [ -f /var/run/redis/redis-server.pid ]; then
+            kill -USR1 $(cat /var/run/redis/redis-server.pid) 2>/dev/null || true
+        fi
+    endscript
+}
+{% endif %}
+
+# Nginx logs
+{% if install_nginx %}
+/var/log/nginx/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data adm
+    sharedscripts
+    prerotate
+        if [ -d /etc/logrotate.d/httpd-prerotate ]; then
+            run-parts /etc/logrotate.d/httpd-prerotate
+        fi
+    endscript
+    postrotate
+        invoke-rc.d nginx rotate >/dev/null 2>&1
+    endscript
+}
+{% endif %}
+
+# Application logs
+{% if app_type == 'django' %}
+/var/log/{{ app_name }}/*.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 {{ app_name }} {{ app_name }}
+    sharedscripts
+    postrotate
+        supervisorctl restart all >/dev/null 2>&1 || true
+    endscript
+}
+{% endif %}
+
+# PM2 logs (handled by PM2 logrotate module)
+{% if app_type == 'nodejs' %}
+# PM2 logs are managed by pm2-logrotate module
+# Configuration: pm2 set pm2-logrotate:max_size 100M
+{% endif %}

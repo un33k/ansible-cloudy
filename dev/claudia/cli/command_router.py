@@ -63,6 +63,11 @@ class CommandRouter:
                     psql_ops = PostgreSQLOperations(config)
                     psql_ops._show_psql_help()
                     return True
+                elif service_name == "pgvector":
+                    from operations.pgvector import PgVectorOperations
+                    pgvector_ops = PgVectorOperations(config)
+                    pgvector_ops.show_help()
+                    return True
                 elif service_name == "redis":
                     redis_ops = RedisOperations(config)
                     redis_ops._show_service_help()
@@ -70,6 +75,16 @@ class CommandRouter:
                 elif service_name == "nginx":
                     nginx_ops = NginxOperations(config)
                     nginx_ops._show_service_help()
+                    return True
+                elif service_name == "nodejs":
+                    from operations.nodejs import NodeJSOperations
+                    nodejs_ops = NodeJSOperations(config)
+                    nodejs_ops.show_help()
+                    return True
+                elif service_name == "standalone":
+                    from operations.standalone import StandaloneOperations
+                    standalone_ops = StandaloneOperations(config)
+                    standalone_ops.show_help()
                     return True
                 
                 # Handle other services with recipe help
@@ -214,6 +229,11 @@ class CommandRouter:
             psql_ops = PostgreSQLOperations(config)
             exit_code = psql_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
+        elif service_name == "pgvector":
+            from operations.pgvector import PgVectorOperations
+            pgvector_ops = PgVectorOperations(config)
+            exit_code = pgvector_ops.handle_operation(args, ansible_args)
+            sys.exit(exit_code)
         elif service_name == "redis":
             redis_ops = RedisOperations(config)
             exit_code = redis_ops.handle_operation(args, ansible_args)
@@ -221,6 +241,16 @@ class CommandRouter:
         elif service_name == "nginx":
             nginx_ops = NginxOperations(config)
             exit_code = nginx_ops.handle_operation(args, ansible_args)
+            sys.exit(exit_code)
+        elif service_name == "nodejs":
+            from operations.nodejs import NodeJSOperations
+            nodejs_ops = NodeJSOperations(config)
+            exit_code = nodejs_ops.handle_operation(args, ansible_args)
+            sys.exit(exit_code)
+        elif service_name == "standalone":
+            from operations.standalone import StandaloneOperations
+            standalone_ops = StandaloneOperations(config)
+            exit_code = standalone_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
         else:
             return False  # Service not handled by specific operations

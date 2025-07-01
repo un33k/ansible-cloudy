@@ -1,0 +1,144 @@
+# {{ ansible_managed }}
+# Nginx configuration for Node.js application: {{ app_name }}
+
+upstream {{ app_name }}_backend {
+    # PM2 cluster mode with multiple instances
+    {% for i in range(pm2_instances if pm2_instances != 'max' else ansible_processor_vcpus) %}
+    server 127.0.0.1:{{ app_port + i }} max_fails=3 fail_timeout=30s;
+    {% endfor %}
+    
+    # Or single port if not using instance_var
+    server 127.0.0.1:{{ app_port }} max_fails=3 fail_timeout=30s;
+    
+    keepalive 64;
+}
+
+{% if nginx_ssl_enabled %}
+# HTTP redirect to HTTPS
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ nginx_domain }};
+    return 301 https://$server_name$request_uri;
+}
+{% endif %}
+
+server {
+    {% if nginx_ssl_enabled %}
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    
+    ssl_certificate /etc/nginx/ssl/{{ nginx_domain }}.crt;
+    ssl_certificate_key /etc/nginx/ssl/{{ nginx_domain }}.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    
+    # HSTS
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    {% else %}
+    listen 80;
+    listen [::]:80;
+    {% endif %}
+    
+    server_name {{ nginx_domain }};
+    
+    # Logging
+    access_log /var/log/nginx/{{ app_name }}_access.log;
+    error_log /var/log/nginx/{{ app_name }}_error.log;
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    
+    # Rate limiting
+    limit_req_zone $binary_remote_addr zone={{ app_name }}_limit:10m rate=10r/s;
+    limit_req zone={{ app_name }}_limit burst=20 nodelay;
+    
+    # Static files
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|pdf|txt|woff|woff2|ttf|svg|eot)$ {
+        root {{ app_path }}/public;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+    
+    # WebSocket support
+    location /socket.io/ {
+        proxy_pass http://{{ app_name }}_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # WebSocket timeouts
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
+    
+    # Health check endpoint
+    location /health {
+        proxy_pass http://{{ app_name }}_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        access_log off;
+    }
+    
+    # API endpoints with different rate limiting
+    location /api/ {
+        limit_req zone={{ app_name }}_limit burst=50 nodelay;
+        
+        proxy_pass http://{{ app_name }}_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Disable buffering for streaming responses
+        proxy_buffering off;
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+    
+    # Main application
+    location / {
+        proxy_pass http://{{ app_name }}_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        
+        # Headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        
+        # Buffering
+        proxy_buffering on;
+        proxy_buffer_size 4k;
+        proxy_buffers 24 4k;
+        proxy_busy_buffers_size 8k;
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+    
+    # Error pages
+    error_page 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}

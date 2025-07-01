@@ -1,0 +1,29 @@
+# {{ ansible_managed }}
+# Nginx Prometheus Exporter Service
+
+[Unit]
+Description=Nginx Prometheus Exporter
+Documentation=https://github.com/nginxinc/nginx-prometheus-exporter
+After=network.target nginx.service
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+ExecStart=/usr/local/bin/nginx-prometheus-exporter \
+    -nginx.scrape-uri=http://localhost:8080/nginx_status \
+    -web.listen-address=:9113 \
+    -web.telemetry-path=/metrics
+
+Restart=on-failure
+RestartSec=5s
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=
+
+[Install]
+WantedBy=multi-user.target

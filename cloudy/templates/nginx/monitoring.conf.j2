@@ -1,0 +1,48 @@
+# {{ ansible_managed }}
+# Nginx Monitoring Configuration
+
+# Nginx status endpoint
+server {
+    listen 127.0.0.1:8080;
+    server_name localhost;
+    
+    location /nginx_status {
+        stub_status on;
+        access_log off;
+        allow 127.0.0.1;
+        deny all;
+    }
+    
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+
+# Prometheus nginx-vts-exporter endpoint (if module installed)
+{% if nginx_vts_module_enabled | default(false) %}
+server {
+    listen 127.0.0.1:8081;
+    server_name localhost;
+    
+    location /status {
+        vhost_traffic_status_display;
+        vhost_traffic_status_display_format json;
+        access_log off;
+        allow 127.0.0.1;
+        deny all;
+    }
+}
+{% endif %}
+
+# Monitoring log format for analysis
+log_format monitoring '$remote_addr - $remote_user [$time_local] '
+                     '"$request" $status $body_bytes_sent '
+                     '"$http_referer" "$http_user_agent" '
+                     'rt=$request_time uct="$upstream_connect_time" '
+                     'uht="$upstream_header_time" urt="$upstream_response_time" '
+                     'cs=$upstream_cache_status';
+
+# Separate access log for monitoring
+access_log /var/log/nginx/monitoring.log monitoring buffer=32k flush=5s;
