@@ -19,9 +19,10 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     
     - name: Cache Python virtual environment
       uses: actions/cache@v3
@@ -41,38 +42,56 @@ jobs:
     
     - name: Setup environment
       run: |
-        # Use the Python that was set up by setup-python action
+        # Debug Python setup
         echo "Python executable: $(which python)"
         echo "Python version: $(python --version)"
+        echo "Current directory: $(pwd)"
         
-        # Create virtual environment using the setup-python's python
-        python -m venv .venv
+        # Ensure venv module is available
+        python -m pip install --user virtualenv
+        
+        # Create virtual environment with error checking
+        echo "Creating virtual environment..."
+        python -m venv .venv || {
+          echo "Failed to create venv with venv module, trying virtualenv..."
+          python -m virtualenv .venv
+        }
+        
+        # Check if venv was created
+        if [ ! -f .venv/bin/python ]; then
+          echo "ERROR: Virtual environment creation failed!"
+          echo "Directory contents:"
+          ls -la
+          echo ".venv contents (if exists):"
+          ls -la .venv/ || echo ".venv directory does not exist"
+          exit 1
+        fi
         
         # Activate venv and install dependencies
+        echo "Activating virtual environment..."
         source .venv/bin/activate
-        python -m pip install --upgrade pip wheel setuptools
         
-        # Install Python dependencies
+        echo "Installing dependencies..."
+        python -m pip install --upgrade pip wheel setuptools
         pip install ansible ansible-lint yamllint flake8
         pip install pytest coverage PyYAML passlib netaddr jsonschema
         
         # Install cspell via npm if available
         if command -v npm &> /dev/null; then
           sudo npm install -g cspell || echo "cspell installation failed"
-        else
-          echo "npm not found, skipping cspell installation"
         fi
         
         # Create cli command symlinks
+        echo "Setting up CLI commands..."
         cp dev/bin/claudia-venv .venv/bin/claudia
         chmod +x .venv/bin/claudia
         cd .venv/bin && ln -sf claudia cli && cd ../..
         
         # Verify environment
-        echo "Python in venv: $(.venv/bin/python --version)"
-        echo "Pip in venv: $(.venv/bin/pip --version)"
-        .venv/bin/ansible --version
-        .venv/bin/cli --version || echo "CLI setup complete"
+        echo "Verifying installation..."
+        .venv/bin/python --version
+        .venv/bin/pip list | grep ansible
+        .venv/bin/ansible --version || echo "Ansible not found"
     
     - name: Run syntax validation
       run: |
