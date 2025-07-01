@@ -40,58 +40,25 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
     
-    - name: Setup environment
+    - name: Install system dependencies
       run: |
-        # Debug Python setup
-        echo "Python executable: $(which python)"
-        echo "Python version: $(python --version)"
-        echo "Current directory: $(pwd)"
+        # Install cspell globally via npm
+        sudo npm install -g cspell || echo "cspell installation skipped"
         
-        # Ensure venv module is available
+        # Ensure virtualenv is available as fallback
         python -m pip install --user virtualenv
+    
+    - name: Setup environment with bootstrap
+      run: |
+        # Run bootstrap in CI mode
+        ./bootstrap.sh --ci
         
-        # Create virtual environment with error checking
-        echo "Creating virtual environment..."
-        python -m venv .venv || {
-          echo "Failed to create venv with venv module, trying virtualenv..."
-          python -m virtualenv .venv
-        }
-        
-        # Check if venv was created
-        if [ ! -f .venv/bin/python ]; then
-          echo "ERROR: Virtual environment creation failed!"
-          echo "Directory contents:"
-          ls -la
-          echo ".venv contents (if exists):"
-          ls -la .venv/ || echo ".venv directory does not exist"
-          exit 1
-        fi
-        
-        # Activate venv and install dependencies
-        echo "Activating virtual environment..."
+        # Verify environment was created
         source .venv/bin/activate
-        
-        echo "Installing dependencies..."
-        python -m pip install --upgrade pip wheel setuptools
-        pip install ansible ansible-lint yamllint flake8
-        pip install pytest coverage PyYAML passlib netaddr jsonschema
-        
-        # Install cspell via npm if available
-        if command -v npm &> /dev/null; then
-          sudo npm install -g cspell || echo "cspell installation failed"
-        fi
-        
-        # Create cli command symlinks
-        echo "Setting up CLI commands..."
-        cp dev/bin/claudia-venv .venv/bin/claudia
-        chmod +x .venv/bin/claudia
-        cd .venv/bin && ln -sf claudia cli && cd ../..
-        
-        # Verify environment
-        echo "Verifying installation..."
-        .venv/bin/python --version
-        .venv/bin/pip list | grep ansible
-        .venv/bin/ansible --version || echo "Ansible not found"
+        echo "Python version: $(python --version)"
+        echo "Ansible version: $(ansible --version | head -1)"
+        echo "CLI available: $(which cli)"
+        cli --version
     
     - name: Run syntax validation
       run: |

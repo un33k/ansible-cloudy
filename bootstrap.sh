@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PYTHON_VERSION="3.11.9"
 VENV_DIR="./.venv"
 AUTO_YES=false
+CI_MODE=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -17,9 +18,15 @@ while [[ $# -gt 0 ]]; do
             AUTO_YES=true
             shift
             ;;
+        --ci)
+            CI_MODE=true
+            AUTO_YES=true
+            shift
+            ;;
         *)
-            echo "Usage: $0 [-y|--yes]"
+            echo "Usage: $0 [-y|--yes] [--ci]"
             echo "  -y, --yes    Auto-confirm all prompts"
+            echo "  --ci         CI mode (skip pyenv, use system Python)"
             exit 1
             ;;
     esac
@@ -185,7 +192,20 @@ install_python_pyenv() {
 
 # Setup Python (pyenv or system)
 setup_python() {
-    if command -v pyenv >/dev/null 2>&1; then
+    if [[ "$CI_MODE" == true ]]; then
+        # In CI, use whatever Python is available
+        if command -v python >/dev/null 2>&1; then
+            log "Using CI Python: $(python --version)"
+        elif command -v python3 >/dev/null 2>&1; then
+            log "Using CI Python 3: $(python3 --version)"
+            # Create a python symlink if needed
+            if ! command -v python >/dev/null 2>&1; then
+                warn "Creating python symlink to python3"
+            fi
+        else
+            error "No Python found in CI environment"
+        fi
+    elif command -v pyenv >/dev/null 2>&1; then
         install_python_pyenv
     elif check_system_python; then
         warn "Using system Python 3 (pyenv not available)"
@@ -197,7 +217,10 @@ setup_python() {
 # Create virtual environment
 create_venv() {
     if [[ -d "$VENV_DIR" ]]; then
-        if ask "Virtual environment already exists. Recreate?"; then
+        if [[ "$CI_MODE" == true ]]; then
+            log "Removing existing virtual environment in CI mode"
+            rm -rf "$VENV_DIR"
+        elif ask "Virtual environment already exists. Recreate?"; then
             rm -rf "$VENV_DIR"
         else
             log "Using existing virtual environment"
@@ -206,7 +229,29 @@ create_venv() {
     fi
     
     log "Creating virtual environment in $VENV_DIR..."
-    python -m venv "$VENV_DIR"
+    
+    # Try different approaches for CI compatibility
+    if command -v python >/dev/null 2>&1; then
+        python -m venv "$VENV_DIR" || python -m virtualenv "$VENV_DIR" || {
+            error "Failed to create virtual environment with python"
+            return 1
+        }
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -m venv "$VENV_DIR" || python3 -m virtualenv "$VENV_DIR" || {
+            error "Failed to create virtual environment with python3"
+            return 1
+        }
+    else
+        error "No Python executable found"
+        return 1
+    fi
+    
+    # Verify venv was created
+    if [[ ! -f "$VENV_DIR/bin/activate" ]]; then
+        error "Virtual environment creation failed - no activate script found"
+        return 1
+    fi
+    
     log "Virtual environment created"
 }
 
@@ -237,18 +282,26 @@ install_deps() {
 # Main execution
 main() {
     echo -e "${BLUE}🚀 Ansible Cloudy Bootstrap${NC}"
-    echo "Setting up Python development environment for Ansible automation..."
+    
+    if [[ "$CI_MODE" == true ]]; then
+        echo "Running in CI mode - using system Python"
+    else
+        echo "Setting up Python development environment for Ansible automation..."
+    fi
     echo
     
-    # Check/install Homebrew (macOS only)
-    check_brew
-    
-    # Check/install pyenv (optional)
-    if ! check_pyenv; then
-        if ask "Install pyenv for better Python version management?"; then
-            install_pyenv
-        else
-            warn "Continuing with system Python (pyenv recommended but not required)"
+    # Skip Homebrew and pyenv in CI mode
+    if [[ "$CI_MODE" != true ]]; then
+        # Check/install Homebrew (macOS only)
+        check_brew
+        
+        # Check/install pyenv (optional)
+        if ! check_pyenv; then
+            if ask "Install pyenv for better Python version management?"; then
+                install_pyenv
+            else
+                warn "Continuing with system Python (pyenv recommended but not required)"
+            fi
         fi
     fi
     
