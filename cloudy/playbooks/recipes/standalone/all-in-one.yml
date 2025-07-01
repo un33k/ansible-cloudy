@@ -48,308 +48,261 @@
     
   pre_tasks:
     # Ensure proper secure connection
-    - name: Validate secure connection
+    - name: Ensure secure connection
       include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
+      tags: [always]
     
-    - name: Display standalone setup information
+    - name: Display deployment configuration
       debug:
         msg: |
-          🚀 Starting All-in-One Standalone Server Setup
-          Target: {{ inventory_hostname }} ({{ ansible_host }})
+          🚀 All-in-One Server Deployment
+          ============================
+          Server: {{ ansible_hostname }} ({{ ansible_default_ipv4.address }})
+          Domain: {{ domain }}
+          App Type: {{ app_type }}
+          SSL: {{ 'Enabled' if enable_ssl else 'Disabled' }}
           
-          📋 Stack Configuration:
-          ├── Application Type: {{ app_type | upper }}
-          ├── Domain: {{ domain }}
-          ├── SSL: {{ 'Enabled' if enable_ssl else 'Disabled' }}
-          ├── PostgreSQL: {{ 'v' + pg_version + ' on port ' + (pg_port|string) if install_postgresql else 'Skipped' }}
-          ├── Redis: {{ 'Port ' + (redis_port|string) + ' with ' + (redis_memory_mb|string) + 'MB' if install_redis else 'Skipped' }}
-          ├── Nginx: {{ 'Reverse proxy with SSL' if install_nginx else 'Skipped' }}
-          └── Production Mode: {{ 'Enabled' if production_mode else 'Disabled' }}
+          Components:
+          - PostgreSQL: {{ 'YES' if install_postgresql else 'NO' }}
+          - Redis: {{ 'YES' if install_redis else 'NO' }}
+          - Nginx: {{ 'YES' if install_nginx else 'NO' }}
+          - Application: {{ app_type }}
           
-          ⚠️  Resource Requirements:
-          ├── RAM: Minimum 2GB recommended
-          ├── CPU: 2+ cores recommended
-          ├── Disk: 20GB+ recommended
-          └── Current RAM: {{ ansible_memtotal_mb }}MB
-          
+          Production Mode: {{ 'YES' if production_mode else 'NO' }}
+      tags: [always]
+  
   tasks:
     # =============================================================================
-    # PHASE 1: SYSTEM PREPARATION
+    # PHASE 1: SYSTEM CONFIGURATION
     # =============================================================================
     
     - name: Update system packages
       include_tasks: "{{ task_paths }}/sys/core/update.yml"
       tags: [system, update]
     
-    - name: Install common utilities
-      include_tasks: "{{ task_paths }}/sys/core/install-common.yml"
-      tags: [system, packages]
+    - name: Configure hostname
+      include_tasks: "{{ task_paths }}/sys/core/configure-hostname.yml"
+      vars:
+        hostname: "{{ domain.split('.')[0] }}"
+      tags: [system, hostname]
     
-    - name: Configure system performance
-      sysctl:
-        name: "{{ item.name }}"
-        value: "{{ item.value }}"
-        sysctl_set: yes
-        state: present
-        reload: yes
-      loop:
-        - { name: 'vm.swappiness', value: '10' }
-        - { name: 'vm.overcommit_memory', value: '1' }
-        - { name: 'net.core.somaxconn', value: '65535' }
-        - { name: 'net.ipv4.tcp_max_syn_backlog', value: '65535' }
+    - name: Configure timezone
+      include_tasks: "{{ task_paths }}/sys/core/configure-timezone.yml"
+      tags: [system, timezone]
+    
+    - name: Install system utilities
+      include_tasks: "{{ task_paths }}/sys/utilities/install.yml"
+      tags: [system, utilities]
+    
+    - name: Configure swap
+      include_tasks: "{{ task_paths }}/sys/swap/configure.yml"
+      when: production_mode
+      tags: [system, swap]
+    
+    - name: Configure kernel parameters for production
+      include_tasks: "{{ task_paths }}/sys/kernel/tune-production.yml"
+      when: production_mode
       tags: [system, performance]
     
     # =============================================================================
     # PHASE 2: DATABASE LAYER (PostgreSQL)
     # =============================================================================
     
-    - name: Install PostgreSQL database
-      include: ../db/psql{{ '-production' if production_mode else '' }}.yml
-      vars:
-        setup_postgresql: "{{ install_postgresql }}"
-        pg_databases:
-          - name: "{{ app_name }}"
-            owner: "{{ app_name }}_user"
-        pg_users:
-          - name: "{{ app_name }}_user"
-            password: "{{ pg_password }}"
-            database: "{{ app_name }}"
-      when: install_postgresql | bool
-      tags: [postgresql, database]
+    - name: Install PostgreSQL
+      when: install_postgresql
+      block:
+        - name: Install PostgreSQL repository
+          include_tasks: "{{ task_paths }}/db/postgresql/install-repo.yml"
+          tags: [postgresql, install]
+        
+        - name: Install PostgreSQL server
+          include_tasks: "{{ task_paths }}/db/postgresql/install.yml"
+          tags: [postgresql, install]
+        
+        - name: Configure PostgreSQL for production
+          include_tasks: "{{ task_paths }}/db/postgresql/configure-production.yml"
+          when: production_mode
+          tags: [postgresql, configure]
+        
+        - name: Create application database
+          include_tasks: "{{ task_paths }}/db/postgresql/create-database.yml"
+          vars:
+            database_name: "{{ app_name }}"
+            database_owner: "{{ app_name }}_user"
+          tags: [postgresql, database]
+        
+        - name: Create application user
+          include_tasks: "{{ task_paths }}/db/postgresql/create-user.yml"
+          vars:
+            user_name: "{{ app_name }}_user"
+            user_password: "{{ vault_app_db_password | default(pg_password) }}"
+          tags: [postgresql, user]
     
     # =============================================================================
     # PHASE 3: CACHE LAYER (Redis)
     # =============================================================================
     
-    - name: Install Redis cache
-      include: ../cache/redis{{ '-production' if production_mode else '' }}.yml
-      vars:
-        redis_bind: "127.0.0.1"
-        redis_requirepass: "{{ redis_password }}"
-        redis_maxmemory_mb: "{{ redis_memory_mb }}"
-      when: install_redis | bool
-      tags: [redis, cache]
+    - name: Install Redis
+      when: install_redis
+      block:
+        - name: Install Redis server
+          include_tasks: "{{ task_paths }}/services/redis/install.yml"
+          tags: [redis, install]
+        
+        - name: Configure Redis port
+          include_tasks: "{{ task_paths }}/services/redis/configure-port.yml"
+          tags: [redis, configure]
+        
+        - name: Configure Redis memory
+          include_tasks: "{{ task_paths }}/services/redis/configure-memory.yml"
+          tags: [redis, configure]
+        
+        - name: Configure Redis for production
+          include_tasks: "{{ task_paths }}/cache/redis/configure-production.yml"
+          when: production_mode
+          tags: [redis, configure]
     
     # =============================================================================
     # PHASE 4: APPLICATION LAYER
     # =============================================================================
     
     # Django Application
-    - name: Install Django application
-      include: ../www/django.yml
-      vars:
-        web_server: "gunicorn"
-        setup_postgresql: false  # Already installed
-        setup_pgbouncer: true
-        django_port: "{{ app_port }}"
-        domain_name: "{{ domain }}"
+    - name: Deploy Django application
       when: app_type == 'django'
-      tags: [django, application]
+      block:
+        - name: Install Python and dependencies
+          include_tasks: "{{ task_paths }}/web/python/install.yml"
+          tags: [django, python]
+        
+        - name: Create Django project directory
+          include_tasks: "{{ task_paths }}/web/django/create-project.yml"
+          vars:
+            project_path: "{{ app_path }}"
+            project_name: "{{ app_name }}"
+          tags: [django, setup]
+        
+        - name: Configure Django service
+          include_tasks: "{{ task_paths }}/web/django/configure-service.yml"
+          vars:
+            project_path: "{{ app_path }}"
+            project_name: "{{ app_name }}"
+            django_port: "{{ app_port }}"
+          tags: [django, service]
+        
+        - name: Install PgBouncer for connection pooling
+          include_tasks: "{{ task_paths }}/services/pgbouncer/install.yml"
+          when: install_postgresql
+          tags: [django, pgbouncer]
     
     # Node.js Application
-    - name: Install Node.js application
-      include: ../www/nodejs.yml
-      vars:
-        setup_nginx: false  # Will be configured separately
-        app_repo: "{{ vault_app_repo | default('') }}"
-        nginx_domain: "{{ domain }}"
+    - name: Deploy Node.js application
       when: app_type == 'nodejs'
-      tags: [nodejs, application]
+      block:
+        - name: Install Node.js and npm
+          include_tasks: "{{ task_paths }}/web/nodejs/install.yml"
+          tags: [nodejs, install]
+        
+        - name: Configure PM2 for Node.js
+          include_tasks: "{{ task_paths }}/web/nodejs/configure-pm2.yml"
+          vars:
+            app_name: "{{ app_name }}"
+            app_path: "{{ app_path }}"
+            app_port: "{{ app_port }}"
+          tags: [nodejs, pm2]
     
     # =============================================================================
-    # PHASE 5: WEB LAYER (Nginx)
+    # PHASE 5: WEB SERVER (Nginx)
     # =============================================================================
     
-    - name: Install Nginx load balancer
-      include: ../lb/nginx{{ '-production' if production_mode else '' }}.yml
-      vars:
-        nginx_domain: "{{ domain }}"
-        nginx_ssl_enabled: "{{ enable_ssl }}"
-        nginx_backends:
-          - { host: "127.0.0.1", port: "{{ app_port }}" }
-      when: install_nginx | bool
-      tags: [nginx, web]
+    - name: Install and configure Nginx
+      when: install_nginx
+      block:
+        - name: Install Nginx
+          include_tasks: "{{ task_paths }}/web/nginx/install.yml"
+          tags: [nginx, install]
+        
+        - name: Configure Nginx for application
+          include_tasks: "{{ task_paths }}/web/nginx/configure-site.yml"
+          vars:
+            site_name: "{{ app_name }}"
+            server_name: "{{ domain }}"
+            proxy_pass: "http://localhost:{{ app_port }}"
+            enable_ssl: "{{ enable_ssl }}"
+          tags: [nginx, configure]
+        
+        - name: Configure Nginx for production
+          include_tasks: "{{ task_paths }}/lb/nginx/configure-production.yml"
+          when: production_mode
+          tags: [nginx, production]
+        
+        - name: Setup Let's Encrypt SSL
+          include_tasks: "{{ task_paths }}/web/nginx/setup-letsencrypt.yml"
+          vars:
+            domain_name: "{{ domain }}"
+          when: 
+            - enable_ssl
+            - domain != ansible_default_ipv4.address
+          tags: [nginx, ssl]
     
     # =============================================================================
-    # PHASE 6: SSL CONFIGURATION
-    # =============================================================================
-    
-    - name: Setup Let's Encrypt SSL
-      include_tasks: "{{ task_paths }}/web/nginx/setup-letsencrypt.yml"
-      vars:
-        le_domain: "{{ domain }}"
-        le_email: "{{ vault_ssl_email | default('admin@' + domain) }}"
-      when: 
-        - install_nginx | bool
-        - enable_ssl | bool
-        - domain != ansible_default_ipv4.address
-      tags: [ssl, letsencrypt]
-    
-    # =============================================================================
-    # PHASE 7: MONITORING AND HEALTH CHECKS
+    # PHASE 6: MONITORING & SECURITY
     # =============================================================================
     
     - name: Setup basic monitoring
       include_tasks: "{{ task_paths }}/monitoring/setup-basic.yml"
-      when: production_mode | bool
+      when: production_mode
       tags: [monitoring]
     
-    - name: Configure log rotation
-      template:
-        src: standalone/logrotate-all.j2
-        dest: /etc/logrotate.d/standalone
-        owner: root
-        group: root
-        mode: '0644'
-      tags: [logs]
+    - name: Configure audit logging
+      include_tasks: "{{ task_paths }}/sys/audit/configure.yml"
+      when: production_mode
+      tags: [security, audit]
     
-    # =============================================================================
-    # PHASE 8: FIREWALL CONFIGURATION
-    # =============================================================================
-    
-    - name: Configure firewall for all services
-      ufw:
-        rule: allow
-        port: "{{ item.port }}"
-        proto: tcp
-        comment: "{{ item.comment }}"
-      loop:
-        - { port: 80, comment: "HTTP" }
-        - { port: 443, comment: "HTTPS" }
-        - { port: "{{ pg_port }}", comment: "PostgreSQL" }
-        - { port: "{{ redis_port }}", comment: "Redis" }
-      when: item.port != "" and (item.comment != "PostgreSQL" or install_postgresql) and (item.comment != "Redis" or install_redis)
-      tags: [firewall]
-    
-    # =============================================================================
-    # PHASE 9: PERFORMANCE OPTIMIZATION
-    # =============================================================================
-    
-    - name: Optimize services for single server
-      template:
-        src: standalone/optimization.sh.j2
-        dest: /usr/local/bin/optimize-standalone.sh
-        owner: root
-        group: root
-        mode: '0755'
-      tags: [optimization]
-    
-    - name: Run optimization script
-      command: /usr/local/bin/optimize-standalone.sh
-      when: production_mode | bool
-      tags: [optimization]
-    
-    # =============================================================================
-    # PHASE 10: VALIDATION
-    # =============================================================================
-    
-    - name: Validate PostgreSQL
-      postgresql_ping:
-        db: "{{ app_name }}"
-        login_host: localhost
-        login_port: "{{ pg_port }}"
-        login_user: postgres
-      become_user: postgres
-      when: install_postgresql | bool
-      tags: [validation]
-    
-    - name: Validate Redis
-      command: redis-cli -p {{ redis_port }} {% if redis_password %}-a {{ redis_password }}{% endif %} ping
-      register: redis_ping
-      changed_when: false
-      failed_when: redis_ping.stdout != "PONG"
-      when: install_redis | bool
-      tags: [validation]
-    
-    - name: Validate Nginx
-      uri:
-        url: "http://localhost/health"
-        status_code: 200
-      when: install_nginx | bool
-      tags: [validation]
-    
-    - name: Validate application
-      uri:
-        url: "http://localhost:{{ app_port }}/{% if app_type == 'nodejs' %}health{% endif %}"
-        status_code: [200, 301, 302]
-      tags: [validation]
-    
+    - name: Configure fail2ban
+      include_tasks: "{{ task_paths }}/sys/security/fail2ban.yml"
+      when: production_mode
+      tags: [security, fail2ban]
+  
   post_tasks:
-    - name: Generate standalone deployment report
-      shell: |
-        echo "=== Standalone Server Deployment Report ===" > /root/standalone-report.txt
-        echo "Generated: $(date)" >> /root/standalone-report.txt
-        echo "" >> /root/standalone-report.txt
-        echo "System Information:" >> /root/standalone-report.txt
-        echo "  Hostname: {{ ansible_hostname }}" >> /root/standalone-report.txt
-        echo "  IP Address: {{ ansible_default_ipv4.address }}" >> /root/standalone-report.txt
-        echo "  Domain: {{ domain }}" >> /root/standalone-report.txt
-        echo "  RAM: {{ ansible_memtotal_mb }}MB" >> /root/standalone-report.txt
-        echo "  CPUs: {{ ansible_processor_vcpus }}" >> /root/standalone-report.txt
-        echo "" >> /root/standalone-report.txt
-        echo "Stack Components:" >> /root/standalone-report.txt
-        echo "  Application: {{ app_type | upper }} on port {{ app_port }}" >> /root/standalone-report.txt
-        {% if install_postgresql %}
-        echo "  PostgreSQL: v{{ pg_version }} on port {{ pg_port }}" >> /root/standalone-report.txt
-        {% endif %}
-        {% if install_redis %}
-        echo "  Redis: Port {{ redis_port }} ({{ redis_memory_mb }}MB cache)" >> /root/standalone-report.txt
-        {% endif %}
-        {% if install_nginx %}
-        echo "  Nginx: Reverse proxy for {{ domain }}" >> /root/standalone-report.txt
-        {% endif %}
-        echo "" >> /root/standalone-report.txt
-        echo "Service Status:" >> /root/standalone-report.txt
-        systemctl status postgresql redis-server nginx {% if app_type == 'django' %}supervisor{% else %}pm2-{{ app_name }}{% endif %} --no-pager | grep "Active:" >> /root/standalone-report.txt
-        echo "" >> /root/standalone-report.txt
-        echo "Resource Usage:" >> /root/standalone-report.txt
-        free -h >> /root/standalone-report.txt
-        echo "" >> /root/standalone-report.txt
-        df -h >> /root/standalone-report.txt
-      tags: [report]
-    
-    - name: Display standalone deployment summary
+    - name: Display deployment summary
       debug:
         msg: |
-          🎉 ✅ ALL-IN-ONE STANDALONE SERVER DEPLOYED SUCCESSFULLY!
+          ✅ All-in-One Server Deployment Complete!
+          ======================================
           
-          📋 Deployment Summary:
-             ├── Server: {{ inventory_hostname }} ({{ ansible_host }})
-             ├── Domain: {{ domain }}
-             ├── Application: {{ app_type | upper }} ({{ app_name }})
-             ├── SSL: {{ 'Enabled with ' + ('Let\'s Encrypt' if domain != ansible_default_ipv4.address else 'self-signed cert') if enable_ssl else 'Disabled' }}
-             └── Production Mode: {{ 'Enabled' if production_mode else 'Disabled' }}
+          🌐 Access your application:
+          {% if enable_ssl and domain != ansible_default_ipv4.address %}
+          https://{{ domain }}
+          {% else %}
+          http://{{ domain }}{% if app_port != 80 %}:{{ app_port }}{% endif %}
+          {% endif %}
           
-          🔧 Stack Components:
-             ├── PostgreSQL: {{ 'v' + pg_version + ' on localhost:' + (pg_port|string) if install_postgresql else 'Not installed' }}
-             ├── Redis: {{ 'localhost:' + (redis_port|string) + ' (' + (redis_memory_mb|string) + 'MB)' if install_redis else 'Not installed' }}
-             ├── Application: {{ app_type | upper }} on localhost:{{ app_port }}
-             └── Nginx: {{ 'Reverse proxy with ' + ('SSL' if enable_ssl else 'HTTP') if install_nginx else 'Not installed' }}
+          📊 Installed Components:
+          {% if install_postgresql %}
+          - PostgreSQL: localhost:{{ pg_port }}
+            Database: {{ app_name }}
+            User: {{ app_name }}_user
+          {% endif %}
+          {% if install_redis %}
+          - Redis: localhost:{{ redis_port }}
+            Password: {{ 'Set' if redis_password else 'None' }}
+          {% endif %}
+          {% if install_nginx %}
+          - Nginx: Port 80{% if enable_ssl %}, 443{% endif %}
+          {% endif %}
+          - {{ app_type|title }}: localhost:{{ app_port }}
           
-          🌐 Access URLs:
-             ├── Application: {{ 'https://' if enable_ssl else 'http://' }}{{ domain }}
-             ├── Admin: {{ 'https://' if enable_ssl else 'http://' }}{{ domain }}/admin (Django only)
-             └── Health: {{ 'https://' if enable_ssl else 'http://' }}{{ domain }}/health
+          🔐 Security:
+          - Firewall: Configured
+          {% if production_mode %}
+          - Monitoring: Enabled
+          - Audit Logging: Active
+          - Fail2ban: Running
+          {% endif %}
           
-          🔑 Credentials:
-             ├── PostgreSQL: {{ app_name }}_user / {{ pg_password if install_postgresql else 'N/A' }}
-             ├── Redis: {{ redis_password if install_redis else 'N/A' }}
-             └── Application: Check {{ app_path }}/.env
-          
-          📊 Reports & Logs:
-             ├── Deployment Report: /root/standalone-report.txt
-             ├── Nginx Logs: /var/log/nginx/
-             ├── App Logs: {% if app_type == 'django' %}/var/log/{{ app_name }}/{% else %}pm2 logs {{ app_name }}{% endif %}
-             └── Database Logs: /var/log/postgresql/
-          
-          🚀 Management Commands:
-             ├── Restart all: systemctl restart postgresql redis-server nginx {% if app_type == 'django' %}supervisor{% else %}pm2-{{ app_name }}{% endif %}
-             ├── Check status: systemctl status --all
-             ├── View logs: journalctl -f
-             └── Monitor: htop
-          
-          ⚡ Optimization Tips:
-             1. Run /usr/local/bin/optimize-standalone.sh periodically
-             2. Monitor resource usage with htop
-             3. Check logs regularly for errors
-             4. Set up backups for PostgreSQL and application data
+          📝 Next Steps:
+          1. Deploy your application code to {{ app_path }}
+          2. Configure environment variables
+          3. Run database migrations (if applicable)
+          4. Test your application
+      tags: [always]

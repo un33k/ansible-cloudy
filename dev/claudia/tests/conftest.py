@@ -15,7 +15,7 @@ from unittest.mock import Mock
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.config import ClaudiaConfig
+from utils.config import ClaudiaConfig  # noqa: E402
 
 
 @pytest.fixture

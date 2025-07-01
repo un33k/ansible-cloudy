@@ -129,7 +129,7 @@ class TestVaultChecker:
             
             # Verify warning was printed
             assert any('OBSOLETE VAULT ENVIRONMENT VARIABLES DETECTED' in str(call) 
-                      for call in mock_print.call_args_list)
+                       for call in mock_print.call_args_list)
         
         # Verify environment variables were removed
         assert 'ANSIBLE_VAULT_PASSWORD_FILE' not in os.environ
@@ -150,4 +150,4 @@ class TestVaultChecker:
             
             # Verify no warning was printed
             assert not any('OBSOLETE VAULT ENVIRONMENT VARIABLES DETECTED' in str(call) 
-                          for call in mock_print.call_args_list)
+                           for call in mock_print.call_args_list)

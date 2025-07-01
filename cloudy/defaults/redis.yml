@@ -52,7 +52,6 @@ redis_slowlog_max_len_default: 128
 # === CLIENT DEFAULTS ===
 redis_databases_default: 16
 redis_hz_default: 10
-redis_timeout_default: 0
 
 # === REPLICATION DEFAULTS ===
 redis_replicaof_default: ""     # Empty = no replication

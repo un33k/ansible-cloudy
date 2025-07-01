@@ -95,8 +95,7 @@ system_default_umask_default: "022"
 system_password_hash_rounds_default: 5000
 
 # === GIT DEFAULTS ===
-git_user_full_name_default: "John Doe"
-git_user_email_default: "jdoe@example.com"
+# Git defaults are defined above in SYSTEM DEFAULTS section
 
 # === PATHS DEFAULTS ===
 system_tmp_dir_default: "/tmp"
