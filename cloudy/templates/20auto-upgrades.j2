@@ -1,0 +1,7 @@
+// {{ ansible_managed }}
+// Enable automatic updates
+
+APT::Periodic::Update-Package-Lists "{{ update_package_lists | default('1') }}";
+APT::Periodic::Download-Upgradeable-Packages "{{ download_upgradeable | default('1') }}";
+APT::Periodic::AutocleanInterval "{{ autoclean_interval | default('7') }}";
+APT::Periodic::Unattended-Upgrade "{{ unattended_upgrade | default('1') }}";

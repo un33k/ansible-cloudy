@@ -1,0 +1,149 @@
+# Recipe: PgBouncer Connection Pooler for Web Servers
+# Purpose: Install pgbouncer on existing web servers for local connection pooling
+# Architecture: Web App → PgBouncer (localhost:6432) → PostgreSQL (db-server:5432)
+# Usage: ansible-playbook playbooks/recipes/services/pgbouncer.yml -i inventory/hosts.yml
+
+---
+- name: PgBouncer Connection Pooler Setup (Web Server Installation)
+  hosts: web_servers
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/postgresql.yml"
+    - "../../../defaults/pgbouncer.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    
+    # Apply defaults with vault override pattern
+    pgbouncer_port: "{{ vault_pgbouncer_port | default(pgbouncer_port_default) }}"
+    pgbouncer_listen_addr: "{{ vault_pgbouncer_listen_addr | default(pgbouncer_listen_addr_default) }}"
+    pgbouncer_backend_host: "{{ vault_pgbouncer_backend_host | default(pgbouncer_backend_host_default) }}"
+    pgbouncer_backend_port: "{{ vault_pg_port | default(pg_port_default) }}"
+    pgbouncer_backend_database: "{{ vault_pgbouncer_backend_database | default(pgbouncer_backend_database_default) }}"
+    pgbouncer_default_pool_size: "{{ vault_pgbouncer_default_pool_size | default(pgbouncer_default_pool_size_default) }}"
+    pgbouncer_max_db_connections: "{{ vault_pgbouncer_max_db_connections | default(pgbouncer_max_db_connections_default) }}"
+    pgbouncer_max_client_conn: "{{ vault_pgbouncer_max_client_conn | default(pgbouncer_max_client_conn_default) }}"
+    
+    # Required variables from vault
+    database_password: "{{ vault_postgres_password }}"
+    pgbouncer_db_host: "{{ pgbouncer_backend_host }}"  # Deprecated
+    pgbouncer_db_port: "{{ pgbouncer_backend_port }}"  # Deprecated
+    pgbouncer_db_name: "{{ pgbouncer_default_database }}"  # Deprecated
+    pgbouncer_db_user: "{{ database_user | default('postgres') }}"
+    
+  pre_tasks:
+    # Ensure proper secure connection
+    - name: Validate secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
+      tags: [validation, security]
+    
+    - name: Validate database password is set
+      fail:
+        msg: |
+          ❌ Database password not configured!
+          Please set vault_postgres_password in your vault file
+      when: vault_postgres_password is not defined
+    
+    - name: Display PgBouncer setup information
+      debug:
+        msg: |
+          🚀 Starting PgBouncer Setup on Web Servers
+          Target: {{ inventory_hostname }} ({{ ansible_host }})
+          
+          📋 Configuration:
+          ├── Listen: localhost:{{ pgbouncer_port }}
+          ├── Backend: {{ pgbouncer_backend_host }}:{{ pgbouncer_backend_port }}
+          ├── Database: {{ pgbouncer_default_database }}
+          ├── Pool Size: {{ pgbouncer_default_pool_size }} (max {{ pgbouncer_max_db_connections }})
+          └── Max Clients: {{ pgbouncer_max_client_conn }}
+          
+  tasks:
+    # Install PgBouncer
+    - name: Install PgBouncer
+      include_tasks: "{{ task_paths }}/services/pgbouncer/install.yml"
+      tags: [pgbouncer, install]
+      
+    # Configure PgBouncer
+    - name: Configure PgBouncer
+      include_tasks: "{{ task_paths }}/services/pgbouncer/configure.yml"
+      vars:
+        database_host: "{{ pgbouncer_backend_host }}"
+        database_port: "{{ pgbouncer_backend_port }}"
+        database_name: "{{ pgbouncer_default_database }}"
+        database_user: "{{ pgbouncer_db_user }}"
+        database_password: "{{ vault_postgres_password }}"
+        pool_size: "{{ pgbouncer_default_pool_size }}"
+        max_db_connections: "{{ pgbouncer_max_db_connections }}"
+        max_client_connections: "{{ pgbouncer_max_client_conn }}"
+      tags: [pgbouncer, configure]
+      
+    # Configure authentication
+    - name: Configure PgBouncer authentication
+      include_tasks: "{{ task_paths }}/services/pgbouncer/configure-auth.yml"
+      vars:
+        database_user: "{{ pgbouncer_db_user }}"
+        database_password: "{{ vault_postgres_password }}"
+      tags: [pgbouncer, auth]
+      
+    # Start service
+    - name: Start PgBouncer service
+      include_tasks: "{{ task_paths }}/services/pgbouncer/start.yml"
+      tags: [pgbouncer, service]
+      
+    # Health check
+    - name: Perform health check
+      include_tasks: "{{ task_paths }}/services/pgbouncer/health-check.yml"
+      vars:
+        database_name: "{{ pgbouncer_default_database }}"
+        database_user: "{{ pgbouncer_db_user }}"
+        database_password: "{{ vault_postgres_password }}"
+      tags: [pgbouncer, health]
+      
+  handlers:
+    - name: restart pgbouncer
+      service:
+        name: pgbouncer
+        state: restarted
+        
+  post_tasks:
+    - name: Display PgBouncer setup completion
+      debug:
+        msg: |
+          🎉 ✅ PGBOUNCER SETUP COMPLETED SUCCESSFULLY!
+          
+          📋 Configuration Summary:
+             ├── Installation: Web server (local pooling)
+             ├── Status: Active and accepting connections
+             ├── Listen: localhost:{{ pgbouncer_port }}
+             ├── Backend: {{ pgbouncer_backend_host }}:{{ pgbouncer_backend_port }}
+             ├── Pool Size: {{ pgbouncer_default_pool_size }} × {{ pgbouncer_max_db_connections }} = {{ pgbouncer_default_pool_size | int * pgbouncer_max_db_connections | int }} max
+             └── Mode: Transaction pooling (most efficient)
+          
+          🚀 Connection pooling is now active!
+          
+          📖 Application Configuration:
+          Update your application database connection to:
+          - Host: localhost (or 127.0.0.1)
+          - Port: {{ pgbouncer_port }}
+          - Database: {{ pgbouncer_default_database }}
+          - User: {{ pgbouncer_db_user }}
+          
+          Example Django settings:
+          DATABASES = {
+              'default': {
+                  'ENGINE': 'django.db.backends.postgresql',
+                  'HOST': 'localhost',
+                  'PORT': '{{ pgbouncer_port }}',
+                  'NAME': '{{ pgbouncer_default_database }}',
+                  'USER': '{{ pgbouncer_db_user }}',
+                  'PASSWORD': os.environ.get('DB_PASSWORD'),
+              }
+          }
+          
+          📖 Monitoring:
+          - Check pools: psql -h localhost -p {{ pgbouncer_port }} -U postgres pgbouncer -c "SHOW POOLS;"
+          - Check clients: psql -h localhost -p {{ pgbouncer_port }} -U postgres pgbouncer -c "SHOW CLIENTS;"
+          - Check stats: psql -h localhost -p {{ pgbouncer_port }} -U postgres pgbouncer -c "SHOW STATS;"

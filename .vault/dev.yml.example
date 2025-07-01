@@ -1,0 +1,34 @@
+---
+# Development Environment Configuration
+# Copy this file to your own vault file and edit the values
+
+# === AUTHENTICATION CREDENTIALS ===
+vault_root_password: "your_root_password_here"
+vault_admin_password: "your_admin_password_here"
+
+# === CONNECTION CONFIGURATION ===
+vault_admin_user: "admin"
+vault_ssh_port: 22022
+
+# === GLOBAL SERVER CONFIGURATION ===
+vault_git_user_full_name: "Your Full Name"
+vault_git_user_email: "your.email@example.com"
+vault_timezone: "America/New_York"
+vault_locale: "en_US.UTF-8"
+
+# === SERVICE CREDENTIALS ===
+vault_postgres_password: "your_postgres_password"
+vault_redis_password: "your_redis_password"
+vault_vpn_passphrase: "your_vpn_passphrase"
+
+# === SERVICE PORTS ===
+vault_postgresql_port: 5433    # Non-standard for security
+vault_pgbouncer_port: 6432     # PgBouncer on web servers
+vault_redis_port: 6379         # Redis default
+vault_nginx_http_port: 80      # HTTP
+vault_nginx_https_port: 443    # HTTPS
+
+# === USAGE INSTRUCTIONS ===
+# 1. Copy this file: cp .vault/dev.yml.example .vault/my-dev.yml
+# 2. Edit with your real credentials: vim .vault/my-dev.yml
+# 3. Use in playbooks: ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbook.yml

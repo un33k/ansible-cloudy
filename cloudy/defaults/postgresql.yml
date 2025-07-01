@@ -1,0 +1,64 @@
+---
+# PostgreSQL Service Defaults
+# Variable naming convention: pg_<setting>
+# These are overridden by vault_pg_<setting> variables
+
+# === VERSION DEFAULTS ===
+pg_version_default: "17"        # Current stable version
+pg_postgis_version_default: "3.4"
+pgvector_version_default: "v0.5.1"  # Current stable pgvector
+
+# === CONNECTION DEFAULTS ===
+pg_port_default: 5432           # PostgreSQL standard port
+pg_listen_addresses_default: "localhost"
+pg_unix_socket_dir_default: "/var/run/postgresql"
+
+# === AUTHENTICATION DEFAULTS ===
+pg_auth_method_default: "md5"
+pg_ssl_default: "on"
+pg_ssl_cert_file_default: "server.crt"
+pg_ssl_key_file_default: "server.key"
+
+# === PERFORMANCE DEFAULTS ===
+pg_max_connections_default: 100
+pg_shared_buffers_default: "256MB"
+pg_work_mem_default: "4MB"
+pg_maintenance_work_mem_default: "64MB"
+pg_effective_cache_size_default: "4GB"
+pg_checkpoint_segments_default: 3
+pg_checkpoint_completion_target_default: 0.5
+
+# === LOGGING DEFAULTS ===
+pg_log_destination_default: "stderr"
+pg_logging_collector_default: "on"
+pg_log_directory_default: "pg_log"
+pg_log_filename_default: "postgresql-%Y-%m-%d_%H%M%S.log"
+pg_log_rotation_age_default: "1d"
+pg_log_rotation_size_default: "10MB"
+pg_log_statement_default: "none"
+pg_log_connections_default: "off"
+pg_log_disconnections_default: "off"
+
+# === REPLICATION DEFAULTS ===
+pg_wal_level_default: "replica"
+pg_max_wal_senders_default: 3
+pg_wal_keep_segments_default: 8
+pg_hot_standby_default: "on"
+
+# === LOCALE DEFAULTS ===
+pg_encoding_default: "UTF8"
+pg_locale_default: "en_US.UTF-8"
+pg_lc_messages_default: "en_US.UTF-8"
+pg_lc_monetary_default: "en_US.UTF-8"
+pg_lc_numeric_default: "en_US.UTF-8"
+pg_lc_time_default: "en_US.UTF-8"
+
+# === DATABASE DEFAULTS ===
+pg_default_database_name: "postgres"
+pg_default_username: "postgres"
+pg_default_schema: "public"
+
+# === PATH DEFAULTS ===
+pg_data_directory_default: "/var/lib/postgresql"
+pg_config_directory_default: "/etc/postgresql"
+pg_bin_directory_default: "/usr/lib/postgresql"

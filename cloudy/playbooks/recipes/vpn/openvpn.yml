@@ -3,24 +3,33 @@
 
 ---
 - name: OpenVPN Server Setup Recipe
-  hosts: all
+  hosts: service_targets
   gather_facts: true
   become: true
   
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/openvpn.yml"
+  
   vars:
+    task_paths: "../../../tasks"
     # OpenVPN Configuration
     vpn_domain: "{{ domain | default(inventory_hostname) }}"
-    vpn_port: "{{ port | default('1194') }}"
-    vpn_proto: "{{ proto | default('udp') }}"
-    vpn_passphrase: "{{ passphrase | default('nopass') }}"
-    vpn_datadir: "{{ datadir | default('/docker/openvpn') }}"
-    vpn_repo: "{{ repo | default('kylemanna/openvpn') }}"
+    vpn_port: "{{ port | default(vault_vpn_port | default(vpn_port_default)) }}"
+    vpn_proto: "{{ proto | default(vault_vpn_proto | default(vpn_proto_default)) }}"
+    vpn_passphrase: "{{ passphrase | default(vault_vpn_passphrase | default(vpn_passphrase_default)) }}"
+    vpn_datadir: "{{ datadir | default(vault_vpn_datadir | default(vpn_docker_volume_default)) }}"
+    vpn_repo: "{{ repo | default(vault_vpn_repo | default(vpn_docker_image_default)) }}"
     
     # Setup flags
     setup_docker: true
     setup_firewall: true
     
   pre_tasks:
+    # Ensure proper secure connection
+    - name: Validate secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
+    
     - name: Display VPN server setup information
       debug:
         msg: |
@@ -32,23 +41,24 @@
   tasks:
     # Docker Installation
     - name: Install Docker
-      include_tasks: ../../tasks/sys/docker/install-docker.yml
+      include_tasks: "{{ task_paths }}/sys/docker/install-docker.yml"
       when: setup_docker | bool
       tags: [docker, install]
       
+      
     - name: Configure Docker
-      include_tasks: ../../tasks/sys/docker/configure.yml
+      include_tasks: "{{ task_paths }}/sys/docker/configure.yml"
       when: setup_docker | bool
       tags: [docker, configure]
       
     # Firewall Setup
     - name: Install UFW firewall
-      include_tasks: ../../tasks/sys/firewall/install.yml
+      include_tasks: "{{ task_paths }}/sys/firewall/install.yml"
       when: setup_firewall | bool
       tags: [firewall, security]
       
     - name: Allow VPN port through firewall
-      include_tasks: ../../tasks/sys/firewall/allow-port.yml
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-port.yml"
       vars:
         port: "{{ vpn_port }}"
         proto: "{{ vpn_proto }}"
@@ -57,7 +67,7 @@
       
     # OpenVPN Installation
     - name: Install OpenVPN Docker container
-      include_tasks: ../../tasks/services/vpn/docker-install.yml
+      include_tasks: "{{ task_paths }}/services/openvpn/docker-install.yml"
       vars:
         domain: "{{ vpn_domain }}"
         port: "{{ vpn_port }}"
@@ -68,7 +78,7 @@
       tags: [openvpn, install]
       
     - name: Configure OpenVPN systemd service
-      include_tasks: ../../tasks/services/vpn/docker-configure.yml
+      include_tasks: "{{ task_paths }}/services/openvpn/docker-configure.yml"
       vars:
         domain: "{{ vpn_domain }}"
         port: "{{ vpn_port }}"
@@ -92,10 +102,10 @@
           
           📖 Next Steps:
           1. Create client certificates:
-             ansible-playbook -i inventory/hosts.yml --extra-vars="client_name=myclient domain={{ vpn_domain }}" --tags=create-client tasks/services/vpn/create-client.yml
+             ansible-playbook -i inventory/hosts.yml --extra-vars="client_name=myclient domain={{ vpn_domain }}" --tags=create-client tasks/services/openvpn/create-client.yml
           
           2. List clients:
-             ansible-playbook -i inventory/hosts.yml --extra-vars="domain={{ vpn_domain }}" --tags=list-clients tasks/services/vpn/list-clients.yml
+             ansible-playbook -i inventory/hosts.yml --extra-vars="domain={{ vpn_domain }}" --tags=list-clients tasks/services/openvpn/list-clients.yml
           
           3. Connect with client:
              Use the downloaded .ovpn file with your OpenVPN client

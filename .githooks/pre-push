@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Simple pre-push hook: Check for unencrypted vault files and warn
+# This prevents accidental exposure of secrets to remote repositories
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}🔒 Checking vault file encryption...${NC}"
+
+# Function to check if a file is encrypted with ansible-vault
+is_vault_encrypted() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        if head -n 1 "$file" | grep -q '^\$ANSIBLE_VAULT'; then
+            return 0  # File is encrypted
+        else
+            return 1  # File is not encrypted
+        fi
+    fi
+    return 1  # File doesn't exist
+}
+
+# Check for unencrypted vault files
+unencrypted_files=()
+for vault_file in .secrets/*.yml; do
+    if [[ -f "$vault_file" ]] && [[ "$vault_file" != *.template ]]; then
+        if ! is_vault_encrypted "$vault_file"; then
+            unencrypted_files+=("$vault_file")
+        fi
+    fi
+done
+
+# If we found unencrypted files, block the push
+if [[ ${#unencrypted_files[@]} -gt 0 ]]; then
+    echo -e "\n${RED}🚨 PUSH BLOCKED: Unencrypted vault files detected!${NC}"
+    echo -e "${YELLOW}The following files contain unencrypted secrets:${NC}"
+    
+    for file in "${unencrypted_files[@]}"; do
+        echo -e "  • ${RED}$file${NC}"
+    done
+    
+    echo -e "\n${YELLOW}To encrypt these files:${NC}"
+    echo -e "${GREEN}# Encrypt all vault files in .secrets/:${NC}"
+    echo -e "  ./claudia vault encrypt --all"
+    
+    echo -e "\n${GREEN}# Or encrypt individual files:${NC}"
+    for file in "${unencrypted_files[@]}"; do
+        filename=$(basename "$file" .yml)
+        echo -e "  ./claudia vault encrypt --file $filename"
+    done
+    
+    echo -e "\n${BLUE}💡 Claudia vault commands:${NC}"
+    echo -e "  ./claudia vault create       # Create new vault file"
+    echo -e "  ./claudia vault edit         # Edit vault file"
+    echo -e "  ./claudia vault encrypt --all # Encrypt all vault files"
+    echo -e "  ./claudia vault decrypt --all # Decrypt all for editing"
+    
+    echo -e "\n${YELLOW}After encrypting, commit and push again.${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ All vault files are properly encrypted${NC}"
+exit 0

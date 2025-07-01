@@ -1,0 +1,156 @@
+# {{ ansible_managed }}
+# Nginx DDoS Protection Configuration
+
+##
+# Connection Limits
+##
+
+# Limit connections per IP
+limit_conn_zone $binary_remote_addr zone=perip:10m;
+limit_conn perip {{ nginx_ddos_conn_limit_per_ip | default(10) }};
+
+# Limit connections per server
+limit_conn_zone $server_name zone=perserver:10m;
+limit_conn perserver {{ nginx_ddos_conn_limit_per_server | default(1000) }};
+
+##
+# Request Rate Limits
+##
+
+# General rate limiting
+limit_req_zone $binary_remote_addr zone=general:10m rate={{ nginx_ddos_req_rate_general | default('10r/s') }};
+limit_req zone=general burst={{ nginx_ddos_req_burst_general | default(20) }} nodelay;
+
+# Strict rate limiting for sensitive endpoints
+limit_req_zone $binary_remote_addr zone=strict:10m rate={{ nginx_ddos_req_rate_strict | default('2r/s') }};
+limit_req_zone $binary_remote_addr zone=auth:10m rate={{ nginx_ddos_req_rate_auth | default('5r/m') }};
+
+# API rate limiting with higher burst
+limit_req_zone $binary_remote_addr zone=api:10m rate={{ nginx_ddos_req_rate_api | default('20r/s') }};
+
+# Search/expensive operations rate limiting
+limit_req_zone $binary_remote_addr zone=search:10m rate={{ nginx_ddos_req_rate_search | default('1r/s') }};
+
+##
+# Request Method Filtering
+##
+
+# Block unwanted request methods
+if ($request_method !~ ^(GET|HEAD|POST|PUT|DELETE|OPTIONS)$) {
+    return 444;
+}
+
+##
+# User-Agent Filtering
+##
+
+# Block bad user agents
+map $http_user_agent $bad_bot {
+    default 0;
+    ~*^$ 1;  # Empty user agent
+    ~*bot 0;  # Allow legitimate bots by default
+    ~*(crawler|spider|scraper)$ 1;
+    ~*(ahrefsbot|dotbot|semrushbot|mj12bot|blexbot) 1;
+    ~*(nikto|sqlmap|nmap|masscan|wpscan) 1;
+    ~*(java|python|ruby|perl|php|curl|wget) 1;
+}
+
+##
+# Referrer Filtering
+##
+
+# Block bad referrers
+map $http_referer $bad_referer {
+    default 0;
+    ~*^$ 0;  # Allow empty referer
+{% for domain in nginx_ddos_bad_referers | default([]) %}
+    ~*{{ domain }} 1;
+{% endfor %}
+}
+
+##
+# Request URI Filtering
+##
+
+# Block suspicious URIs
+map $request_uri $blocked_uri {
+    default 0;
+    ~*(/wp-admin|/wp-login|/xmlrpc\.php) 1;
+    ~*(/\.git|/\.svn|/\.env|/\.htaccess) 1;
+    ~*(\.sql|\.bak|\.backup|\.tar|\.gz|\.zip)$ 1;
+    ~*(/phpmyadmin|/pma|/adminer) 1;
+}
+
+##
+# GeoIP Filtering (if enabled)
+##
+{% if nginx_geoip_enabled | default(false) %}
+geoip_country /usr/share/GeoIP/GeoIP.dat;
+map $geoip_country_code $allowed_country {
+    default 1;
+{% for country in nginx_blocked_countries | default([]) %}
+    {{ country }} 0;
+{% endfor %}
+}
+{% endif %}
+
+##
+# Request Body Size Limits
+##
+
+# Limit request body size based on endpoint
+map $request_uri $max_body_size {
+    default {{ nginx_ddos_body_size_default | default('1m') }};
+    ~*^/api/upload {{ nginx_ddos_body_size_upload | default('100m') }};
+    ~*^/api {{ nginx_ddos_body_size_api | default('10m') }};
+}
+
+##
+# Slow Request Protection
+##
+
+# Protect against slowloris attacks
+client_body_timeout {{ nginx_ddos_client_body_timeout | default('10s') }};
+client_header_timeout {{ nginx_ddos_client_header_timeout | default('10s') }};
+send_timeout {{ nginx_ddos_send_timeout | default('10s') }};
+reset_timedout_connection on;
+
+##
+# Buffer Overflow Protection
+##
+
+client_body_buffer_size {{ nginx_ddos_client_body_buffer | default('1k') }};
+client_header_buffer_size {{ nginx_ddos_client_header_buffer | default('1k') }};
+large_client_header_buffers {{ nginx_ddos_large_client_header_buffers | default('2 1k') }};
+
+##
+# Additional Security Headers
+##
+
+# Prevent content type sniffing
+add_header X-Content-Type-Options "nosniff" always;
+
+# Enable XSS protection
+add_header X-XSS-Protection "1; mode=block" always;
+
+# Clickjacking protection
+add_header X-Frame-Options "SAMEORIGIN" always;
+
+# Referrer policy
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+##
+# Custom Error Pages for Rate Limiting
+##
+
+error_page 429 /429.html;
+location = /429.html {
+    root /usr/share/nginx/html;
+    internal;
+}
+
+error_page 444 /444.html;
+location = /444.html {
+    root /usr/share/nginx/html;
+    internal;
+}

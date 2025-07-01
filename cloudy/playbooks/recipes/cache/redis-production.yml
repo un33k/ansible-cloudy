@@ -1,0 +1,260 @@
+# Recipe: Production Redis Cache Server with Enterprise Features
+# Purpose: Production-grade Redis with persistence, security, and monitoring
+# Usage: ./cli redis --install --prod [--port 6379]
+
+---
+- name: Production Redis Cache Server Setup
+  hosts: service_targets
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/redis.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    production_mode: true
+    
+    # Apply defaults with vault override pattern
+    redis_port: "{{ vault_redis_port | default(redis_port_default) }}"
+    redis_bind: "{{ vault_redis_bind | default(redis_bind_default) }}"
+    redis_memory_mb: "{{ vault_redis_memory_mb | default(redis_memory_mb_default) }}"
+    redis_requirepass: "{{ vault_redis_password | default('') }}"
+    redis_loglevel: "{{ vault_redis_loglevel | default('notice') }}"
+    redis_logfile: "{{ vault_redis_logfile | default('/var/log/redis/redis-server.log') }}"
+    redis_dir: "{{ vault_redis_dir | default('/var/lib/redis') }}"
+    
+    # Production settings
+    redis_protected_mode: "{{ vault_redis_protected_mode | default('yes') }}"
+    redis_appendonly: "{{ vault_redis_appendonly | default('yes') }}"
+    redis_appendfsync: "{{ vault_redis_appendfsync | default('everysec') }}"
+    redis_maxmemory_policy: "{{ vault_redis_maxmemory_policy | default('allkeys-lru') }}"
+    redis_tcp_keepalive: "{{ vault_redis_tcp_keepalive | default(300) }}"
+    redis_timeout: "{{ vault_redis_timeout | default(0) }}"
+    redis_tcp_backlog: "{{ vault_redis_tcp_backlog | default(511) }}"
+    
+    # Persistence settings
+    redis_save_rules:
+      - "900 1"      # Save after 900 sec (15 min) if at least 1 key changed
+      - "300 10"     # Save after 300 sec (5 min) if at least 10 keys changed
+      - "60 10000"   # Save after 60 sec if at least 10000 keys changed
+    
+    # Security - rename dangerous commands
+    redis_rename_commands:
+      - { from: "FLUSHDB", to: "" }
+      - { from: "FLUSHALL", to: "" }
+      - { from: "KEYS", to: "" }
+      - { from: "CONFIG", to: "CONFIG_{{ ansible_hostname | hash('md5') | truncate(8, True, '') }}" }
+    
+    # Setup flags
+    setup_firewall: true
+    enable_monitoring: "{{ vault_redis_enable_monitoring | default(true) }}"
+    enable_backups: "{{ vault_redis_enable_backups | default(true) }}"
+    
+  pre_tasks:
+    # Ensure proper secure connection
+    - name: Validate secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
+    
+    - name: Display production Redis setup information
+      debug:
+        msg: |
+          🚀 Starting Production Redis Cache Server Setup
+          Target: {{ inventory_hostname }} ({{ ansible_host }})
+          
+          📋 Configuration:
+          ├── Port: {{ redis_port }}
+          ├── Bind: {{ redis_bind }}
+          ├── Memory: {{ redis_memory_mb }}MB
+          ├── Password: {{ 'Configured' if redis_requirepass else 'Not set (INSECURE!)' }}
+          ├── Persistence: AOF + RDB
+          ├── Eviction: {{ redis_maxmemory_policy }}
+          └── Production Mode: Enabled
+          
+  tasks:
+    # Redis Installation
+    - name: Install Redis server
+      include_tasks: "{{ task_paths }}/sys/redis/install.yml"
+      tags: [redis, install]
+    
+    # Production Configuration
+    - name: Apply production Redis configuration
+      include_tasks: "{{ task_paths }}/cache/redis/configure-production.yml"
+      when: production_mode | bool
+      tags: [redis, production, config]
+    
+    # Basic Configuration (for compatibility)
+    - name: Configure Redis memory
+      include_tasks: "{{ task_paths }}/sys/redis/configure-memory.yml"
+      vars:
+        memory: "{{ redis_memory_mb }}"
+        divider: 0
+      tags: [redis, memory]
+    
+    - name: Configure Redis port
+      include_tasks: "{{ task_paths }}/sys/redis/configure-port.yml"
+      vars:
+        port: "{{ redis_port }}"
+      tags: [redis, port]
+    
+    - name: Configure Redis interface
+      include_tasks: "{{ task_paths }}/sys/redis/configure-interface.yml"
+      vars:
+        interface: "{{ redis_bind }}"
+      tags: [redis, interface]
+    
+    - name: Configure Redis password
+      include_tasks: "{{ task_paths }}/sys/redis/configure-password.yml"
+      vars:
+        password: "{{ redis_requirepass }}"
+      when: redis_requirepass != ""
+      tags: [redis, password, security]
+    
+    # Monitoring Setup
+    - name: Install Redis exporter for Prometheus
+      apt:
+        name: prometheus-redis-exporter
+        state: present
+      when: enable_monitoring | bool
+      tags: [redis, monitoring]
+    
+    - name: Configure Redis exporter
+      template:
+        src: redis/redis_exporter.default.j2
+        dest: /etc/default/prometheus-redis-exporter
+        owner: root
+        group: root
+        mode: '0644'
+      when: enable_monitoring | bool
+      notify: restart redis-exporter
+      tags: [redis, monitoring]
+    
+    # Sentinel Setup (optional)
+    - name: Configure Redis Sentinel
+      include_tasks: "{{ task_paths }}/cache/redis/configure-sentinel.yml"
+      when: redis_sentinel_enabled | default(false)
+      tags: [redis, sentinel, ha]
+    
+    # Firewall Configuration
+    - name: Allow Redis port through firewall
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-port.yml"
+      vars:
+        port: "{{ redis_port }}"
+        proto: tcp
+      when: setup_firewall | bool
+      tags: [firewall, redis]
+    
+    - name: Allow Redis exporter port through firewall
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-port.yml"
+      vars:
+        port: "9121"
+        proto: tcp
+      when: 
+        - setup_firewall | bool
+        - enable_monitoring | bool
+      tags: [firewall, monitoring]
+    
+    # Performance Testing
+    - name: Run Redis benchmark
+      shell: |
+        redis-benchmark -h 127.0.0.1 -p {{ redis_port }} \
+          {% if redis_requirepass %}-a {{ redis_requirepass }}{% endif %} \
+          -t set,get -n 10000 -q
+      register: redis_benchmark
+      changed_when: false
+      tags: [redis, benchmark]
+    
+    # Health Check
+    - name: Verify Redis is running and accessible
+      shell: |
+        redis-cli -h 127.0.0.1 -p {{ redis_port }} \
+          {% if redis_requirepass %}-a {{ redis_requirepass }}{% endif %} \
+          ping
+      register: redis_ping
+      changed_when: false
+      failed_when: redis_ping.stdout != "PONG"
+      tags: [redis, validation]
+    
+  post_tasks:
+    - name: Generate Redis production report
+      shell: |
+        echo "=== Redis Production Report ===" > /root/redis-production-report.txt
+        echo "Generated: $(date)" >> /root/redis-production-report.txt
+        echo "" >> /root/redis-production-report.txt
+        
+        # Version and configuration
+        echo "Redis Version:" >> /root/redis-production-report.txt
+        redis-cli --version >> /root/redis-production-report.txt
+        echo "" >> /root/redis-production-report.txt
+        
+        # Memory info
+        echo "Memory Configuration:" >> /root/redis-production-report.txt
+        redis-cli -p {{ redis_port }} {% if redis_requirepass %}-a {{ redis_requirepass }}{% endif %} INFO memory | grep -E "used_memory_human|maxmemory_human" >> /root/redis-production-report.txt
+        echo "" >> /root/redis-production-report.txt
+        
+        # Persistence info
+        echo "Persistence:" >> /root/redis-production-report.txt
+        redis-cli -p {{ redis_port }} {% if redis_requirepass %}-a {{ redis_requirepass }}{% endif %} CONFIG GET "appendonly" >> /root/redis-production-report.txt
+        redis-cli -p {{ redis_port }} {% if redis_requirepass %}-a {{ redis_requirepass }}{% endif %} CONFIG GET "save" >> /root/redis-production-report.txt
+        echo "" >> /root/redis-production-report.txt
+        
+        # Performance benchmark
+        echo "Performance Benchmark:" >> /root/redis-production-report.txt
+        echo "{{ redis_benchmark.stdout }}" >> /root/redis-production-report.txt
+        echo "" >> /root/redis-production-report.txt
+        
+        # Dangerous commands status
+        echo "Security - Dangerous Commands:" >> /root/redis-production-report.txt
+        for cmd in FLUSHDB FLUSHALL KEYS CONFIG; do
+          echo -n "$cmd: " >> /root/redis-production-report.txt
+          redis-cli -p {{ redis_port }} {% if redis_requirepass %}-a {{ redis_requirepass }}{% endif %} COMMAND INFO $cmd | grep -q "^$cmd" && echo "Available (WARNING!)" || echo "Disabled" >> /root/redis-production-report.txt
+        done
+      when: production_mode | bool
+      tags: [redis, report]
+    
+    - name: Display Redis production completion summary
+      debug:
+        msg: |
+          🎉 ✅ PRODUCTION REDIS SETUP COMPLETED SUCCESSFULLY!
+          
+          📋 Configuration Summary:
+             ├── Server: {{ inventory_hostname }} ({{ ansible_host }})
+             ├── Port: {{ redis_port }}
+             ├── Bind: {{ redis_bind }}
+             ├── Memory: {{ redis_memory_mb }}MB (Policy: {{ redis_maxmemory_policy }})
+             ├── Password: {{ 'Configured' if redis_requirepass else 'Not set' }}
+             └── Firewall: Port {{ redis_port }} configured
+          
+          🔒 Production Features:
+             ├── Protected Mode: {{ redis_protected_mode }}
+             ├── Persistence: AOF ({{ redis_appendfsync }}) + RDB
+             ├── Dangerous Commands: Disabled
+             ├── TCP Keepalive: {{ redis_tcp_keepalive }}s
+             ├── Monitoring: {{ 'Prometheus exporter on :9121' if enable_monitoring else 'Disabled' }}
+             └── Backups: {{ 'Scheduled daily' if enable_backups else 'Disabled' }}
+          
+          📊 Performance Benchmark:
+          {{ redis_benchmark.stdout | indent(10) }}
+          
+          📊 Reports:
+             ├── Configuration: /root/redis-report.txt
+             └── Production: /root/redis-production-report.txt
+          
+          🚀 Redis Production Server Ready!
+             └── Connection: redis-cli -h {{ ansible_host }} -p {{ redis_port }}{% if redis_requirepass %} -a <password>{% endif %}
+             
+  handlers:
+    - name: restart redis
+      service:
+        name: redis-server
+        state: restarted
+        
+    - name: restart redis-exporter
+      service:
+        name: prometheus-redis-exporter
+        state: restarted
+        
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes

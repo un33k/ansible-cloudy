@@ -1,0 +1,173 @@
+# {{ ansible_managed }}
+# PostgreSQL Production Configuration - Cloudy
+
+#------------------------------------------------------------------------------
+# CONNECTIONS AND AUTHENTICATION
+#------------------------------------------------------------------------------
+
+# Connection settings
+listen_addresses = '{{ pg_listen_addresses | default("localhost") }}'
+port = {{ pg_port | default(postgresql_port_default) }}
+max_connections = {{ pg_max_connections | default(100) }}
+superuser_reserved_connections = {{ pg_superuser_reserved_connections | default(3) }}
+
+# Security
+ssl = {{ pg_ssl | default('on') }}
+ssl_cert_file = '{{ pg_ssl_cert_file | default("server.crt") }}'
+ssl_key_file = '{{ pg_ssl_key_file | default("server.key") }}'
+ssl_ciphers = '{{ pg_ssl_ciphers | default("HIGH:MEDIUM:+3DES:!aNULL") }}'
+ssl_prefer_server_ciphers = {{ pg_ssl_prefer_server_ciphers | default('on') }}
+password_encryption = {{ pg_password_encryption | default('scram-sha-256') }}
+
+#------------------------------------------------------------------------------
+# RESOURCE USAGE (Memory)
+#------------------------------------------------------------------------------
+
+# Memory settings - automatically tuned based on system RAM
+shared_buffers = {{ [(ansible_memtotal_mb * 0.25) | int, 128] | max }}MB
+effective_cache_size = {{ [(ansible_memtotal_mb * 0.75) | int, 1024] | max }}MB
+work_mem = {{ [(ansible_memtotal_mb / pg_max_connections|default(100) / 4) | int, 4] | max }}MB
+maintenance_work_mem = {{ [(ansible_memtotal_mb * 0.05) | int, 64] | max }}MB
+hash_mem_multiplier = {{ pg_hash_mem_multiplier | default(2.0) }}
+
+# Kernel resources
+max_files_per_process = {{ pg_max_files_per_process | default(1000) }}
+shared_preload_libraries = '{{ pg_shared_preload_libraries | default("pg_stat_statements") }}'
+
+#------------------------------------------------------------------------------
+# WRITE AHEAD LOG
+#------------------------------------------------------------------------------
+
+# WAL settings
+wal_level = {{ pg_wal_level | default('replica') }}
+wal_buffers = {{ pg_wal_buffers | default('16MB') }}
+checkpoint_timeout = {{ pg_checkpoint_timeout | default('15min') }}
+checkpoint_completion_target = {{ pg_checkpoint_completion_target | default(0.9) }}
+max_wal_size = {{ pg_max_wal_size | default('4GB') }}
+min_wal_size = {{ pg_min_wal_size | default('1GB') }}
+
+# Archiving (for backups and replication)
+archive_mode = {{ pg_archive_mode | default('on') }}
+archive_command = '{{ pg_archive_command | default("test ! -f /var/lib/postgresql/archive/%f && cp %p /var/lib/postgresql/archive/%f") }}'
+archive_timeout = {{ pg_archive_timeout | default(300) }}
+
+#------------------------------------------------------------------------------
+# REPLICATION
+#------------------------------------------------------------------------------
+
+# Streaming replication
+max_wal_senders = {{ pg_max_wal_senders | default(5) }}
+max_replication_slots = {{ pg_max_replication_slots | default(5) }}
+wal_keep_size = {{ pg_wal_keep_size | default('1GB') }}
+hot_standby = {{ pg_hot_standby | default('on') }}
+hot_standby_feedback = {{ pg_hot_standby_feedback | default('on') }}
+
+#------------------------------------------------------------------------------
+# QUERY TUNING
+#------------------------------------------------------------------------------
+
+# Planner cost constants (optimized for SSD)
+random_page_cost = {{ pg_random_page_cost | default(1.1) }}
+seq_page_cost = {{ pg_seq_page_cost | default(1.0) }}
+cpu_tuple_cost = {{ pg_cpu_tuple_cost | default(0.01) }}
+cpu_index_tuple_cost = {{ pg_cpu_index_tuple_cost | default(0.005) }}
+cpu_operator_cost = {{ pg_cpu_operator_cost | default(0.0025) }}
+effective_io_concurrency = {{ pg_effective_io_concurrency | default(200) }}
+
+# Planner settings
+default_statistics_target = {{ pg_default_statistics_target | default(100) }}
+jit = {{ pg_jit | default('off') }}  # JIT can cause issues, disabled by default
+
+#------------------------------------------------------------------------------
+# REPORTING AND LOGGING
+#------------------------------------------------------------------------------
+
+# Where to log
+log_destination = '{{ pg_log_destination | default("stderr") }}'
+logging_collector = {{ pg_logging_collector | default('on') }}
+log_directory = '{{ pg_log_directory | default("log") }}'
+log_filename = '{{ pg_log_filename | default("postgresql-%Y-%m-%d_%H%M%S.log") }}'
+log_file_mode = {{ pg_log_file_mode | default('0600') }}
+log_rotation_age = {{ pg_log_rotation_age | default('1d') }}
+log_rotation_size = {{ pg_log_rotation_size | default('100MB') }}
+
+# When to log
+log_min_messages = {{ pg_log_min_messages | default('warning') }}
+log_min_error_statement = {{ pg_log_min_error_statement | default('error') }}
+log_min_duration_statement = {{ pg_log_min_duration_statement | default(500) }}  # Log slow queries
+
+# What to log
+log_checkpoints = {{ pg_log_checkpoints | default('on') }}
+log_connections = {{ pg_log_connections | default('on') }}
+log_disconnections = {{ pg_log_disconnections | default('on') }}
+log_duration = {{ pg_log_duration | default('off') }}
+log_error_verbosity = {{ pg_log_error_verbosity | default('default') }}
+log_line_prefix = '{{ pg_log_line_prefix | default("%t [%p] %q%u@%d ") }}'
+log_lock_waits = {{ pg_log_lock_waits | default('on') }}
+log_statement = '{{ pg_log_statement | default("ddl") }}'  # Log DDL statements
+log_temp_files = {{ pg_log_temp_files | default(0) }}
+log_timezone = '{{ pg_log_timezone | default(timezone | default("UTC")) }}'
+
+#------------------------------------------------------------------------------
+# STATISTICS
+#------------------------------------------------------------------------------
+
+# Statistics monitoring
+track_activities = {{ pg_track_activities | default('on') }}
+track_activity_query_size = {{ pg_track_activity_query_size | default(1024) }}
+track_counts = {{ pg_track_counts | default('on') }}
+track_io_timing = {{ pg_track_io_timing | default('on') }}
+track_wal_io_timing = {{ pg_track_wal_io_timing | default('on') }}
+track_functions = {{ pg_track_functions | default('all') }}
+stats_temp_directory = '{{ pg_stats_temp_directory | default("pg_stat_tmp") }}'
+
+# pg_stat_statements configuration
+pg_stat_statements.track = {{ pg_stat_statements_track | default('all') }}
+pg_stat_statements.max = {{ pg_stat_statements_max | default(5000) }}
+pg_stat_statements.save = {{ pg_stat_statements_save | default('on') }}
+
+#------------------------------------------------------------------------------
+# AUTOVACUUM
+#------------------------------------------------------------------------------
+
+autovacuum = {{ pg_autovacuum | default('on') }}
+autovacuum_max_workers = {{ pg_autovacuum_max_workers | default(3) }}
+autovacuum_naptime = {{ pg_autovacuum_naptime | default('1min') }}
+autovacuum_vacuum_threshold = {{ pg_autovacuum_vacuum_threshold | default(50) }}
+autovacuum_vacuum_insert_threshold = {{ pg_autovacuum_vacuum_insert_threshold | default(1000) }}
+autovacuum_analyze_threshold = {{ pg_autovacuum_analyze_threshold | default(50) }}
+autovacuum_vacuum_scale_factor = {{ pg_autovacuum_vacuum_scale_factor | default(0.2) }}
+autovacuum_vacuum_insert_scale_factor = {{ pg_autovacuum_vacuum_insert_scale_factor | default(0.2) }}
+autovacuum_analyze_scale_factor = {{ pg_autovacuum_analyze_scale_factor | default(0.1) }}
+autovacuum_vacuum_cost_delay = {{ pg_autovacuum_vacuum_cost_delay | default('2ms') }}
+autovacuum_vacuum_cost_limit = {{ pg_autovacuum_vacuum_cost_limit | default(1000) }}
+
+#------------------------------------------------------------------------------
+# LOCK MANAGEMENT
+#------------------------------------------------------------------------------
+
+deadlock_timeout = {{ pg_deadlock_timeout | default('1s') }}
+max_locks_per_transaction = {{ pg_max_locks_per_transaction | default(64) }}
+max_pred_locks_per_transaction = {{ pg_max_pred_locks_per_transaction | default(64) }}
+
+#------------------------------------------------------------------------------
+# ERROR HANDLING
+#------------------------------------------------------------------------------
+
+exit_on_error = {{ pg_exit_on_error | default('off') }}
+restart_after_crash = {{ pg_restart_after_crash | default('on') }}
+data_sync_retry = {{ pg_data_sync_retry | default('off') }}
+
+#------------------------------------------------------------------------------
+# VERSION AND PLATFORM SPECIFIC
+#------------------------------------------------------------------------------
+
+# Locale settings
+lc_messages = '{{ pg_lc_messages | default(locale | default("en_US.UTF-8")) }}'
+lc_monetary = '{{ pg_lc_monetary | default(locale | default("en_US.UTF-8")) }}'
+lc_numeric = '{{ pg_lc_numeric | default(locale | default("en_US.UTF-8")) }}'
+lc_time = '{{ pg_lc_time | default(locale | default("en_US.UTF-8")) }}'
+
+# Other settings
+default_text_search_config = '{{ pg_default_text_search_config | default("pg_catalog.english") }}'
+timezone = '{{ pg_timezone | default(timezone | default("UTC")) }}'

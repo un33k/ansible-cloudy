@@ -1,0 +1,161 @@
+version: '3.8'
+
+services:
+  # Single server for basic tests
+  test-server-01:
+    build:
+      context: .
+      dockerfile: Dockerfile.ubuntu
+    container_name: ansible-cloudy-test-server-01
+    hostname: test-server-01
+    networks:
+      test-net:
+        ipv4_address: 172.20.0.10
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /run
+      - /run/lock
+    tmpfs:
+      - /tmp
+    environment:
+      - ANSIBLE_TEST_MODE=true
+      - container=docker
+    cap_add:
+      - SYS_ADMIN
+      - SYS_NICE
+      - SYS_RESOURCE
+      - NET_ADMIN
+      - NET_RAW
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "2201:22"
+      - "8001:80"
+      - "8443:443"
+
+  # Web server cluster for multi-server tests
+  web-01:
+    build:
+      context: .
+      dockerfile: Dockerfile.ubuntu
+    container_name: ansible-cloudy-web-01
+    hostname: web-01
+    networks:
+      test-net:
+        ipv4_address: 172.20.0.21
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    environment:
+      - ANSIBLE_TEST_MODE=true
+      - container=docker
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "2211:22"
+
+  web-02:
+    build:
+      context: .
+      dockerfile: Dockerfile.ubuntu
+    container_name: ansible-cloudy-web-02
+    hostname: web-02
+    networks:
+      test-net:
+        ipv4_address: 172.20.0.22
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    environment:
+      - ANSIBLE_TEST_MODE=true
+      - container=docker
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "2212:22"
+
+  # Database server
+  db-01:
+    build:
+      context: .
+      dockerfile: Dockerfile.debian
+    container_name: ansible-cloudy-db-01
+    hostname: db-01
+    networks:
+      test-net:
+        ipv4_address: 172.20.0.31
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    environment:
+      - ANSIBLE_TEST_MODE=true
+      - container=docker
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "2221:22"
+      - "5432:5432"
+
+  # Cache server
+  cache-01:
+    build:
+      context: .
+      dockerfile: Dockerfile.ubuntu
+    container_name: ansible-cloudy-cache-01
+    hostname: cache-01
+    networks:
+      test-net:
+        ipv4_address: 172.20.0.41
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    environment:
+      - ANSIBLE_TEST_MODE=true
+      - container=docker
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "2231:22"
+      - "6379:6379"
+
+  # Load balancer
+  lb-01:
+    build:
+      context: .
+      dockerfile: Dockerfile.ubuntu
+    container_name: ansible-cloudy-lb-01
+    hostname: lb-01
+    networks:
+      test-net:
+        ipv4_address: 172.20.0.51
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    environment:
+      - ANSIBLE_TEST_MODE=true
+      - container=docker
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "2241:22"
+      - "80:80"
+      - "443:443"
+
+networks:
+  test-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1

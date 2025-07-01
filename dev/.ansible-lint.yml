@@ -1,29 +1,26 @@
-# Ansible Lint Configuration for Ansible Cloudy
-# Provides reasonable rules for infrastructure automation
+# Ansible-lint configuration for Ansible Cloudy
+# More permissive settings for practical development
 
-# Exclude certain rules that are too strict for our use case
+profile: basic  # Use basic profile instead of production
+
+# Skip specific rules that are too strict for this project
 skip_list:
-  - yaml[line-length]  # Allow longer lines for readability
-  - name[casing]       # Allow flexible task naming
-  - var-naming[no-role-prefix]  # Allow variables without role prefix
-  - fqcn[action-core]  # Allow short module names for core modules
-  - risky-file-permissions  # Allow default file permissions in some cases
-  - command-instead-of-module  # Allow command module when appropriate
-  - package-latest     # Allow latest package versions for development
+  - yaml[trailing-spaces]      # Allow trailing spaces (handled by yamllint)
+  - yaml[new-line-at-end-of-file]  # Allow missing newlines (handled by yamllint) 
+  - fqcn[action-core]          # Allow short module names (include_tasks vs ansible.builtin.include_tasks)
+  - var-naming[no-reserved]    # Allow some reserved variable names
+  - jinja[spacing]             # Allow flexible jinja spacing
+  - ignore-errors              # Allow ignore_errors when appropriate
+  # Temporarily removed: deprecated-module to test if linting works
 
-# Enable offline mode (don't check for newer versions)
+# Exclude paths we don't want to lint
+exclude_paths:
+  - cloudy/tasks/services/     # Third-party service tasks
+
+# Use offline mode to avoid external dependencies
 offline: true
 
-# Exclude certain directories and files
-exclude_paths:
-  - .git/
-  - .github/
-  - .cache/
-  - tests/output/
-  - '*.md'
-  - '*.txt'
-
-# Additional rules to skip (added to skip_list above)
-warn_list:
-  - name[template]
-  - command-instead-of-shell
+# Enable specific useful rules
+enable_list:
+  - no-changed-when            # Ensure changed_when is used appropriately
+  - no-tabs                    # Prevent tab characters

@@ -1,0 +1,92 @@
+// {{ ansible_managed }}
+// PM2 Ecosystem Configuration
+
+module.exports = {
+  apps: [{
+    name: '{{ app_name }}',
+    script: '{{ app_entry_point | default("app.js") }}',
+    cwd: '{{ app_path }}',
+    instances: {{ pm2_instances if pm2_instances != 'max' else ansible_processor_vcpus }},
+    exec_mode: '{{ pm2_exec_mode }}',
+    
+    // Environment variables
+    env: {
+      NODE_ENV: '{{ app_env }}',
+      PORT: {{ app_port }}
+    },
+    
+    // Logs
+    error_file: '/var/log/{{ app_name }}/error.log',
+    out_file: '/var/log/{{ app_name }}/out.log',
+    log_file: '/var/log/{{ app_name }}/combined.log',
+    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    merge_logs: true,
+    
+    // Advanced features
+    watch: {{ pm2_watch | default(false) | lower }},
+    ignore_watch: ['node_modules', 'logs', '.git', '*.log'],
+    max_memory_restart: '{{ pm2_max_memory | default("1G") }}',
+    
+    // Graceful reload
+    wait_ready: true,
+    listen_timeout: 3000,
+    kill_timeout: 5000,
+    
+    // Restart behavior
+    autorestart: true,
+    max_restarts: 10,
+    min_uptime: '10s',
+    
+    // Resource limits
+    max_memory_restart: '{{ pm2_memory_limit | default("2G") }}',
+    
+    // Node.js arguments
+    node_args: [
+{% if node_max_old_space_size is defined %}
+      '--max-old-space-size={{ node_max_old_space_size }}',
+{% endif %}
+      '--optimize-for-size',
+      '--gc-interval=100'
+    ],
+    
+    // Application arguments
+    args: [
+{% for arg in app_args | default([]) %}
+      '{{ arg }}'{{ ',' if not loop.last else '' }}
+{% endfor %}
+    ],
+    
+    // CPU affinity
+{% if pm2_cpu_affinity is defined %}
+    instance_var: 'INSTANCE_ID',
+    exec_mode: 'cluster',
+    instances: {{ pm2_cpu_affinity | length }},
+{% endif %}
+    
+    // Post-start hook
+    post_update: ['npm install', 'npm audit fix'],
+    
+    // Health check
+    health_check: {
+      interval: 30000,
+      path: '/health',
+      port: {{ app_port }},
+      max_consecutive_fails: 3
+    }
+  }],
+  
+  // Deployment configuration
+  deploy: {
+    production: {
+      user: '{{ app_name }}',
+      host: '{{ ansible_host }}',
+      ref: 'origin/{{ app_branch | default("main") }}',
+      repo: '{{ app_repo }}',
+      path: '{{ app_path }}',
+      'post-deploy': 'npm install && pm2 reload ecosystem.config.js --env production',
+      env: {
+        NODE_ENV: 'production'
+      }
+    }
+  }
+};

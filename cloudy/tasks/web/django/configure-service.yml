@@ -1,0 +1,59 @@
+# Granular Task: Configure Django Service with Grunt User Support
+# Purpose: Set up Django to run under grunt user when available
+# Usage: include_tasks: tasks/web/django/configure-service.yml
+
+---
+- name: Configure Django service user
+  include_tasks: "../../sys/services/configure-service-user.yml"
+  vars:
+    service_name: "django"
+    service_groups: ["www-data"]
+    service_directories:
+      - "/opt/django"
+      - "/var/log/django"
+      - "/var/run/django"
+    
+- name: Install Django and dependencies
+  pip:
+    name:
+      - django
+      - gunicorn
+      - psycopg2-binary
+    state: present
+  become_user: "{{ effective_service_user }}"
+  
+- name: Create Django project structure
+  file:
+    path: "/opt/django/{{ item }}"
+    state: directory
+    owner: "{{ effective_service_user }}"
+    group: "{{ effective_service_user }}"
+    mode: '0755'
+  loop:
+    - "static"
+    - "media"
+    - "logs"
+
+- name: Create Django systemd service
+  include_tasks: "../../sys/services/create-systemd-service.yml"
+  vars:
+    service_name: "django"
+    service_description: "Django Web Application"
+    service_exec_start: "/usr/local/bin/gunicorn --bind 0.0.0.0:8000 myproject.wsgi:application"
+    service_working_directory: "/opt/django"
+    service_environment:
+      DJANGO_SETTINGS_MODULE: "myproject.settings"
+      PYTHONPATH: "/opt/django"
+    service_writable_paths:
+      - "/var/log/django"
+      - "/var/run/django"
+
+- name: Display Django service configuration
+  debug:
+    msg: |
+      🌐 Django Service Configuration:
+      ├── Service User: {{ effective_service_user }}
+      ├── Working Directory: /opt/django
+      ├── Service: django.service (systemd)
+      ├── Grunt User Mode: {{ 'Enabled' if vault_grunt_user is defined else 'Disabled (using root)' }}
+      └── Security: Enhanced systemd security settings

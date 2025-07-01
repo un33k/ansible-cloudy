@@ -1,0 +1,308 @@
+# Recipe: All-in-One Standalone Server
+# Purpose: Deploy complete stack (PostgreSQL, Redis, Nginx, App) on single server
+# Usage: ./cli standalone --install [--app-type django|nodejs] [--domain example.com]
+
+---
+- name: All-in-One Standalone Server Setup
+  hosts: service_targets
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/postgresql.yml"
+    - "../../../defaults/redis.yml"
+    - "../../../defaults/nginx.yml"
+    - "../../../defaults/nodejs.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    
+    # Deployment configuration
+    app_type: "{{ vault_app_type | default('django') }}"  # django or nodejs
+    domain: "{{ vault_domain | default(ansible_default_ipv4.address) }}"
+    enable_ssl: "{{ vault_enable_ssl | default(true) }}"
+    
+    # Component flags
+    install_postgresql: "{{ vault_install_postgresql | default(true) }}"
+    install_redis: "{{ vault_install_redis | default(true) }}"
+    install_nginx: "{{ vault_install_nginx | default(true) }}"
+    
+    # PostgreSQL settings
+    pg_version: "{{ vault_pg_version | default(pg_version_default) }}"
+    pg_port: "{{ vault_pg_port | default(5432) }}"
+    pg_password: "{{ vault_pg_password | default('postgres123') }}"
+    
+    # Redis settings
+    redis_port: "{{ vault_redis_port | default(6379) }}"
+    redis_memory_mb: "{{ vault_redis_memory_mb | default(512) }}"
+    redis_password: "{{ vault_redis_password | default('redis123') }}"
+    
+    # Application settings
+    app_name: "{{ vault_app_name | default('webapp') }}"
+    app_port: "{{ vault_app_port | default(8000 if app_type == 'django' else 3000) }}"
+    app_path: "{{ vault_app_path | default('/var/www/' + app_name) }}"
+    
+    # Production mode
+    production_mode: "{{ vault_production_mode | default(true) }}"
+    
+  pre_tasks:
+    # Ensure proper secure connection
+    - name: Ensure secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
+      tags: [always]
+    
+    - name: Display deployment configuration
+      debug:
+        msg: |
+          🚀 All-in-One Server Deployment
+          ============================
+          Server: {{ ansible_hostname }} ({{ ansible_default_ipv4.address }})
+          Domain: {{ domain }}
+          App Type: {{ app_type }}
+          SSL: {{ 'Enabled' if enable_ssl else 'Disabled' }}
+          
+          Components:
+          - PostgreSQL: {{ 'YES' if install_postgresql else 'NO' }}
+          - Redis: {{ 'YES' if install_redis else 'NO' }}
+          - Nginx: {{ 'YES' if install_nginx else 'NO' }}
+          - Application: {{ app_type }}
+          
+          Production Mode: {{ 'YES' if production_mode else 'NO' }}
+      tags: [always]
+  
+  tasks:
+    # =============================================================================
+    # PHASE 1: SYSTEM CONFIGURATION
+    # =============================================================================
+    
+    - name: Update system packages
+      include_tasks: "{{ task_paths }}/sys/core/update.yml"
+      tags: [system, update]
+    
+    - name: Configure hostname
+      include_tasks: "{{ task_paths }}/sys/core/configure-hostname.yml"
+      vars:
+        hostname: "{{ domain.split('.')[0] }}"
+      tags: [system, hostname]
+    
+    - name: Configure timezone
+      include_tasks: "{{ task_paths }}/sys/core/configure-timezone.yml"
+      tags: [system, timezone]
+    
+    - name: Install system utilities
+      include_tasks: "{{ task_paths }}/sys/utilities/install.yml"
+      tags: [system, utilities]
+    
+    - name: Configure swap
+      include_tasks: "{{ task_paths }}/sys/swap/configure.yml"
+      when: production_mode
+      tags: [system, swap]
+    
+    - name: Configure kernel parameters for production
+      include_tasks: "{{ task_paths }}/sys/kernel/tune-production.yml"
+      when: production_mode
+      tags: [system, performance]
+    
+    # =============================================================================
+    # PHASE 2: DATABASE LAYER (PostgreSQL)
+    # =============================================================================
+    
+    - name: Install PostgreSQL
+      when: install_postgresql
+      block:
+        - name: Install PostgreSQL repository
+          include_tasks: "{{ task_paths }}/db/postgresql/install-repo.yml"
+          tags: [postgresql, install]
+        
+        - name: Install PostgreSQL server
+          include_tasks: "{{ task_paths }}/db/postgresql/install.yml"
+          tags: [postgresql, install]
+        
+        - name: Configure PostgreSQL for production
+          include_tasks: "{{ task_paths }}/db/postgresql/configure-production.yml"
+          when: production_mode
+          tags: [postgresql, configure]
+        
+        - name: Create application database
+          include_tasks: "{{ task_paths }}/db/postgresql/create-database.yml"
+          vars:
+            database_name: "{{ app_name }}"
+            database_owner: "{{ app_name }}_user"
+          tags: [postgresql, database]
+        
+        - name: Create application user
+          include_tasks: "{{ task_paths }}/db/postgresql/create-user.yml"
+          vars:
+            user_name: "{{ app_name }}_user"
+            user_password: "{{ vault_app_db_password | default(pg_password) }}"
+          tags: [postgresql, user]
+    
+    # =============================================================================
+    # PHASE 3: CACHE LAYER (Redis)
+    # =============================================================================
+    
+    - name: Install Redis
+      when: install_redis
+      block:
+        - name: Install Redis server
+          include_tasks: "{{ task_paths }}/services/redis/install.yml"
+          tags: [redis, install]
+        
+        - name: Configure Redis port
+          include_tasks: "{{ task_paths }}/services/redis/configure-port.yml"
+          tags: [redis, configure]
+        
+        - name: Configure Redis memory
+          include_tasks: "{{ task_paths }}/services/redis/configure-memory.yml"
+          tags: [redis, configure]
+        
+        - name: Configure Redis for production
+          include_tasks: "{{ task_paths }}/cache/redis/configure-production.yml"
+          when: production_mode
+          tags: [redis, configure]
+    
+    # =============================================================================
+    # PHASE 4: APPLICATION LAYER
+    # =============================================================================
+    
+    # Django Application
+    - name: Deploy Django application
+      when: app_type == 'django'
+      block:
+        - name: Install Python and dependencies
+          include_tasks: "{{ task_paths }}/web/python/install.yml"
+          tags: [django, python]
+        
+        - name: Create Django project directory
+          include_tasks: "{{ task_paths }}/web/django/create-project.yml"
+          vars:
+            project_path: "{{ app_path }}"
+            project_name: "{{ app_name }}"
+          tags: [django, setup]
+        
+        - name: Configure Django service
+          include_tasks: "{{ task_paths }}/web/django/configure-service.yml"
+          vars:
+            project_path: "{{ app_path }}"
+            project_name: "{{ app_name }}"
+            django_port: "{{ app_port }}"
+          tags: [django, service]
+        
+        - name: Install PgBouncer for connection pooling
+          include_tasks: "{{ task_paths }}/services/pgbouncer/install.yml"
+          when: install_postgresql
+          tags: [django, pgbouncer]
+    
+    # Node.js Application
+    - name: Deploy Node.js application
+      when: app_type == 'nodejs'
+      block:
+        - name: Install Node.js and npm
+          include_tasks: "{{ task_paths }}/web/nodejs/install.yml"
+          tags: [nodejs, install]
+        
+        - name: Configure PM2 for Node.js
+          include_tasks: "{{ task_paths }}/web/nodejs/configure-pm2.yml"
+          vars:
+            app_name: "{{ app_name }}"
+            app_path: "{{ app_path }}"
+            app_port: "{{ app_port }}"
+          tags: [nodejs, pm2]
+    
+    # =============================================================================
+    # PHASE 5: WEB SERVER (Nginx)
+    # =============================================================================
+    
+    - name: Install and configure Nginx
+      when: install_nginx
+      block:
+        - name: Install Nginx
+          include_tasks: "{{ task_paths }}/web/nginx/install.yml"
+          tags: [nginx, install]
+        
+        - name: Configure Nginx for application
+          include_tasks: "{{ task_paths }}/web/nginx/configure-site.yml"
+          vars:
+            site_name: "{{ app_name }}"
+            server_name: "{{ domain }}"
+            proxy_pass: "http://localhost:{{ app_port }}"
+            enable_ssl: "{{ enable_ssl }}"
+          tags: [nginx, configure]
+        
+        - name: Configure Nginx for production
+          include_tasks: "{{ task_paths }}/lb/nginx/configure-production.yml"
+          when: production_mode
+          tags: [nginx, production]
+        
+        - name: Setup Let's Encrypt SSL
+          include_tasks: "{{ task_paths }}/web/nginx/setup-letsencrypt.yml"
+          vars:
+            domain_name: "{{ domain }}"
+          when: 
+            - enable_ssl
+            - domain != ansible_default_ipv4.address
+          tags: [nginx, ssl]
+    
+    # =============================================================================
+    # PHASE 6: MONITORING & SECURITY
+    # =============================================================================
+    
+    - name: Setup basic monitoring
+      include_tasks: "{{ task_paths }}/monitoring/setup-basic.yml"
+      when: production_mode
+      tags: [monitoring]
+    
+    - name: Configure audit logging
+      include_tasks: "{{ task_paths }}/sys/audit/configure.yml"
+      when: production_mode
+      tags: [security, audit]
+    
+    - name: Configure fail2ban
+      include_tasks: "{{ task_paths }}/sys/security/fail2ban.yml"
+      when: production_mode
+      tags: [security, fail2ban]
+  
+  post_tasks:
+    - name: Display deployment summary
+      debug:
+        msg: |
+          ✅ All-in-One Server Deployment Complete!
+          ======================================
+          
+          🌐 Access your application:
+          {% if enable_ssl and domain != ansible_default_ipv4.address %}
+          https://{{ domain }}
+          {% else %}
+          http://{{ domain }}{% if app_port != 80 %}:{{ app_port }}{% endif %}
+          {% endif %}
+          
+          📊 Installed Components:
+          {% if install_postgresql %}
+          - PostgreSQL: localhost:{{ pg_port }}
+            Database: {{ app_name }}
+            User: {{ app_name }}_user
+          {% endif %}
+          {% if install_redis %}
+          - Redis: localhost:{{ redis_port }}
+            Password: {{ 'Set' if redis_password else 'None' }}
+          {% endif %}
+          {% if install_nginx %}
+          - Nginx: Port 80{% if enable_ssl %}, 443{% endif %}
+          {% endif %}
+          - {{ app_type|title }}: localhost:{{ app_port }}
+          
+          🔐 Security:
+          - Firewall: Configured
+          {% if production_mode %}
+          - Monitoring: Enabled
+          - Audit Logging: Active
+          - Fail2ban: Running
+          {% endif %}
+          
+          📝 Next Steps:
+          1. Deploy your application code to {{ app_path }}
+          2. Configure environment variables
+          3. Run database migrations (if applicable)
+          4. Test your application
+      tags: [always]

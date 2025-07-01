@@ -1,0 +1,45 @@
+---
+# CI/CD Environment Configuration
+# Copy this file to your own vault file and edit the values
+
+# === AUTHENTICATION CREDENTIALS ===
+vault_root_password: "ci_root_password"
+vault_admin_password: "ci_admin_password"
+
+# === CONNECTION CONFIGURATION ===
+vault_admin_user: "admin"
+vault_ssh_port: 22
+
+# === GLOBAL SERVER CONFIGURATION ===
+vault_git_user_full_name: "CI/CD Bot"
+vault_git_user_email: "ci@yourcompany.com"
+vault_timezone: "UTC"
+vault_locale: "en_US.UTF-8"
+
+# === SERVICE CREDENTIALS ===
+vault_postgres_password: "ci_postgres_password"
+vault_redis_password: "ci_redis_password"
+vault_vpn_passphrase: "ci_vpn_passphrase"
+
+# === SERVICE PORTS ===
+# Default ports used when not specified (standard service ports)
+# Uncomment and modify for security through obscurity in production
+# vault_postgresql_port: 5432    # PostgreSQL standard port (default)
+# vault_pgbouncer_port: 6432     # PgBouncer standard port (default)
+
+# Example: Security-hardened configuration (uncomment for production)
+# vault_postgresql_port: 6543    # Obscure port for PostgreSQL
+# vault_pgbouncer_port: 5432     # PgBouncer masquerades as PostgreSQL
+vault_redis_port: 6379         # Redis default
+vault_nginx_http_port: 80      # HTTP
+vault_nginx_https_port: 443    # HTTPS
+
+# === CI/CD SPECIFIC ===
+# These credentials are for automated testing
+# Keep them simple but secure for CI environments
+# Use different credentials than dev/prod
+
+# === USAGE INSTRUCTIONS ===
+# 1. Copy this file: cp .vault/ci.yml.example .vault/my-ci.yml
+# 2. Edit with your real credentials: vim .vault/my-ci.yml
+# 3. Use in CI: ansible-playbook -i inventory/ci.yml -e @.vault/my-ci.yml playbook.yml

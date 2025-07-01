@@ -1,0 +1,273 @@
+# {{ ansible_managed }}
+# Redis Production Configuration - Cloudy
+
+################################## NETWORK #####################################
+
+# Accept connections on the specified interfaces
+bind {{ redis_bind | default('127.0.0.1 ::1') }}
+
+# Protected mode - blocks external connections without auth
+protected-mode {{ redis_protected_mode | default('yes') }}
+
+# Accept connections on the specified port
+port {{ redis_port | default(redis_port_default) }}
+
+# TCP listen() backlog for high-performance environments
+tcp-backlog {{ redis_tcp_backlog | default(511) }}
+
+# Close the connection after client idle N seconds
+timeout {{ redis_timeout | default(0) }}
+
+# TCP keepalive
+tcp-keepalive {{ redis_tcp_keepalive | default(300) }}
+
+################################# TLS/SSL ######################################
+
+{% if redis_tls_enabled | default(false) %}
+# Enable TLS/SSL
+tls-port {{ redis_tls_port | default(6380) }}
+tls-cert-file {{ redis_tls_cert_file }}
+tls-key-file {{ redis_tls_key_file }}
+tls-ca-cert-file {{ redis_tls_ca_cert_file | default('') }}
+tls-dh-params-file {{ redis_tls_dh_params_file | default('') }}
+tls-protocols "{{ redis_tls_protocols | default('TLSv1.2 TLSv1.3') }}"
+tls-prefer-server-ciphers {{ redis_tls_prefer_server_ciphers | default('yes') }}
+{% endif %}
+
+################################# GENERAL ######################################
+
+# Run as daemon
+daemonize {{ redis_daemonize | default('yes') }}
+
+# Supervised by systemd
+supervised {{ redis_supervised | default('systemd') }}
+
+# PID file location
+pidfile {{ redis_pidfile | default('/var/run/redis/redis-server.pid') }}
+
+# Log level
+loglevel {{ redis_loglevel | default('notice') }}
+
+# Log file location
+logfile {{ redis_logfile | default('/var/log/redis/redis-server.log') }}
+
+# Syslog
+syslog-enabled {{ redis_syslog_enabled | default('no') }}
+syslog-ident {{ redis_syslog_ident | default('redis') }}
+
+# Number of databases
+databases {{ redis_databases | default(16) }}
+
+# Show logo
+always-show-logo {{ redis_always_show_logo | default('no') }}
+
+################################ SNAPSHOTTING  ################################
+
+# Save the DB on disk
+{% for save_rule in redis_save_rules | default(['900 1', '300 10', '60 10000']) %}
+save {{ save_rule }}
+{% endfor %}
+
+# Stop accepting writes if RDB snapshot fails
+stop-writes-on-bgsave-error {{ redis_stop_writes_on_bgsave_error | default('yes') }}
+
+# Compress RDB files
+rdbcompression {{ redis_rdbcompression | default('yes') }}
+
+# Checksum RDB files
+rdbchecksum {{ redis_rdbchecksum | default('yes') }}
+
+# RDB filename
+dbfilename {{ redis_dbfilename | default('dump.rdb') }}
+
+# Working directory
+dir {{ redis_dir | default('/var/lib/redis') }}
+
+################################# REPLICATION ##################################
+
+{% if redis_replication_enabled | default(false) %}
+# Master-Replica replication
+replicaof {{ redis_master_host }} {{ redis_master_port }}
+
+# Master password
+masterauth {{ redis_master_password }}
+
+# Replica password (for chained replication)
+requirepass {{ redis_requirepass }}
+
+# Serve stale data when disconnected from master
+replica-serve-stale-data {{ redis_replica_serve_stale_data | default('yes') }}
+
+# Replica read-only mode
+replica-read-only {{ redis_replica_read_only | default('yes') }}
+
+# Replication synchronization
+repl-diskless-sync {{ redis_repl_diskless_sync | default('no') }}
+repl-diskless-sync-delay {{ redis_repl_diskless_sync_delay | default(5) }}
+
+# Replication timeout
+repl-timeout {{ redis_repl_timeout | default(60) }}
+
+# Disable TCP_NODELAY on replica socket
+repl-disable-tcp-nodelay {{ redis_repl_disable_tcp_nodelay | default('no') }}
+
+# Replication backlog
+repl-backlog-size {{ redis_repl_backlog_size | default('1mb') }}
+repl-backlog-ttl {{ redis_repl_backlog_ttl | default(3600) }}
+
+# Replica priority for Sentinel
+replica-priority {{ redis_replica_priority | default(100) }}
+{% endif %}
+
+################################## SECURITY ####################################
+
+# Require password
+{% if redis_requirepass is defined and redis_requirepass %}
+requirepass {{ redis_requirepass }}
+{% endif %}
+
+# ACL configuration (Redis 6+)
+{% if redis_version | default('7') | int >= 6 and redis_acl_enabled | default(false) %}
+aclfile {{ redis_aclfile | default('/etc/redis/users.acl') }}
+{% endif %}
+
+# Rename dangerous commands
+{% for cmd in redis_rename_commands | default([]) %}
+rename-command {{ cmd.from }} {{ cmd.to | default('') }}
+{% endfor %}
+
+################################### CLIENTS ####################################
+
+# Max clients
+maxclients {{ redis_maxclients | default(10000) }}
+
+#################################### MEMORY ####################################
+
+# Max memory usage
+maxmemory {{ redis_maxmemory | default(redis_memory_mb + 'mb') }}
+
+# Memory eviction policy
+maxmemory-policy {{ redis_maxmemory_policy | default('noeviction') }}
+
+# Memory sampling size
+maxmemory-samples {{ redis_maxmemory_samples | default(5) }}
+
+# Memory efficiency
+lazyfree-lazy-eviction {{ redis_lazyfree_lazy_eviction | default('no') }}
+lazyfree-lazy-expire {{ redis_lazyfree_lazy_expire | default('no') }}
+lazyfree-lazy-server-del {{ redis_lazyfree_lazy_server_del | default('no') }}
+replica-lazy-flush {{ redis_replica_lazy_flush | default('no') }}
+
+############################# LAZY FREEING #####################################
+
+lazyfree-lazy-user-del {{ redis_lazyfree_lazy_user_del | default('no') }}
+
+################################ THREADED I/O ##################################
+
+{% if redis_version | default('7') | int >= 6 %}
+# Thread I/O (Redis 6+)
+io-threads {{ redis_io_threads | default(4) }}
+io-threads-do-reads {{ redis_io_threads_do_reads | default('no') }}
+{% endif %}
+
+############################ KERNEL OOM CONTROL ################################
+
+oom-score-adj {{ redis_oom_score_adj | default('no') }}
+
+############################ APPEND ONLY MODE ##################################
+
+# Enable AOF
+appendonly {{ redis_appendonly | default('yes') }}
+
+# AOF filename
+appendfilename "{{ redis_appendfilename | default('appendonly.aof') }}"
+
+# AOF fsync policy
+appendfsync {{ redis_appendfsync | default('everysec') }}
+
+# Prevent fsync during rewrites
+no-appendfsync-on-rewrite {{ redis_no_appendfsync_on_rewrite | default('no') }}
+
+# Auto rewrite the AOF
+auto-aof-rewrite-percentage {{ redis_auto_aof_rewrite_percentage | default(100) }}
+auto-aof-rewrite-min-size {{ redis_auto_aof_rewrite_min_size | default('64mb') }}
+
+# Load truncated AOF
+aof-load-truncated {{ redis_aof_load_truncated | default('yes') }}
+
+# Use RDB-AOF hybrid persistence
+aof-use-rdb-preamble {{ redis_aof_use_rdb_preamble | default('yes') }}
+
+################################## SLOW LOG ####################################
+
+# Slow log threshold (microseconds)
+slowlog-log-slower-than {{ redis_slowlog_log_slower_than | default(10000) }}
+
+# Slow log max length
+slowlog-max-len {{ redis_slowlog_max_len | default(128) }}
+
+################################ LATENCY MONITOR ###############################
+
+# Latency monitoring threshold
+latency-monitor-threshold {{ redis_latency_monitor_threshold | default(0) }}
+
+############################# EVENT NOTIFICATION ###############################
+
+# Keyspace notifications
+notify-keyspace-events "{{ redis_notify_keyspace_events | default('') }}"
+
+############################### ADVANCED CONFIG ################################
+
+# Hash table settings
+hash-max-ziplist-entries {{ redis_hash_max_ziplist_entries | default(512) }}
+hash-max-ziplist-value {{ redis_hash_max_ziplist_value | default(64) }}
+
+# Lists
+list-max-ziplist-size {{ redis_list_max_ziplist_size | default(-2) }}
+list-compress-depth {{ redis_list_compress_depth | default(0) }}
+
+# Sets
+set-max-intset-entries {{ redis_set_max_intset_entries | default(512) }}
+
+# Sorted sets
+zset-max-ziplist-entries {{ redis_zset_max_ziplist_entries | default(128) }}
+zset-max-ziplist-value {{ redis_zset_max_ziplist_value | default(64) }}
+
+# HyperLogLog
+hll-sparse-max-bytes {{ redis_hll_sparse_max_bytes | default(3000) }}
+
+# Streams
+stream-node-max-bytes {{ redis_stream_node_max_bytes | default(4096) }}
+stream-node-max-entries {{ redis_stream_node_max_entries | default(100) }}
+
+# Active rehashing
+activerehashing {{ redis_activerehashing | default('yes') }}
+
+# Client output buffer limits
+client-output-buffer-limit normal {{ redis_client_output_buffer_limit_normal | default('0 0 0') }}
+client-output-buffer-limit replica {{ redis_client_output_buffer_limit_replica | default('256mb 64mb 60') }}
+client-output-buffer-limit pubsub {{ redis_client_output_buffer_limit_pubsub | default('32mb 8mb 60') }}
+
+# Frequency of background tasks
+hz {{ redis_hz | default(10) }}
+
+# Enable dynamic HZ
+dynamic-hz {{ redis_dynamic_hz | default('yes') }}
+
+# AOF rewrite incremental fsync
+aof-rewrite-incremental-fsync {{ redis_aof_rewrite_incremental_fsync | default('yes') }}
+
+# RDB saves incremental fsync
+rdb-save-incremental-fsync {{ redis_rdb_save_incremental_fsync | default('yes') }}
+
+{% if redis_cluster_enabled | default(false) %}
+################################ REDIS CLUSTER  ################################
+
+cluster-enabled yes
+cluster-config-file {{ redis_cluster_config_file | default('nodes.conf') }}
+cluster-node-timeout {{ redis_cluster_node_timeout | default(15000) }}
+cluster-replica-validity-factor {{ redis_cluster_replica_validity_factor | default(10) }}
+cluster-migration-barrier {{ redis_cluster_migration_barrier | default(1) }}
+cluster-require-full-coverage {{ redis_cluster_require_full_coverage | default('yes') }}
+cluster-replica-no-failover {{ redis_cluster_replica_no_failover | default('no') }}
+{% endif %}

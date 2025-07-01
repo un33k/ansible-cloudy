@@ -1,0 +1,73 @@
+# Granular Task: Configure PostgreSQL Port
+# Usage: include_tasks: configure-port.yml
+
+---
+- name: Validate PostgreSQL port range
+  fail:
+    msg: "PostgreSQL port must be between 1024-65535, got: {{ pg_port }}"
+  when: pg_port | int < 1024 or pg_port | int > 65535
+
+- name: Get PostgreSQL major version for config path
+  shell: |
+    pg_config --version | grep -oE '[0-9]+' | head -1
+  register: pg_major_version_result
+  changed_when: false
+
+- name: Set PostgreSQL config path
+  set_fact:
+    pg_config_path: "/etc/postgresql/{{ pg_major_version_result.stdout }}/main/postgresql.conf"
+
+- name: Check if PostgreSQL config file exists
+  stat:
+    path: "{{ pg_config_path }}"
+  register: pg_config_stat
+
+- name: Fail if PostgreSQL config not found
+  fail:
+    msg: "PostgreSQL config file not found at {{ pg_config_path }}. Is PostgreSQL installed?"
+  when: not pg_config_stat.stat.exists
+
+- name: Configure PostgreSQL port
+  lineinfile:
+    path: "{{ pg_config_path }}"
+    regexp: '^#?port\s*='
+    line: "port = {{ pg_port }}"
+    backup: true
+  register: pg_port_config
+  notify: restart postgresql
+
+- name: Update PostgreSQL HBA config for new port (if needed)
+  lineinfile:
+    path: "/etc/postgresql/{{ pg_major_version_result.stdout }}/main/pg_hba.conf"
+    regexp: '^local\s+all\s+all\s+peer'
+    line: "local   all             all                                     peer"
+    backup: true
+  when: pg_port_config.changed
+
+- name: Restart PostgreSQL service if port changed
+  service:
+    name: postgresql
+    state: restarted
+  when: pg_port_config.changed
+
+- name: Wait for PostgreSQL to be ready on new port
+  wait_for:
+    port: "{{ pg_port }}"
+    host: localhost
+    delay: 2
+    timeout: 30
+  when: pg_port_config.changed
+
+- name: Verify PostgreSQL is listening on configured port
+  shell: |
+    netstat -ln | grep ":{{ pg_port }}" || ss -ln | grep ":{{ pg_port }}"
+  register: pg_port_check
+  changed_when: false
+
+- name: Display PostgreSQL port configuration status
+  debug:
+    msg: |
+      ✅ PostgreSQL port configured: {{ pg_port }}
+      Status: {{ 'Changed and restarted' if pg_port_config.changed else 'Already configured' }}
+      Config file: {{ pg_config_path }}
+      Port check: {{ 'Listening' if pg_port_check.rc == 0 else 'Not listening' }}

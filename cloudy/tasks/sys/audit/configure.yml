@@ -1,0 +1,61 @@
+---
+# cloudy/tasks/sys/audit/configure.yml
+# Configure auditd for system monitoring
+
+- name: Install auditd and related packages
+  apt:
+    name:
+      - auditd
+      - audispd-plugins
+    state: present
+    update_cache: yes
+
+- name: Configure auditd
+  template:
+    src: auditd.conf.j2
+    dest: /etc/audit/auditd.conf
+    owner: root
+    group: root
+    mode: '0640'
+    backup: yes
+  notify: restart auditd
+
+- name: Create audit rules for system monitoring
+  template:
+    src: audit.rules.j2
+    dest: /etc/audit/rules.d/cloudy.rules
+    owner: root
+    group: root
+    mode: '0640'
+  notify: reload auditd rules
+
+- name: Configure audit log rotation
+  template:
+    src: audit-logrotate.j2
+    dest: /etc/logrotate.d/audit
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Set audit log permissions
+  file:
+    path: /var/log/audit
+    state: directory
+    owner: root
+    group: adm
+    mode: '0750'
+
+- name: Enable and start auditd service
+  systemd:
+    name: auditd
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Configure aureport for daily summaries
+  cron:
+    name: "Daily audit report"
+    job: "/usr/sbin/aureport --summary > /var/log/audit/daily-summary-$(date +\\%Y\\%m\\%d).txt"
+    hour: "23"
+    minute: "55"
+    user: root

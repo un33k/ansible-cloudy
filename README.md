@@ -1,207 +1,374 @@
-# Cloudy - Ansible Infrastructure Automation
+# Ansible Cloudy - Infrastructure Automation
 
-Modern infrastructure automation tool built with Ansible for secure server deployment and management.
+**Ansible Cloudy** is a comprehensive infrastructure automation toolkit featuring the **Claudia CLI** - an intelligent command-line interface that simplifies server deployment and management through Ansible playbooks.
+
+## 🚀 Key Features
+
+- **🔐 Enterprise Security**: Two-phase authentication with SSH keys and secure firewall configuration
+- **🧠 Intelligent CLI**: Auto-discovery of services and operations with intuitive parameter mapping
+- **⚡ Universal Parameters**: `cli redis --install --port 6380 --memory 512` instead of complex Ansible variables
+- **🔄 Granular Operations**: Service-specific tasks like `cli psql --adduser foo --password 1234`
+- **🛡️ Production-Ready**: Secure defaults, comprehensive validation, and enterprise-grade security model
+- **🚀 New Deployment Flavors**: pgvector for AI/ML, Node.js with PM2, standalone all-in-one deployments
+- **⚙️ Production Hardening**: Kernel security, SSH hardening, audit logging, DDoS protection
+- **🔌 Connection Pooling**: PgBouncer integration for optimal database performance
 
 ## Quick Start
 
 ### Installation
 ```bash
-# Install Ansible
-pip install ansible
+# Bootstrap environment (recommended)
+./bootstrap.sh
+source .venv/bin/activate
 
-# Clone and navigate to project
-cd cloudy/
+# Or install manually
+pip install ansible
 ```
+
+> **💡 Tip:** After activation, you can use either `cli` or its short alias `cli`. Both commands are identical - `cli` saves keystrokes for frequent use.
 
 ### Basic Usage
 ```bash
-# Step 1: Security setup (creates admin user, SSH keys, firewall)
-./ali security
+# Show help and configuration options (default action)
+cli security    # View security setup help and available variables
+cli psql        # View PostgreSQL setup help and configuration
+cli redis       # View Redis setup help and all parameters
 
-# Step 2: Base configuration (hostname, git, timezone, swap)
-./ali base
+# Execute recipes with universal parameter support
+cli security --install                           # Security setup (admin user, SSH keys, firewall)
+cli base --install                               # Base configuration (hostname, git, timezone, swap)
+cli psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
+cli redis --install --port 6380 --memory 512    # Redis with custom port and memory
+cli nginx --install --domain example.com --ssl  # Nginx with SSL domain
 
-# Step 3: Deploy services as needed
-./ali django
-./ali redis
-./ali nginx
+# Environment selection
+cli psql --install --dev                        # Use dev environment (default)
+cli psql --install --prod                       # Use production environment
+cli psql --install --ci                         # Use CI environment
+cli psql --install -i custom-inventory.yml      # Use custom inventory file
+
+# New deployment flavors
+cli pgvector --install --dimensions 1536        # PostgreSQL with AI/ML embeddings
+cli nodejs --install --app-name api --pm2      # Node.js with PM2 process manager
+cli standalone --install --app-type django     # All-in-one server deployment
+
+# Granular operations (no recipe installation)
+cli psql --adduser myuser --password secret123  # Add PostgreSQL user
+cli redis --configure-port 6379                 # Change Redis port
+cli nginx --setup-ssl example.com               # Setup SSL for domain
+cli pgbouncer --configure-port 6433            # Configure connection pooler
 ```
 
-## Features
+## 🏗️ Architecture Overview
 
-### 🔐 Secure Server Automation
-- **Safe Authentication Flow**: UFW firewall configured before SSH port changes
-- **SSH Key Management**: Automated public key installation and validation  
-- **Root Login Disable**: Safely disabled after admin user verification
-- **Custom SSH Ports**: Default port 22022 with firewall integration
+### Claudia CLI - Intelligent Command Interface
+The **Claudia CLI** is the heart of Ansible Cloudy, providing:
 
-### 🚀 One-Command Server Deployment
-- **Generic Server**: Secure SSH, user management, firewall
-- **VPN Server**: OpenVPN with Docker containerization
-- **Web Server**: Nginx, Apache, Supervisor process management
-- **Database Server**: PostgreSQL, PostGIS, PgBouncer pooling
-- **Cache Server**: Redis with memory management
-- **Load Balancer**: Nginx with SSL termination
+- **🔍 Auto-Discovery**: Services and operations automatically discovered from filesystem
+- **📋 Universal Parameters**: Intuitive CLI with `--port`, `--domain`, `--ssl` instead of complex Ansible variables
+- **🎯 Granular Operations**: Service-specific tasks without full recipe installation
+- **🔒 Smart Security**: Two-phase authentication model with connection validation
+- **📊 Clean Output**: Shows only changes and failures by default
 
-### 📊 Clean Output Control
+### Service Categories
+- **Core**: `security`, `base` - Foundation server setup with production hardening
+- **Database**: `psql`, `postgis`, `pgvector` - PostgreSQL with spatial and AI/ML extensions
+- **Web**: `django`, `nodejs`, `nginx` - Web applications and load balancing
+- **Cache**: `redis` - High-performance caching with persistence
+- **Connection Pooling**: `pgbouncer` - Database connection optimization
+- **VPN**: `openvpn` - Secure remote access
+- **Standalone**: `standalone` - All-in-one server deployment
+- **Development**: `dev` - Validation and testing tools
+
+### Security Model
+- **🔑 SSH Key Authentication**: Root access via SSH keys only (no password brute force)
+- **👤 Admin Emergency Access**: Dual authentication (password + SSH keys) for manual operations
+- **🔥 Smart Firewall**: UFW automatically configured with service-specific ports
+- **🚪 Custom SSH Port**: Default port 22022 with seamless migration
+- **🛡️ Enterprise Hardening**: Fail2ban, connection limits, secure SSH configuration
+- **🔒 Kernel Security**: Hardened sysctl parameters, ASLR, secure shared memory
+- **📝 Audit Logging**: Comprehensive audit trail with auditd and logrotate
+- **🚫 DDoS Protection**: Rate limiting, connection throttling, SYN flood protection
+- **🔐 Secure Ciphers**: Modern encryption algorithms, disabled weak protocols
+
+### 📊 Output Control
 ```bash
-# Default: Show only changes and failures
-./ali security
+# Show help by default (safe exploration)
+cli security
+
+# Execute with clean output (show only changes and failures)
+cli security --install
 
 # Compact output
-ANSIBLE_STDOUT_CALLBACK=minimal ./ali security
-
-# One line per task
-ANSIBLE_STDOUT_CALLBACK=oneline ./ali security
+ANSIBLE_STDOUT_CALLBACK=minimal cli security --install
 
 # Verbose debugging
-./ali security -- -v
+cli security --install -v
 ```
 
-## Architecture
+## 📁 Project Structure
 
-### Directory Structure
 ```
-cloudy/
-├── playbooks/recipes/     # High-level deployment recipes
-├── tasks/                 # Modular task files
-│   ├── sys/              # System operations (SSH, firewall, users)
-│   ├── db/               # Database automation (PostgreSQL, MySQL)
-│   ├── web/              # Web server management
-│   └── services/         # Service management (Docker, Redis, VPN)
-├── templates/            # Configuration file templates
-├── inventory/            # Server inventory configurations
-└── ansible.cfg          # Ansible configuration
+ansible-cloudy/
+├── cli                    # Main CLI entry point
+├── bootstrap.sh              # Environment setup script
+├── cloudy/                   # Ansible automation core
+│   ├── playbooks/recipes/    # High-level deployment recipes
+│   │   ├── core/            # security.yml, base.yml
+│   │   ├── db/              # psql.yml, postgis.yml, pgvector.yml
+│   │   ├── www/             # django.yml, nodejs.yml
+│   │   ├── cache/           # redis.yml
+│   │   ├── lb/              # nginx.yml, pgbouncer.yml
+│   │   ├── vpn/             # openvpn.yml
+│   │   └── standalone/      # all-in-one.yml
+│   ├── tasks/                # Granular, reusable task files
+│   │   ├── sys/             # System operations (SSH, firewall, users)
+│   │   ├── db/              # Database automation (PostgreSQL)
+│   │   ├── web/             # Web server management
+│   │   └── services/        # Service management (Docker, Redis, VPN)
+│   ├── templates/           # Configuration file templates
+│   ├── inventory/           # Server inventory configurations
+│   └── ansible.cfg          # Ansible configuration
+├── dev/                     # Development tools and CLI implementation
+│   ├── claudia/             # Python CLI implementation
+│   │   ├── cli/             # Command parsing and routing
+│   │   ├── operations/      # Service-specific operations
+│   │   ├── discovery/       # Auto-discovery of services
+│   │   ├── execution/       # Ansible execution engine
+│   │   └── utils/           # Configuration and utilities
+│   └── validate.py         # Development validation tools
+└── docs/                   # Project documentation
+    ├── getting-started/    # New user guides
+    ├── architecture/       # System design docs
+    ├── development/        # Developer guides
+    ├── operations/         # User guides
+    └── reference/          # Technical reference
 ```
 
-### Recipe Categories
-- **`cloudy/playbooks/recipes/core/security.yml`**: Initial server security setup
-- **`cloudy/playbooks/recipes/core/base.yml`**: Foundation server configuration
-- **`cloudy/playbooks/recipes/vpn/openvpn.yml`**: VPN with OpenVPN Docker
-- **`cloudy/playbooks/recipes/www/django.yml`**: Django web server deployment
-- **`cloudy/playbooks/recipes/db/psql.yml`**: PostgreSQL database server
-- **`cloudy/playbooks/recipes/cache/redis.yml`**: Redis cache server
-- **`cloudy/playbooks/recipes/lb/nginx.yml`**: Nginx load balancer with SSL
+## ⚙️ Configuration
 
-## Configuration
-
-### Inventory Setup
-Configure servers in `cloudy/inventory/test.yml`:
+### 1. Server Inventory
+Configure servers in `cloudy/inventory/dev.yml`:
 ```yaml
 all:
   vars:
-    ansible_user: admin
-    ansible_ssh_pass: secure123
-    ansible_port: 22022
+    ansible_user: admin         # Connect as admin user (after setup)
+    ansible_port: 22022         # Custom SSH port
+    ansible_host_key_checking: false
     
   children:
-    test_servers:
+    generic_servers:
       hosts:
-        test-server:
+        my-server:
           ansible_host: 10.10.10.100
-          hostname: test.example.com
+          hostname: my-server.example.com
+          admin_user: admin
+          admin_password: secure123
 ```
 
-### Output Customization
-The `cloudy/ansible.cfg` provides clean output by default:
-```ini
-[defaults]
-display_skipped_hosts = no    # Hide unchanged tasks
-display_ok_hosts = no         # Show only changes/failures
-```
-
-## Security
-
-### Authentication Flow
-1. Connect as root with initial password
-2. Create admin user with SSH key access
-3. Configure UFW firewall for new SSH port
-4. Change SSH port (default: 22022)
-5. Test admin user connection
-6. Disable root login safely
-7. Remove old SSH port from firewall
-
-### Best Practices
-- SSH keys required for production
-- Custom SSH ports (not 22)
-- UFW firewall enabled by default
-- Admin users with sudo access
-- Root login disabled after setup
-
-## Key Benefits
-
-This Ansible implementation provides:
-- **🔄 Idempotency**: Tasks only run when changes are needed
-- **🛡️ Error handling**: Rollback and validation built-in
-- **🎯 Clean output**: Focus on changes and failures
-- **🏗️ Modern tooling**: Industry-standard configuration management
-- **📈 Scalability**: Easy multi-server deployments
-- **🧪 Validation tools**: Ali CLI provides syntax and structure checking
-- **📚 Extensive documentation**: Complete guides and examples
-- **🔧 Developer-friendly**: Granular tasks and composable recipes
-
-## Examples
-
-### Complete Web Stack
+### 2. Vault Configuration (Recommended)
+For production deployments, use Ansible Vault for credentials:
 ```bash
-# 1. Secure server foundation
-./ali security
+# Create encrypted vault
+cli vault --create
 
-# 2. Base configuration
-./ali base
-
-# 3. Database layer
-./ali psql
-
-# 4. Web application layer
-./ali django
-
-# 5. Load balancer (optional)
-./ali nginx
+# Edit vault with real credentials
+cli vault --edit
 ```
 
-### VPN Server
+Example vault content:
+```yaml
+vault_root_password: "secure_root_password_123"
+vault_admin_password: "secure_admin_password_456"
+vault_admin_user: "admin"
+vault_ssh_port: 22022
+```
+
+### 3. Two-Phase Authentication Model
+**Phase 1 - Initial Security Setup** (Root + Password):
+```yaml
+# For fresh servers - inventory configuration
+ansible_user: root
+ansible_ssh_pass: "{{ vault_root_password }}"
+ansible_port: 22
+```
+
+**Phase 2 - Service Operations** (Root + SSH Keys):
+```yaml
+# After security setup - inventory configuration
+ansible_user: "{{ vault_ansible_user }}"
+ansible_port: "{{ vault_ssh_port }}"
+# Now using SSH keys only, no passwords
+```
+
+## 🎯 Workflow Examples
+
+### Complete Web Application Stack
 ```bash
-# Single command VPN deployment
-./ali openvpn
+# Step 1: Secure server foundation (creates admin user, SSH keys, firewall)
+cli security --install
+
+# Step 2: Base server configuration (hostname, git, timezone, swap)
+cli base --install
+
+# Step 3: Database layer with custom parameters
+cli psql --install --port 5544 --pgis
+
+# Step 4: Web application layer
+cli django --install
+
+# Step 5: Load balancer with SSL domain
+cli nginx --install --domain example.com --ssl
 ```
 
-## Documentation
+### Redis Cache Server with Custom Configuration
+```bash
+# View Redis configuration options
+cli redis
 
-- **📚 [USAGE.md](USAGE.md)**: Complete step-by-step tutorials and troubleshooting
-- **🔧 [CLAUDE.md](CLAUDE.md)**: Developer reference and command documentation  
-- **🤝 [CONTRIBUTING.md](CONTRIBUTING.md)**: Development guidelines and contribution workflow
-- **🐛 Issues**: Report bugs and feature requests via GitHub Issues
+# Install Redis with custom port and memory limit
+cli redis --install --port 6380 --memory 512 --password secret123
 
-## Quick Links
+# Granular operations (without recipe installation)
+cli redis --configure-port 6379    # Change port
+cli redis --set-password newpass   # Update password
+```
 
-- 🚀 [Getting Started](USAGE.md) - Complete setup and usage guide
-- 🔧 [Ali CLI Commands](CLAUDE.md) - Simplified Ansible wrapper commands
-- 🏗️ [Development Setup](CONTRIBUTING.md) - Contributing to the project
-- 🧪 [Validation Tools](dev/) - Syntax checking and validation scripts
+### PostgreSQL Database Management
+```bash
+# Install PostgreSQL with PostGIS on custom port
+cli psql --install --port 5544 --pgis
 
-## 🧪 Testing & Validation
+# Database user management (granular operations)
+cli psql --adduser myapp --password secret123
+cli psql --adddb myapp_db --owner myapp
+cli psql --list-users
+cli psql --list-databases
+```
 
-Ansible Cloudy includes development validation tools:
+### VPN Server Deployment
+```bash
+# View OpenVPN configuration options
+cli openvpn
+
+# Deploy complete VPN server with Docker
+cli openvpn --install
+```
+
+### PostgreSQL with pgvector for AI/ML
+```bash
+# View pgvector configuration options
+cli pgvector
+
+# Install PostgreSQL with pgvector extension
+cli pgvector --install --dimensions 1536 --index-type hnsw
+
+# Production deployment with custom settings
+cli pgvector --install --prod --port 5433 --create-examples
+```
+
+### Node.js Application Deployment
+```bash
+# View Node.js deployment options
+cli nodejs
+
+# Deploy Node.js application with PM2
+cli nodejs --install --app-repo https://github.com/user/app.git
+
+# Production deployment with domain and SSL
+cli nodejs --install --prod --domain api.example.com --ssl --pm2-instances 4
+```
+
+### Standalone All-in-One Server
+```bash
+# View standalone deployment options
+cli standalone
+
+# Deploy complete stack on single server
+cli standalone --install --app-type django --domain example.com --ssl
+
+# Custom configuration with specific components
+cli standalone --install --with-postgresql --with-redis --pg-port 5433
+```
+
+### Database Connection Pooling with PgBouncer
+```bash
+# Install PgBouncer on web servers
+cli pgbouncer --install
+
+# Configure with custom settings
+cli pgbouncer --install --port 6433 --pool-size 30
+
+# Granular operations
+cli pgbouncer --configure-port 6433
+cli pgbouncer --set-pool-size 50
+```
+
+## 🧪 Development & Validation
+
+Ansible Cloudy includes comprehensive development tools:
 
 ```bash
-# Ali CLI validation commands  
-./ali dev syntax      # Quick syntax check
-./ali dev validate     # Comprehensive validation
-./ali dev lint         # Ansible linting
-./ali dev test         # Authentication flow test
+# Environment setup
+./bootstrap.sh                    # Setup Python virtual environment with all tools
+source .venv/bin/activate         # Activate development environment
 
-# Traditional validation
-./dev/syntax-check.sh  # Direct syntax validation
-./dev/validate.py      # Python validation script
+# Validation commands via Claudia CLI
+cli dev syntax              # Quick syntax check
+cli dev validate            # Comprehensive validation suite
+cli dev lint                # Ansible linting with rules
+cli dev test                # Authentication flow testing
+cli dev spell               # Spell check documentation
+
+# Direct development tools
+./dev/validate.py                 # Python validation script
+./dev/syntax-check.sh             # Shell syntax validation
 ```
 
-**Validation Coverage:**
-- ✅ Syntax validation for all playbooks and tasks
-- ✅ YAML structure validation
-- ✅ Ansible configuration validation
-- ✅ Authentication flow testing
+**Development Features:**
+- ✅ **Auto-Discovery**: Services automatically discovered from filesystem
+- ✅ **Universal Parameters**: Smart parameter mapping for all services
+- ✅ **Comprehensive Validation**: YAML, Ansible, inventory, and template validation
+- ✅ **Clean Architecture**: Modular design with clear separation of concerns
+- ✅ **File Size Limits**: All files kept under 200 LOC for maintainability
+
+## 📚 Documentation
+
+### Quick Access
+- **🚀 [Quick Start](docs/getting-started/quickstart.md)** - Get up and running in 5 minutes
+- **📦 [Installation Guide](docs/getting-started/installation.md)** - Detailed setup instructions
+- **📖 [Command Reference](docs/operations/commands.md)** - All available commands
+- **🍱 [Deployment Recipes](docs/operations/recipes.md)** - Pre-built deployment patterns
+
+### In-Depth Guides
+- **🏗️ [Architecture Overview](docs/architecture/overview.md)** - How Ansible Cloudy works
+- **🔐 [Authentication Flow](docs/architecture/authentication-flow.md)** - Security model explained
+- **⚙️ [Configuration Guide](docs/operations/configuration.md)** - Vault and inventory setup
+- **🛠️ [Development Guide](docs/development/guide.md)** - Contributing to the project
+
+### Reference
+- **📊 [Variable Reference](docs/reference/variables.md)** - All configurable variables
+- **🔧 [Troubleshooting](docs/reference/troubleshooting.md)** - Common issues and solutions
+- **📝 [Changelog](docs/reference/changelog.md)** - Version history
+
+See the complete **[Documentation Index](docs/README.md)** for all available guides.
+
+## 🎯 Key Benefits
+
+- **🔄 Idempotent Operations**: Tasks only run when changes are needed
+- **🛡️ Enterprise Security**: Two-phase authentication with SSH keys and firewall automation
+- **🧠 Intelligent CLI**: Auto-discovery with intuitive parameter mapping
+- **📊 Clean Output**: Focus on changes and failures, hide unchanged tasks
+- **🏗️ Modern Tooling**: Industry-standard Ansible with intelligent Python CLI layer
+- **📈 Production Ready**: Secure defaults, comprehensive validation, vault integration
+- **🔧 Developer Friendly**: Granular operations, modular architecture, extensive documentation
+- **🚀 AI/ML Ready**: PostgreSQL with pgvector for embedding storage and similarity search
+- **⚡ High Performance**: Connection pooling, optimized configurations, resource-aware tuning
+- **🎯 Deployment Flexibility**: Single server standalone or distributed multi-tier architectures
+- **🔒 Security First**: Kernel hardening, audit logging, DDoS protection built-in
 
 ## 🤝 Contributing
 
-**Quick Contribution Workflow**: Fork the repo, install Ansible (`pip install ansible`), make your changes to tasks or recipes, run `./ali dev validate` to check syntax and structure, commit with descriptive messages, and submit a PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+**Quick Start**: Fork the repo → run `./bootstrap.sh` → make changes → run `cli dev validate` → commit → PR
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed development guidelines and workflow.

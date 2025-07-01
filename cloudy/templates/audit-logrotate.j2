@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+# Audit log rotation configuration
+
+/var/log/audit/audit.log {
+    daily
+    rotate {{ audit_log_rotate | default(7) }}
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0600 root root
+    sharedscripts
+    postrotate
+        /usr/bin/killall -HUP auditd 2> /dev/null || true
+    endscript
+}

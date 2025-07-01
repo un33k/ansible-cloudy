@@ -1,0 +1,125 @@
+---
+# Nginx Service Defaults
+# Variable naming convention: nginx_<setting>
+# These are overridden by vault_nginx_<setting> variables
+
+# === VERSION DEFAULTS ===
+nginx_version_default: "stable"  # stable or mainline
+
+# === CONNECTION DEFAULTS ===
+nginx_http_port_default: 80
+nginx_https_port_default: 443
+nginx_status_port_default: 8080
+
+# === WORKER DEFAULTS ===
+nginx_worker_processes_default: "auto"
+nginx_worker_connections_default: 1024
+nginx_multi_accept_default: "on"
+nginx_use_default: "epoll"
+
+# === PERFORMANCE DEFAULTS ===
+nginx_sendfile_default: "on"
+nginx_tcp_nopush_default: "on"
+nginx_tcp_nodelay_default: "on"
+nginx_keepalive_timeout_default: 65
+nginx_keepalive_requests_default: 100
+nginx_reset_timedout_connection_default: "on"
+nginx_client_body_timeout_default: 12
+nginx_client_header_timeout_default: 12
+nginx_send_timeout_default: 10
+
+# === BUFFER DEFAULTS ===
+nginx_client_body_buffer_size_default: "16K"
+nginx_client_header_buffer_size_default: "1k"
+nginx_client_max_body_size_default: "64M"
+nginx_large_client_header_buffers_default: "4 8k"
+
+# === GZIP DEFAULTS ===
+nginx_gzip_default: "on"
+nginx_gzip_comp_level_default: 5
+nginx_gzip_min_length_default: 256
+nginx_gzip_proxied_default: "any"
+nginx_gzip_vary_default: "on"
+nginx_gzip_types_default: |
+  application/atom+xml
+  application/javascript
+  application/json
+  application/ld+json
+  application/manifest+json
+  application/rss+xml
+  application/vnd.geo+json
+  application/vnd.ms-fontobject
+  application/x-font-ttf
+  application/x-web-app-manifest+json
+  application/xhtml+xml
+  application/xml
+  font/opentype
+  image/bmp
+  image/svg+xml
+  image/x-icon
+  text/cache-manifest
+  text/css
+  text/plain
+  text/vcard
+  text/vnd.rim.location.xloc
+  text/vtt
+  text/x-component
+  text/x-cross-domain-policy
+
+# === SSL DEFAULTS ===
+nginx_ssl_protocols_default: "TLSv1.2 TLSv1.3"
+nginx_ssl_ciphers_default: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+nginx_ssl_prefer_server_ciphers_default: "on"
+nginx_ssl_session_cache_default: "shared:SSL:10m"
+nginx_ssl_session_timeout_default: "10m"
+nginx_ssl_session_tickets_default: "off"
+nginx_ssl_stapling_default: "on"
+nginx_ssl_stapling_verify_default: "on"
+
+# === SECURITY HEADERS DEFAULTS ===
+nginx_server_tokens_default: "off"
+nginx_x_frame_options_default: "SAMEORIGIN"
+nginx_x_content_type_options_default: "nosniff"
+nginx_x_xss_protection_default: "1; mode=block"
+nginx_referrer_policy_default: "no-referrer-when-downgrade"
+
+# === LOGGING DEFAULTS ===
+nginx_access_log_default: "/var/log/nginx/access.log"
+nginx_error_log_default: "/var/log/nginx/error.log"
+nginx_log_format_default: "combined"
+nginx_error_log_level_default: "warn"
+
+# === RATE LIMITING DEFAULTS ===
+nginx_limit_req_zone_default: "$binary_remote_addr zone=one:10m rate=1r/s"
+nginx_limit_req_default: "zone=one burst=5"
+nginx_limit_conn_zone_default: "$binary_remote_addr zone=addr:10m"
+nginx_limit_conn_default: "addr 10"
+
+# === PROXY DEFAULTS ===
+nginx_proxy_connect_timeout_default: 60
+nginx_proxy_send_timeout_default: 60
+nginx_proxy_read_timeout_default: 60
+nginx_proxy_buffer_size_default: "4k"
+nginx_proxy_buffers_default: "8 4k"
+nginx_proxy_busy_buffers_size_default: "8k"
+
+# === CACHE DEFAULTS ===
+nginx_proxy_cache_path_default: "/var/cache/nginx"
+nginx_proxy_cache_levels_default: "1:2"
+nginx_proxy_cache_keys_zone_default: "cache:10m"
+nginx_proxy_cache_max_size_default: "1g"
+nginx_proxy_cache_inactive_default: "60m"
+
+# === PATH DEFAULTS ===
+nginx_config_dir_default: "/etc/nginx"
+nginx_sites_available_default: "/etc/nginx/sites-available"
+nginx_sites_enabled_default: "/etc/nginx/sites-enabled"
+nginx_ssl_cert_dir_default: "/etc/nginx/ssl"
+nginx_log_dir_default: "/var/log/nginx"
+nginx_cache_dir_default: "/var/cache/nginx"
+nginx_pid_file_default: "/var/run/nginx.pid"
+
+# === UPSTREAM DEFAULTS ===
+nginx_upstream_keepalive_default: 32
+nginx_upstream_keepalive_timeout_default: 60
+nginx_upstream_keepalive_requests_default: 100

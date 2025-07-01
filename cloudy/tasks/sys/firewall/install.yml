@@ -1,39 +1,33 @@
-# Granular Task: Install UFW Firewall
+# Granular Task: Install UFW Firewall (Smart Installation)
 # Equivalent to: cloudy-old/sys/firewall.py::fw_install()
-# Usage: ansible-playbook tasks/sys/firewall/install.yml
+# Usage: include_tasks: install.yml
 
 ---
-- name: Disable UFW if currently enabled
-  ufw:
-    state: disabled
+- name: Check if UFW is already installed
+  command: dpkg -l ufw
+  register: ufw_check
   failed_when: false
+  changed_when: false
   
-- name: Remove existing UFW installation
-  apt:
-    name: ufw
-    state: absent
-    purge: true
-  register: ufw_removal
+- name: Get UFW status if installed
+  command: ufw status
+  register: ufw_status
+  failed_when: false
+  changed_when: false
+  when: ufw_check.rc == 0
   
-- name: Clean up remaining packages
-  apt:
-    autoremove: true
-    autoclean: true
-  when: ufw_removal.changed
-  
-- name: Update package cache
-  apt:
-    update_cache: true
-    
-- name: Install UFW firewall
+- name: Install UFW firewall (only if not installed)
   apt:
     name: ufw
     state: present
+    update_cache: true
   register: ufw_installation
+  when: ufw_check.rc != 0
   
 - name: Display UFW installation status
   debug:
     msg: |
-      ✅ UFW firewall installed
+      ✅ UFW firewall ready
       Status: {{ 'Fresh installation' if ufw_installation.changed else 'Already installed' }}
-      ⚠️  Firewall is installed but not yet configured or enabled
+      Current Status: {{ ufw_status.stdout if ufw_check.rc == 0 else 'Not yet configured' }}
+      ⚠️  Use firewall configuration tasks to enable and configure rules

@@ -1,0 +1,88 @@
+---
+# PgBouncer Service Defaults
+# Variable naming convention: pgbouncer_<setting>
+# These are overridden by vault_pgbouncer_<setting> variables
+
+# === VERSION DEFAULTS ===
+pgbouncer_version_default: "1.21"  # Current stable version
+
+# === CONNECTION DEFAULTS ===
+pgbouncer_port_default: 6432       # PgBouncer standard port
+pgbouncer_listen_addr_default: "127.0.0.1"
+pgbouncer_unix_socket_dir_default: "/var/run/postgresql"
+pgbouncer_unix_socket_mode_default: "0777"
+
+# === BACKEND CONNECTION DEFAULTS ===
+pgbouncer_backend_host_default: "localhost"
+pgbouncer_backend_port_default: 5432  # PostgreSQL standard port
+pgbouncer_backend_database_default: "postgres"
+
+# === AUTHENTICATION DEFAULTS ===
+pgbouncer_auth_type_default: "md5"
+pgbouncer_auth_file_default: "/etc/pgbouncer/userlist.txt"
+pgbouncer_admin_users_default: "postgres"
+pgbouncer_stats_users_default: "postgres, pgbouncer"
+
+# === POOL DEFAULTS ===
+pgbouncer_pool_mode_default: "transaction"  # transaction, session, statement
+pgbouncer_max_client_conn_default: 100
+pgbouncer_default_pool_size_default: 25
+pgbouncer_min_pool_size_default: 0
+pgbouncer_reserve_pool_size_default: 5
+pgbouncer_reserve_pool_timeout_default: 3
+pgbouncer_max_db_connections_default: 50
+pgbouncer_max_user_connections_default: 50
+
+# === TIMEOUT DEFAULTS ===
+pgbouncer_server_idle_timeout_default: 600
+pgbouncer_server_lifetime_default: 3600
+pgbouncer_server_connect_timeout_default: 15
+pgbouncer_server_login_retry_default: 15
+pgbouncer_client_idle_timeout_default: 0
+pgbouncer_client_login_timeout_default: 60
+pgbouncer_query_timeout_default: 0
+pgbouncer_query_wait_timeout_default: 120
+
+# === PERFORMANCE DEFAULTS ===
+pgbouncer_pkt_buf_default: 4096
+pgbouncer_listen_backlog_default: 128
+pgbouncer_sbuf_loopcnt_default: 5
+pgbouncer_max_packet_size_default: 2147483647
+
+# === LOGGING DEFAULTS ===
+pgbouncer_log_connections_default: 1
+pgbouncer_log_disconnections_default: 1
+pgbouncer_log_pooler_errors_default: 1
+pgbouncer_log_stats_default: 1
+pgbouncer_stats_period_default: 60
+pgbouncer_verbose_default: 0
+
+# === DNS DEFAULTS ===
+pgbouncer_dns_max_ttl_default: 15
+pgbouncer_dns_nxdomain_ttl_default: 15
+pgbouncer_dns_zone_check_period_default: 0
+
+# === DANGEROUS DEFAULTS ===
+pgbouncer_server_reset_query_default: "DISCARD ALL"
+pgbouncer_server_reset_query_always_default: 0
+pgbouncer_server_check_delay_default: 30
+pgbouncer_server_check_query_default: "select 1"
+
+# === TCP DEFAULTS ===
+pgbouncer_tcp_keepalive_default: 1
+pgbouncer_tcp_keepcnt_default: 0
+pgbouncer_tcp_keepidle_default: 0
+pgbouncer_tcp_keepintvl_default: 0
+pgbouncer_tcp_user_timeout_default: 0
+
+# === APPLICATION NAME DEFAULTS ===
+pgbouncer_application_name_add_host_default: 0
+pgbouncer_disable_pqexec_default: 0
+
+# === PATH DEFAULTS ===
+pgbouncer_config_dir_default: "/etc/pgbouncer"
+pgbouncer_logfile_default: "/var/log/pgbouncer/pgbouncer.log"
+pgbouncer_pidfile_default: "/var/run/pgbouncer/pgbouncer.pid"
+
+# === IGNORE STARTUP PARAMETERS ===
+pgbouncer_ignore_startup_parameters_default: "extra_float_digits"

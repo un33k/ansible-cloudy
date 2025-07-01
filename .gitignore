@@ -7,6 +7,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+.mypy_cache/
 env/
 build/
 develop-eggs/
@@ -70,3 +71,24 @@ cloudy-old/
 
 .DS_Store
 .python-version
+
+# Vault password files (security)
+.vault_pass*
+*vault_pass*
+*.ansible-vault-pass*
+
+# User's real vault files (examples are safe to commit)
+*.vault.yml
+*-vault.yml
+.secrets/*.local.yml
+.secrets/dev.yml
+.secrets/ci.yml
+.secrets/prod.yml
+
+# Simple vault files (new system - examples are safe to commit)
+.vault/*.yml
+!.vault/*.example
+!.vault/README.md
+
+# Unencrypted secrets (if any)
+.secrets/**/unencrypted_*

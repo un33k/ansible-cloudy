@@ -1,0 +1,74 @@
+---
+# Redis Service Defaults
+# Variable naming convention: redis_<setting>
+# These are overridden by vault_redis_<setting> variables
+
+# === VERSION DEFAULTS ===
+redis_version_default: "7"      # Current stable major version
+
+# === CONNECTION DEFAULTS ===
+redis_port_default: 6379        # Redis standard port
+redis_bind_default: "127.0.0.1"
+redis_protected_mode_default: "yes"
+redis_tcp_backlog_default: 511
+redis_timeout_default: 0        # 0 = no timeout
+redis_tcp_keepalive_default: 300
+
+# === AUTHENTICATION DEFAULTS ===
+redis_requirepass_default: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=32') }}"  # Random if not set
+redis_acl_enabled_default: "no"
+
+# === MEMORY DEFAULTS ===
+redis_maxmemory_mb_default: 256
+redis_maxmemory_policy_default: "allkeys-lru"
+redis_maxmemory_samples_default: 5
+
+# === PERSISTENCE DEFAULTS ===
+redis_save_default: "900 1 300 10 60 10000"
+redis_stop_writes_on_bgsave_error_default: "yes"
+redis_rdbcompression_default: "yes"
+redis_rdbchecksum_default: "yes"
+redis_dbfilename_default: "dump.rdb"
+redis_dir_default: "/var/lib/redis"
+
+# === AOF DEFAULTS ===
+redis_appendonly_default: "no"
+redis_appendfilename_default: "appendonly.aof"
+redis_appendfsync_default: "everysec"
+redis_no_appendfsync_on_rewrite_default: "no"
+redis_auto_aof_rewrite_percentage_default: 100
+redis_auto_aof_rewrite_min_size_default: "64mb"
+
+# === LOGGING DEFAULTS ===
+redis_loglevel_default: "notice"
+redis_logfile_default: "/var/log/redis/redis-server.log"
+redis_syslog_enabled_default: "no"
+redis_syslog_ident_default: "redis"
+
+# === SLOW LOG DEFAULTS ===
+redis_slowlog_log_slower_than_default: 10000
+redis_slowlog_max_len_default: 128
+
+# === CLIENT DEFAULTS ===
+redis_databases_default: 16
+redis_hz_default: 10
+
+# === REPLICATION DEFAULTS ===
+redis_replicaof_default: ""     # Empty = no replication
+redis_masterauth_default: ""    # Empty = no auth
+redis_replica_serve_stale_data_default: "yes"
+redis_replica_read_only_default: "yes"
+redis_repl_diskless_sync_default: "no"
+redis_repl_diskless_sync_delay_default: 5
+
+# === CLUSTER DEFAULTS ===
+redis_cluster_enabled_default: "no"
+redis_cluster_config_file_default: "nodes.conf"
+redis_cluster_node_timeout_default: 15000
+
+# === PATHS DEFAULTS ===
+redis_config_dir_default: "/etc/redis"
+redis_data_dir_default: "/var/lib/redis"
+redis_log_dir_default: "/var/log/redis"
+redis_pid_file_default: "/var/run/redis/redis-server.pid"
+redis_socket_default: "/var/run/redis/redis.sock"

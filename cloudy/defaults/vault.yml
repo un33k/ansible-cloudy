@@ -1,0 +1,61 @@
+---
+# Vault Variable Defaults
+# These provide default values for vault variables when they are not defined
+# in the actual vault files (.vault/*.yml)
+
+# === AUTHENTICATION DEFAULTS ===
+vault_ansible_user: "root"
+vault_ansible_host_key_checking: false
+vault_ansible_ssh_private_key_file: "~/.ssh/id_rsa"
+vault_ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
+# === SSH PORT DEFAULTS ===
+vault_ssh_port: 22022             # Secure SSH port after security setup
+vault_initial_ssh_port: 22        # Standard SSH port for initial setup
+
+# === GLOBAL CONFIGURATION DEFAULTS ===
+vault_git_user_full_name: "System Administrator"
+vault_git_user_email: "admin@example.com"
+vault_timezone: "America/New_York"
+vault_locale: "en_US.UTF-8"
+
+# === OPTIONAL GRUNT USER DEFAULTS ===
+# These are empty by default - grunt user is only created if defined
+vault_grunt_user: ""
+vault_grunt_password: ""
+vault_grunt_groups: "sudo,adm,systemd-journal"
+vault_grunt_ssh_private_key_file: "~/.ssh/id_rsa"
+
+# === ADMIN USER DEFAULTS (for legacy compatibility) ===
+vault_admin_user: "admin"
+# vault_admin_password: ""  # No default - must be set in vault
+
+# === SERVICE CREDENTIALS ===
+# These have no defaults and must be set in vault files
+# vault_root_password: ""         # Required for initial setup
+# vault_postgres_password: ""     # Required for PostgreSQL
+# vault_mysql_root_password: ""   # Required for MySQL
+# vault_redis_password: ""        # Required for Redis
+# vault_vpn_passphrase: ""        # Required for VPN
+
+# === SERVICE PORTS DEFAULTS ===
+vault_postgresql_port: 5432       # PostgreSQL standard port
+vault_pgbouncer_port: 6432        # PgBouncer standard port
+vault_redis_port: 6379            # Redis standard port
+vault_mysql_port: 3306            # MySQL standard port
+vault_nginx_http_port: 80         # HTTP standard port
+vault_nginx_https_port: 443       # HTTPS standard port
+
+# === SERVICE CONFIGURATION DEFAULTS ===
+vault_redis_memory_mb: 512        # Redis memory limit in MB
+vault_pgbouncer_pool_size: 25     # Connection pool size
+vault_pgbouncer_max_clients: 100  # Maximum client connections
+
+# === NETWORK CONFIGURATION DEFAULTS ===
+vault_listen_interface: "0.0.0.0" # Listen on all interfaces
+vault_localhost: "127.0.0.1"      # Localhost address
+
+# === DATABASE CONFIGURATION DEFAULTS ===
+vault_db_encoding: "UTF8"
+vault_db_lc_collate: "en_US.UTF-8"
+vault_db_lc_ctype: "en_US.UTF-8"

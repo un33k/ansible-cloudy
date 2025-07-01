@@ -1,0 +1,32 @@
+# Granular Task: Configure Cron Jobs with Grunt User Support
+# Purpose: Set up cron jobs to run under grunt user when available
+# Usage: include_tasks: tasks/sys/services/configure-cron-jobs.yml
+
+---
+- name: Configure service user for cron jobs
+  include_tasks: configure-service-user.yml
+  vars:
+    service_name: "{{ cron_service_name | default('cron-jobs') }}"
+
+- name: Create cron jobs under effective service user
+  cron:
+    name: "{{ item.name }}"
+    job: "{{ item.job }}"
+    minute: "{{ item.minute | default('*') }}"
+    hour: "{{ item.hour | default('*') }}"
+    day: "{{ item.day | default('*') }}"
+    month: "{{ item.month | default('*') }}"
+    weekday: "{{ item.weekday | default('*') }}"
+    user: "{{ effective_service_user }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ cron_jobs | default([]) }}"
+  when: cron_jobs is defined
+
+- name: Display cron job configuration
+  debug:
+    msg: |
+      ⏰ Cron Jobs Configuration:
+      ├── Service User: {{ effective_service_user }}
+      ├── Jobs Count: {{ cron_jobs | length if cron_jobs is defined else 0 }}
+      ├── Grunt User Mode: {{ 'Enabled' if vault_grunt_user is defined else 'Disabled (using root)' }}
+      └── Jobs: {{ cron_jobs | map(attribute='name') | list | join(', ') if cron_jobs is defined else 'None configured' }}

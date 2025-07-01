@@ -1,0 +1,62 @@
+# {{ ansible_managed }}
+# PostgreSQL Client Authentication Configuration - Cloudy
+# 
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+#
+# Security Policy:
+# - Local connections: peer for postgres, scram-sha-256 for others
+# - Remote connections: SSL required with scram-sha-256
+# - No trust authentication allowed
+# - IP-based restrictions for production
+
+# Local connections
+local   all             postgres                                peer
+local   all             all                                     scram-sha-256
+
+# IPv4 local connections (localhost only)
+host    all             all             127.0.0.1/32            scram-sha-256
+
+# IPv6 local connections (localhost only)
+host    all             all             ::1/128                 scram-sha-256
+
+{% if pg_allow_remote_connections | default(false) %}
+# Remote connections - SSL required
+{% for network in pg_allowed_networks | default(['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']) %}
+hostssl all             all             {{ network }}           scram-sha-256
+{% endfor %}
+
+{% if pg_allowed_hosts is defined %}
+# Specific host allowlist
+{% for host in pg_allowed_hosts %}
+hostssl all             all             {{ host }}              scram-sha-256
+{% endfor %}
+{% endif %}
+
+# Replication connections (if configured)
+{% if pg_replication_enabled | default(false) %}
+hostssl replication     replicator      10.0.0.0/8              scram-sha-256
+hostssl replication     replicator      172.16.0.0/12           scram-sha-256
+hostssl replication     replicator      192.168.0.0/16          scram-sha-256
+{% endif %}
+
+# Reject any non-SSL connection attempts
+hostnossl all           all             0.0.0.0/0               reject
+hostnossl all           all             ::/0                    reject
+{% endif %}
+
+# Monitoring user (restricted access)
+{% if pg_monitoring_enabled | default(false) %}
+hostssl postgres        monitoring      127.0.0.1/32            scram-sha-256
+{% if pg_monitoring_hosts is defined %}
+{% for host in pg_monitoring_hosts %}
+hostssl postgres        monitoring      {{ host }}              scram-sha-256
+{% endfor %}
+{% endif %}
+{% endif %}
+
+# Application-specific rules
+{% if pg_app_rules is defined %}
+{% for rule in pg_app_rules %}
+{{ rule.type }} {{ rule.database }} {{ rule.user }} {{ rule.address }} {{ rule.method }}
+{% endfor %}
+{% endif %}

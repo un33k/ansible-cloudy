@@ -1,0 +1,44 @@
+# Granular Task: Create systemd service with grunt user support
+# Purpose: Create systemd service files that use grunt user when available
+# Usage: include_tasks: tasks/sys/services/create-systemd-service.yml
+
+---
+- name: Configure service user settings
+  include_tasks: configure-service-user.yml
+
+- name: Create systemd service file
+  template:
+    src: "{{ service_template | default('generic-service.j2') }}"
+    dest: "/etc/systemd/system/{{ service_name }}.service"
+    owner: root
+    group: root
+    mode: '0644'
+  vars:
+    service_user: "{{ effective_service_user }}"
+    service_group: "{{ effective_service_user }}"
+    service_description: "{{ service_description | default(service_name + ' Service') }}"
+    service_exec_start: "{{ service_exec_start }}"
+    service_working_directory: "{{ service_working_directory | default('/opt/' + service_name) }}"
+    service_environment: "{{ service_environment | default({}) }}"
+    service_restart: "{{ service_restart | default('always') }}"
+    service_restart_sec: "{{ service_restart_sec | default('10') }}"
+  notify: reload systemd
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: true
+
+- name: Enable and start service
+  systemd:
+    name: "{{ service_name }}"
+    enabled: true
+    state: "{{ service_state | default('started') }}"
+
+- name: Display service configuration
+  debug:
+    msg: |
+      ✅ Systemd Service: {{ service_name }}
+      ├── User: {{ effective_service_user }}
+      ├── Working Directory: {{ service_working_directory | default('/opt/' + service_name) }}
+      ├── State: {{ service_state | default('started') }}
+      └── Enabled: Yes

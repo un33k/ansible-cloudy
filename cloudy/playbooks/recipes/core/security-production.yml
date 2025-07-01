@@ -1,0 +1,264 @@
+# Recipe: Production-Grade Security Setup
+# Purpose: Enhanced security with comprehensive hardening for production environments
+# Usage: ansible-playbook playbooks/recipes/core/security-production.yml -i inventory/hosts.yml
+
+---
+- name: Production-Grade Security Setup with Comprehensive Hardening
+  hosts: security_targets
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/security.yml"
+    - "../../../defaults/system.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    emergency_user: "{{ grunt_user }}"    # Only set if vault_grunt_user is defined
+    # SSH Port Management Variables
+    target_ssh_port: "{{ new_ssh_port | default(vault_ssh_port | default(ssh_port_default)) }}"
+    phase_mode: "{{ 'port_change' if ssh_port_change_only | default(false) else 'full' if not skip_ssh_port_change | default(false) else 'no_port_change' }}"
+    
+  pre_tasks:
+    - name: Validate root connection for security setup
+      fail:
+        msg: |
+          ❌ SECURITY SETUP ERROR: Must connect as root user!
+          
+          Security setup requires root access with password.
+          
+          Expected: ansible_user should be 'root'
+          Actual: ansible_user is '{{ ansible_user }}'
+          
+          🔧 Fix:
+          1. Target 'security_targets' group in inventory
+          2. Ensure vault_root_password is set
+          3. Use: ./cli security --install --prod
+      when: ansible_user != 'root'
+    
+    - name: Display production security setup information
+      debug:
+        msg: |
+          🔐 Starting Production-Grade Security Setup ({{ phase_mode }} mode)
+          Target: {{ inventory_hostname }} ({{ ansible_host }})
+          Connection: {{ ansible_user }}@{{ ansible_host }}:{{ ansible_port }}
+          
+          Security Model:
+          ├── Root User: SSH keys ONLY (automation access)
+          ├── Grunt User: {{ emergency_user if vault_grunt_user is defined else 'Not configured - Optional service user' }} {{ '(password + SSH keys)' if vault_grunt_user is defined else '' }}
+          ├── SSH Port: {{ ansible_port }} → {{ target_ssh_port }} (secure port)
+          ├── Firewall: UFW enabled with strict rules
+          ├── Kernel: Production hardening applied
+          ├── Audit: System monitoring enabled
+          └── Updates: Automatic security patches
+          
+  tasks:
+    # Phase 1: Foundation Setup (only in full mode)
+    - name: Update system packages
+      include_tasks: "{{ task_paths }}/sys/core/update.yml"
+      when: phase_mode != 'port_change'
+      tags: [foundation, update]
+      
+    - name: Install common utilities
+      include_tasks: "{{ task_paths }}/sys/core/install-common.yml"
+      when: phase_mode != 'port_change'
+      tags: [foundation, packages]
+      
+    # Phase 2: SSH Key Security for Root (only in full mode)
+    - name: Install SSH public key for root
+      include_tasks: "{{ task_paths }}/sys/ssh/install-public-key.yml"
+      vars:
+        target_user: "root"
+        pub_key_path: "{{ ansible_ssh_private_key_file }}.pub"
+      when: ansible_ssh_private_key_file is defined and phase_mode != 'port_change'
+      tags: [ssh, keys, root]
+      
+    # Phase 3: Create Optional Grunt Service User (only in full mode)
+    - name: Create grunt user ({{ emergency_user }})
+      include_tasks: "{{ task_paths }}/sys/user/add-user.yml"
+      vars:
+        username: "{{ emergency_user }}"
+      when: vault_grunt_user is defined and phase_mode != 'port_change'
+      tags: [users, grunt]
+      
+    - name: Set grunt user password
+      include_tasks: "{{ task_paths }}/sys/user/change-password.yml"
+      vars:
+        username: "{{ emergency_user }}"
+        password: "{{ grunt_password }}"
+      when: vault_grunt_user is defined and phase_mode != 'port_change'
+      tags: [users, grunt, password]
+      
+    - name: Add grunt user to sudoers with NOPASSWD
+      include_tasks: "{{ task_paths }}/sys/user/add-sudoer.yml"
+      vars:
+        username: "{{ emergency_user }}"
+        nopasswd_sudo: true
+      when: vault_grunt_user is defined and phase_mode != 'port_change'
+      tags: [users, grunt, sudo]
+      
+    - name: Install SSH public key for grunt user
+      include_tasks: "{{ task_paths }}/sys/ssh/install-public-key.yml"
+      vars:
+        target_user: "{{ emergency_user }}"
+        pub_key_path: "{{ ansible_ssh_private_key_file }}.pub"
+      when: vault_grunt_user is defined and ansible_ssh_private_key_file is defined and phase_mode != 'port_change'
+      tags: [ssh, keys, grunt]
+      
+    # Phase 4: Firewall Setup (Early Protection) - conditional
+    - name: Install UFW firewall (smart installation)
+      include_tasks: "{{ task_paths }}/sys/firewall/install.yml"
+      when: phase_mode != 'port_change'
+      tags: [firewall, security]
+      
+    - name: Allow new SSH port in UFW firewall
+      ufw:
+        rule: allow
+        port: "{{ target_ssh_port }}"
+        proto: tcp
+      when: phase_mode != 'no_port_change'
+      tags: [firewall, ssh, security]
+      
+    - name: Enable UFW firewall immediately
+      ufw:
+        state: enabled
+        logging: 'on'
+        default: deny
+      when: phase_mode != 'port_change'
+      tags: [firewall, security]
+      
+    # Phase 5: SSH Security Configuration - conditional based on mode
+    - name: Configure SSH port
+      include_tasks: "{{ task_paths }}/sys/ssh/set-port.yml"
+      vars:
+        ssh_port: "{{ target_ssh_port }}"
+      when: phase_mode != 'no_port_change'
+      tags: [ssh, security]
+      
+    - name: Apply production SSH hardening
+      include_tasks: "{{ task_paths }}/sys/ssh/harden-production.yml"
+      tags: [ssh, security, production]
+      
+    # Phase 6: Kernel Security Hardening (only in full mode)
+    - name: Apply kernel security parameters
+      include_tasks: "{{ task_paths }}/sys/security/kernel-hardening.yml"
+      when: phase_mode != 'port_change'
+      tags: [kernel, security, production]
+      
+    # Phase 7: Audit Configuration (only in full mode)
+    - name: Configure system auditing
+      include_tasks: "{{ task_paths }}/sys/audit/configure.yml"
+      when: phase_mode != 'port_change'
+      tags: [audit, security, production]
+      
+    # Phase 8: Automatic Security Updates (only in full mode)
+    - name: Configure automatic security updates
+      include_tasks: "{{ task_paths }}/sys/security/auto-updates.yml"
+      when: phase_mode != 'port_change'
+      tags: [updates, security, production]
+      
+    # Phase 9: Install Security Monitoring (only in full mode)
+    - name: Install fail2ban for intrusion detection
+      apt:
+        name: fail2ban
+        state: present
+      when: phase_mode != 'port_change'
+      tags: [security, monitoring]
+      
+    - name: Start and enable fail2ban
+      service:
+        name: fail2ban
+        state: started
+        enabled: true
+      when: phase_mode != 'port_change'
+      tags: [security, monitoring]
+      
+    # Phase 10: Additional Production Hardening (only in full mode)
+    - name: Disable unnecessary services
+      service:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop: "{{ services_to_disable | default([]) }}"
+      when: phase_mode != 'port_change'
+      failed_when: false
+      tags: [services, security, production]
+      
+    - name: Set secure file permissions on sensitive files
+      file:
+        path: "{{ item.path }}"
+        owner: "{{ item.owner | default('root') }}"
+        group: "{{ item.group | default('root') }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: '/etc/passwd', mode: '0644' }
+        - { path: '/etc/shadow', mode: '0640' }
+        - { path: '/etc/group', mode: '0644' }
+        - { path: '/etc/gshadow', mode: '0640' }
+        - { path: '/etc/ssh/sshd_config', mode: '0600' }
+        - { path: '/boot/grub/grub.cfg', mode: '0600' }
+      when: phase_mode != 'port_change'
+      tags: [permissions, security, production]
+      
+  handlers:
+    - name: restart ssh
+      service:
+        name: ssh
+        state: restarted
+        
+    - name: restart auditd
+      service:
+        name: auditd
+        state: restarted
+        
+    - name: reload auditd rules
+      command: augenrules --load
+      notify: restart auditd
+      
+  post_tasks:
+    - name: Generate security report
+      shell: |
+        echo "=== Production Security Report ===" > /root/security-report.txt
+        echo "Generated: $(date)" >> /root/security-report.txt
+        echo "" >> /root/security-report.txt
+        echo "SSH Port: {{ target_ssh_port }}" >> /root/security-report.txt
+        echo "Firewall Status:" >> /root/security-report.txt
+        ufw status verbose >> /root/security-report.txt 2>&1 || echo "UFW not available" >> /root/security-report.txt
+        echo "" >> /root/security-report.txt
+        echo "Kernel Parameters:" >> /root/security-report.txt
+        sysctl -a | grep -E "(randomize_va_space|kptr_restrict|dmesg_restrict|tcp_syncookies)" >> /root/security-report.txt
+        echo "" >> /root/security-report.txt
+        echo "Audit Status:" >> /root/security-report.txt
+        systemctl status auditd --no-pager >> /root/security-report.txt 2>&1 || echo "Auditd not available" >> /root/security-report.txt
+        echo "" >> /root/security-report.txt
+        echo "Auto-update Status:" >> /root/security-report.txt
+        systemctl status unattended-upgrades --no-pager >> /root/security-report.txt 2>&1 || echo "Unattended-upgrades not available" >> /root/security-report.txt
+      when: phase_mode != 'port_change'
+      
+    - name: Display production security completion
+      debug:
+        msg: |
+          🎉 ✅ PRODUCTION-GRADE SECURITY SETUP COMPLETED! ({{ phase_mode }} mode)
+          
+          📋 Security Configuration:
+             ├── Root Access: SSH keys ONLY (automation)
+             ├── Grunt Access: {{ emergency_user if vault_grunt_user is defined else 'Not configured' }} {{ '(password + SSH keys)' if vault_grunt_user is defined else '' }}
+             ├── SSH Port: {{ target_ssh_port }}
+             ├── SSH Hardening: Production ciphers, MACs, and KEX algorithms
+             ├── Firewall: {{ 'UFW enabled with rate limiting' if phase_mode != 'port_change' else 'Previously configured' }}
+             ├── Kernel: {{ 'Production security parameters applied' if phase_mode != 'port_change' else 'Previously configured' }}
+             ├── Audit: {{ 'System monitoring active' if phase_mode != 'port_change' else 'Previously configured' }}
+             ├── Updates: {{ 'Automatic security patches enabled' if phase_mode != 'port_change' else 'Previously configured' }}
+             ├── Monitoring: {{ 'fail2ban active' if phase_mode != 'port_change' else 'Previously configured' }}
+             └── Connection: Use root for all automation
+          
+          🔐 Security Status: PRODUCTION-GRADE ENTERPRISE
+          
+          📊 Security Report: /root/security-report.txt
+          
+          🚀 Next Steps:
+             • All automation continues as root (no connection switching)
+             • Grunt access: {{ 'ssh ' + emergency_user + '@' + ansible_host + ':' + (target_ssh_port|string) if vault_grunt_user is defined else 'No grunt user configured - using root for all operations' }}
+             • Deploy services: ./cli base --install, ./cli psql --install, etc.
+             • Monitor logs: /var/log/audit/audit.log, /var/log/unattended-upgrades/

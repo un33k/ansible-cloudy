@@ -1,0 +1,376 @@
+# Recipe: Node.js Web Application Server
+# Purpose: Deploy Node.js applications with PM2, Nginx, and production optimizations
+# Usage: ./cli nodejs --install [--node-version 18] [--app-repo https://github.com/user/app.git]
+
+---
+- name: Node.js Web Application Server Setup
+  hosts: service_targets
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/nodejs.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    
+    # Node.js configuration
+    node_version: "{{ vault_node_version | default('18') }}"
+    npm_registry: "{{ vault_npm_registry | default('https://registry.npmjs.org/') }}"
+    
+    # Application configuration
+    app_name: "{{ vault_app_name | default('nodejs-app') }}"
+    app_repo: "{{ vault_app_repo | default('') }}"
+    app_branch: "{{ vault_app_branch | default('main') }}"
+    app_path: "{{ vault_app_path | default('/var/www/' + app_name) }}"
+    app_port: "{{ vault_app_port | default(3000) }}"
+    app_env: "{{ vault_app_env | default('production') }}"
+    
+    # PM2 configuration
+    pm2_instances: "{{ vault_pm2_instances | default('max') }}"
+    pm2_exec_mode: "{{ vault_pm2_exec_mode | default('cluster') }}"
+    
+    # Nginx configuration
+    setup_nginx: "{{ vault_setup_nginx | default(true) }}"
+    nginx_domain: "{{ vault_nginx_domain | default(ansible_default_ipv4.address) }}"
+    nginx_ssl_enabled: "{{ vault_nginx_ssl_enabled | default(false) }}"
+    
+  pre_tasks:
+    # Ensure proper secure connection
+    - name: Validate secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
+    
+    - name: Display Node.js setup information
+      debug:
+        msg: |
+          🚀 Starting Node.js Web Application Server Setup
+          Target: {{ inventory_hostname }} ({{ ansible_host }})
+          
+          📋 Configuration:
+          ├── Node.js: v{{ node_version }}
+          ├── Application: {{ app_name }}
+          ├── Repository: {{ app_repo if app_repo else 'No repo configured' }}
+          ├── App Path: {{ app_path }}
+          ├── App Port: {{ app_port }}
+          ├── Environment: {{ app_env }}
+          ├── PM2 Mode: {{ pm2_exec_mode }} ({{ pm2_instances }} instances)
+          └── Nginx: {{ 'Enabled with domain ' + nginx_domain if setup_nginx else 'Disabled' }}
+          
+  tasks:
+    # Install Node.js
+    - name: Install Node.js repository
+      shell: |
+        curl -fsSL https://deb.nodesource.com/setup_{{ node_version }}.x | sudo -E bash -
+      args:
+        creates: /etc/apt/sources.list.d/nodesource.list
+      tags: [nodejs, install]
+    
+    - name: Install Node.js and build tools
+      apt:
+        name:
+          - nodejs
+          - build-essential
+          - git
+        state: present
+        update_cache: yes
+      tags: [nodejs, install]
+    
+    - name: Install Yarn package manager
+      npm:
+        name: yarn
+        global: yes
+        state: present
+      tags: [nodejs, yarn]
+    
+    - name: Configure npm
+      shell: |
+        npm config set registry {{ npm_registry }}
+        npm config set strict-ssl true
+      tags: [nodejs, npm]
+    
+    # Install PM2
+    - name: Install PM2 process manager
+      npm:
+        name: pm2
+        global: yes
+        state: present
+      tags: [nodejs, pm2]
+    
+    - name: Install PM2 log rotation
+      shell: pm2 install pm2-logrotate
+      args:
+        creates: /home/{{ ansible_user }}/.pm2/modules/pm2-logrotate
+      tags: [nodejs, pm2]
+    
+    - name: Configure PM2 log rotation
+      shell: |
+        pm2 set pm2-logrotate:max_size 100M
+        pm2 set pm2-logrotate:retain 7
+        pm2 set pm2-logrotate:compress true
+      tags: [nodejs, pm2]
+    
+    # Create application user
+    - name: Create application user
+      user:
+        name: "{{ app_name }}"
+        system: yes
+        shell: /bin/bash
+        home: "/home/{{ app_name }}"
+        createhome: yes
+      tags: [nodejs, user]
+    
+    # Setup application directory
+    - name: Create application directory
+      file:
+        path: "{{ app_path }}"
+        state: directory
+        owner: "{{ app_name }}"
+        group: "{{ app_name }}"
+        mode: '0755'
+      tags: [nodejs, app]
+    
+    # Clone application repository (if provided)
+    - name: Clone application repository
+      git:
+        repo: "{{ app_repo }}"
+        dest: "{{ app_path }}"
+        version: "{{ app_branch }}"
+        force: yes
+      become_user: "{{ app_name }}"
+      when: app_repo != ''
+      tags: [nodejs, app, git]
+    
+    # Create sample application if no repo provided
+    - name: Create sample Express application
+      copy:
+        dest: "{{ app_path }}/app.js"
+        content: |
+          const express = require('express');
+          const app = express();
+          const port = process.env.PORT || {{ app_port }};
+          
+          app.use(express.json());
+          
+          // Health check endpoint
+          app.get('/health', (req, res) => {
+            res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+          });
+          
+          // Main route
+          app.get('/', (req, res) => {
+            res.json({ 
+              message: 'Node.js application is running!',
+              environment: process.env.NODE_ENV || 'development',
+              node_version: process.version
+            });
+          });
+          
+          app.listen(port, () => {
+            console.log(`Server running on port ${port}`);
+          });
+        owner: "{{ app_name }}"
+        group: "{{ app_name }}"
+        mode: '0644'
+      when: app_repo == ''
+      tags: [nodejs, app, sample]
+    
+    - name: Create package.json for sample app
+      copy:
+        dest: "{{ app_path }}/package.json"
+        content: |
+          {
+            "name": "{{ app_name }}",
+            "version": "1.0.0",
+            "description": "Node.js application",
+            "main": "app.js",
+            "scripts": {
+              "start": "node app.js",
+              "dev": "nodemon app.js"
+            },
+            "dependencies": {
+              "express": "^4.18.2"
+            },
+            "devDependencies": {
+              "nodemon": "^3.0.1"
+            }
+          }
+        owner: "{{ app_name }}"
+        group: "{{ app_name }}"
+        mode: '0644'
+      when: app_repo == ''
+      tags: [nodejs, app, sample]
+    
+    # Install application dependencies
+    - name: Install application dependencies
+      npm:
+        path: "{{ app_path }}"
+        production: "{{ app_env == 'production' }}"
+      become_user: "{{ app_name }}"
+      tags: [nodejs, app, npm]
+    
+    # Create environment file
+    - name: Create application environment file
+      template:
+        src: nodejs/env.j2
+        dest: "{{ app_path }}/.env"
+        owner: "{{ app_name }}"
+        group: "{{ app_name }}"
+        mode: '0600'
+      tags: [nodejs, app, env]
+    
+    # Create PM2 ecosystem file
+    - name: Create PM2 ecosystem configuration
+      template:
+        src: nodejs/ecosystem.config.js.j2
+        dest: "{{ app_path }}/ecosystem.config.js"
+        owner: "{{ app_name }}"
+        group: "{{ app_name }}"
+        mode: '0644'
+      tags: [nodejs, pm2, config]
+    
+    # Start application with PM2
+    - name: Start application with PM2
+      shell: |
+        cd {{ app_path }}
+        pm2 start ecosystem.config.js
+        pm2 save
+      become_user: "{{ app_name }}"
+      environment:
+        NODE_ENV: "{{ app_env }}"
+      tags: [nodejs, pm2, start]
+    
+    # Setup PM2 startup script
+    - name: Setup PM2 startup script
+      shell: |
+        pm2 startup systemd -u {{ app_name }} --hp /home/{{ app_name }}
+        systemctl enable pm2-{{ app_name }}
+      tags: [nodejs, pm2, startup]
+    
+    # Install and configure Nginx
+    - name: Install Nginx web server
+      include_tasks: "{{ task_paths }}/web/nginx/install.yml"
+      when: setup_nginx | bool
+      tags: [nginx, install]
+    
+    - name: Create Nginx site configuration
+      template:
+        src: nodejs/nginx-site.conf.j2
+        dest: "/etc/nginx/sites-available/{{ app_name }}.conf"
+        owner: root
+        group: root
+        mode: '0644'
+      when: setup_nginx | bool
+      notify: reload nginx
+      tags: [nginx, config]
+    
+    - name: Enable Nginx site
+      file:
+        src: "/etc/nginx/sites-available/{{ app_name }}.conf"
+        dest: "/etc/nginx/sites-enabled/{{ app_name }}.conf"
+        state: link
+      when: setup_nginx | bool
+      notify: reload nginx
+      tags: [nginx, config]
+    
+    - name: Disable default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      when: setup_nginx | bool
+      notify: reload nginx
+      tags: [nginx, config]
+    
+    # Firewall configuration
+    - name: Allow HTTP through firewall
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-http.yml"
+      when: setup_nginx | bool
+      tags: [firewall, http]
+    
+    - name: Allow HTTPS through firewall
+      include_tasks: "{{ task_paths }}/sys/firewall/allow-https.yml"
+      when: setup_nginx | bool and nginx_ssl_enabled | bool
+      tags: [firewall, https]
+    
+    - name: Allow Node.js port through firewall (if not using Nginx)
+      ufw:
+        rule: allow
+        port: "{{ app_port }}"
+        proto: tcp
+        comment: "Node.js application"
+      when: not setup_nginx | bool
+      tags: [firewall, nodejs]
+    
+    # Health check
+    - name: Wait for application to start
+      wait_for:
+        port: "{{ app_port }}"
+        host: 127.0.0.1
+        delay: 5
+        timeout: 30
+      tags: [nodejs, validation]
+    
+    - name: Check application health
+      uri:
+        url: "http://127.0.0.1:{{ app_port }}/health"
+        status_code: 200
+      register: health_check
+      tags: [nodejs, validation]
+    
+  post_tasks:
+    - name: Generate Node.js deployment report
+      shell: |
+        echo "=== Node.js Application Deployment Report ===" > /root/nodejs-report.txt
+        echo "Generated: $(date)" >> /root/nodejs-report.txt
+        echo "" >> /root/nodejs-report.txt
+        echo "Node.js Version: $(node --version)" >> /root/nodejs-report.txt
+        echo "NPM Version: $(npm --version)" >> /root/nodejs-report.txt
+        echo "PM2 Version: $(pm2 --version)" >> /root/nodejs-report.txt
+        echo "" >> /root/nodejs-report.txt
+        echo "Application:" >> /root/nodejs-report.txt
+        echo "  Name: {{ app_name }}" >> /root/nodejs-report.txt
+        echo "  Path: {{ app_path }}" >> /root/nodejs-report.txt
+        echo "  Port: {{ app_port }}" >> /root/nodejs-report.txt
+        echo "  Environment: {{ app_env }}" >> /root/nodejs-report.txt
+        echo "" >> /root/nodejs-report.txt
+        echo "PM2 Status:" >> /root/nodejs-report.txt
+        su - {{ app_name }} -c "pm2 list" >> /root/nodejs-report.txt
+        echo "" >> /root/nodejs-report.txt
+        echo "Nginx: {{ 'Configured for ' + nginx_domain if setup_nginx else 'Not configured' }}" >> /root/nodejs-report.txt
+      tags: [nodejs, report]
+    
+    - name: Display Node.js deployment summary
+      debug:
+        msg: |
+          🎉 ✅ NODE.JS WEB SERVER SETUP COMPLETED!
+          
+          📋 Configuration Summary:
+             ├── Server: {{ inventory_hostname }} ({{ ansible_host }})
+             ├── Node.js: v{{ node_version }}
+             ├── Application: {{ app_name }}
+             ├── Port: {{ app_port }}
+             ├── PM2: {{ pm2_exec_mode }} mode with {{ pm2_instances }} instances
+             └── Nginx: {{ 'Reverse proxy on ' + nginx_domain if setup_nginx else 'Direct access on port ' + (app_port|string) }}
+          
+          🚀 Application Status:
+             ├── Health Check: {{ health_check.json | to_nice_json if health_check is defined else 'N/A' }}
+             ├── Process Manager: PM2 (auto-restart enabled)
+             ├── Logs: pm2 logs {{ app_name }}
+             └── Monitoring: pm2 monit
+          
+          📖 Management Commands:
+             ├── View status: pm2 list
+             ├── View logs: pm2 logs {{ app_name }}
+             ├── Restart app: pm2 restart {{ app_name }}
+             ├── Stop app: pm2 stop {{ app_name }}
+             └── Monitor: pm2 monit
+          
+          🌐 Access URLs:
+             ├── Application: {{ 'http://' + nginx_domain if setup_nginx else 'http://' + ansible_host + ':' + (app_port|string) }}
+             └── Health Check: {{ 'http://' + nginx_domain + '/health' if setup_nginx else 'http://' + ansible_host + ':' + (app_port|string) + '/health' }}
+             
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded

@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+# Prometheus Redis Exporter Configuration
+
+# Redis instance to monitor
+REDIS_ADDR="redis://127.0.0.1:{{ redis_port | default(redis_port_default) }}"
+
+{% if redis_requirepass is defined and redis_requirepass %}
+# Redis password
+REDIS_PASSWORD="{{ redis_requirepass }}"
+{% endif %}
+
+# Exporter listening address
+LISTEN_ADDRESS="0.0.0.0:9121"
+
+# Additional options
+OPTIONS="--log-format=json"

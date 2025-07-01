@@ -1,0 +1,55 @@
+# Task: Configure PgBouncer Authentication
+# Purpose: Setup user authentication for pgbouncer
+# Security: MD5 hashed passwords in userlist.txt
+
+---
+- name: Check if database password is defined
+  fail:
+    msg: |
+      ❌ Database password not defined!
+      Please set database_password or vault_postgres_password
+  when: (database_password is not defined) and (vault_postgres_password is not defined)
+
+- name: Set authentication variables
+  set_fact:
+    pgbouncer_auth_type: "{{ auth_type | default('md5') }}"
+    pgbouncer_auth_file: "/etc/pgbouncer/userlist.txt"
+    db_password: "{{ database_password | default(vault_postgres_password) }}"
+
+- name: Generate MD5 password hash for pgbouncer
+  shell: |
+    echo -n "{{ db_password }}{{ database_user | default('postgres') }}" | md5sum | awk '{print $1}'
+  register: md5_password
+  changed_when: false
+  no_log: true
+
+- name: Create userlist.txt with hashed password
+  copy:
+    content: |
+      # PgBouncer userlist - Auto-generated
+      # Format: "username" "password"
+      "{{ database_user | default('postgres') }}" "md5{{ md5_password.stdout }}"
+    dest: "{{ pgbouncer_auth_file }}"
+    owner: postgres
+    group: postgres
+    mode: '0640'
+    backup: yes
+  notify: restart pgbouncer
+
+- name: Configure authentication in pgbouncer.ini
+  lineinfile:
+    path: /etc/pgbouncer/pgbouncer.ini
+    regexp: "^{{ item.key }} ="
+    line: "{{ item.key }} = {{ item.value }}"
+  loop:
+    - { key: "auth_type", value: "{{ pgbouncer_auth_type }}" }
+    - { key: "auth_file", value: "{{ pgbouncer_auth_file }}" }
+  notify: restart pgbouncer
+
+- name: Display authentication configuration
+  debug:
+    msg: |
+      ✅ Authentication configured
+      Type: {{ pgbouncer_auth_type }}
+      User: {{ database_user | default('postgres') }}
+      Auth file: {{ pgbouncer_auth_file }}

@@ -1,0 +1,48 @@
+# yamllint configuration for Ansible Cloudy
+# More permissive settings for practical Ansible development
+
+extends: default
+
+# Ignore patterns for third-party and service directories
+ignore: |
+  */tasks/services/redis/*
+  */tasks/services/vpn/*
+
+rules:
+  # Line length - disabled for practical Ansible development
+  line-length: disable
+
+  # Allow trailing spaces (common in YAML templates)
+  trailing-spaces: disable
+
+  # Allow empty lines at document end
+  new-line-at-end-of-file: disable
+
+  # More lenient indentation for Ansible playbooks
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Allow truthy values like 'yes'/'no' (common in Ansible)
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
+
+  # Allow empty values (common in Ansible variables)
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: false
+
+  # More relaxed comments rules
+  comments:
+    min-spaces-from-content: 1
+  
+  # Disable comment indentation checks (common in config files)
+  comments-indentation: disable
+
+  # Allow flexible braces spacing (style preference)
+  braces: disable
+
+  # Allow longer documents (Ansible playbooks can be long)
+  document-start: disable

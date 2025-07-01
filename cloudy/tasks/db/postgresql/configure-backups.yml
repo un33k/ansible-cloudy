@@ -1,0 +1,127 @@
+---
+# cloudy/tasks/db/postgresql/configure-backups.yml
+# Configure PostgreSQL backup strategy
+
+- name: Create backup directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+  loop:
+    - /var/lib/postgresql/backups
+    - /var/lib/postgresql/backups/base
+    - /var/lib/postgresql/backups/wal
+    - /var/lib/postgresql/archive
+
+- name: Install backup dependencies
+  apt:
+    name:
+      - postgresql-client-{{ pg_version }}
+      - python3-psycopg2
+      - pigz  # Parallel gzip for faster compression
+    state: present
+
+- name: Create PostgreSQL backup script
+  template:
+    src: pg_backup.sh.j2
+    dest: /usr/local/bin/pg_backup.sh
+    owner: postgres
+    group: postgres
+    mode: '0750'
+
+- name: Create WAL archive cleanup script
+  template:
+    src: pg_archive_cleanup.sh.j2
+    dest: /usr/local/bin/pg_archive_cleanup.sh
+    owner: postgres
+    group: postgres
+    mode: '0750'
+
+- name: Create backup restore script
+  template:
+    src: pg_restore_backup.sh.j2
+    dest: /usr/local/bin/pg_restore_backup.sh
+    owner: postgres
+    group: postgres
+    mode: '0750'
+
+- name: Schedule daily base backups
+  cron:
+    name: "PostgreSQL daily base backup"
+    user: postgres
+    job: "/usr/local/bin/pg_backup.sh base"
+    hour: "{{ pg_backup_hour | default('2') }}"
+    minute: "{{ pg_backup_minute | default('0') }}"
+    state: present
+
+- name: Schedule hourly WAL backups
+  cron:
+    name: "PostgreSQL hourly WAL backup"
+    user: postgres
+    job: "/usr/local/bin/pg_backup.sh wal"
+    minute: "0"
+    state: present
+  when: pg_continuous_archiving | default(true)
+
+- name: Schedule weekly full cluster backup
+  cron:
+    name: "PostgreSQL weekly full backup"
+    user: postgres
+    job: "/usr/local/bin/pg_backup.sh full"
+    weekday: "{{ pg_backup_weekday | default('0') }}"
+    hour: "{{ pg_backup_full_hour | default('3') }}"
+    minute: "0"
+    state: present
+
+- name: Schedule daily backup cleanup
+  cron:
+    name: "PostgreSQL backup cleanup"
+    user: postgres
+    job: "/usr/local/bin/pg_archive_cleanup.sh"
+    hour: "23"
+    minute: "30"
+    state: present
+
+- name: Configure logrotate for backup logs
+  template:
+    src: pg_backup_logrotate.j2
+    dest: /etc/logrotate.d/postgresql-backup
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create backup monitoring script
+  template:
+    src: pg_backup_monitor.sh.j2
+    dest: /usr/local/bin/pg_backup_monitor.sh
+    owner: postgres
+    group: postgres
+    mode: '0750'
+
+- name: Schedule backup monitoring
+  cron:
+    name: "PostgreSQL backup monitoring"
+    user: postgres
+    job: "/usr/local/bin/pg_backup_monitor.sh"
+    hour: "9"
+    minute: "0"
+    state: present
+
+- name: Test backup configuration
+  command: /usr/local/bin/pg_backup.sh test
+  become_user: postgres
+  register: backup_test
+  changed_when: false
+  failed_when: backup_test.rc != 0
+
+- name: Display backup configuration
+  debug:
+    msg: |
+      PostgreSQL Backup Configuration:
+      ├── Base backups: Daily at {{ pg_backup_hour | default('2') }}:{{ pg_backup_minute | default('0') }}
+      ├── WAL archiving: {{ 'Enabled (continuous)' if pg_continuous_archiving | default(true) else 'Disabled' }}
+      ├── Full backups: Weekly on {{ ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][pg_backup_weekday | default(0) | int] }}
+      ├── Retention: {{ pg_backup_retention_days | default(7) }} days
+      └── Backup location: /var/lib/postgresql/backups/

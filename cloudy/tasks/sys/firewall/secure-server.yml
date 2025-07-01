@@ -1,6 +1,6 @@
 # Granular Task: Secure Server with Basic Firewall Rules
 # Equivalent to: cloudy-old/sys/firewall.py::fw_secure_server()
-# Usage: ansible-playbook tasks/sys/firewall/secure-server.yml -e "ssh_port=22"
+# Usage: ansible-playbook tasks/sys/firewall/secure-server.yml -e "ansible_port=22"
 
 ---
 - name: Enable UFW logging
@@ -23,7 +23,7 @@
 - name: Allow SSH on specified port
   ufw:
     rule: allow
-    port: "{{ ssh_port }}"
+    port: "{{ ansible_port }}"
     proto: tcp
   register: ufw_allow_ssh
   
@@ -41,7 +41,7 @@
   debug:
     msg: |
       ✅ Server secured with UFW firewall
-      SSH port allowed: {{ ssh_port }}
+      SSH port allowed: {{ ansible_port }}
       Default incoming: DENY
       Default outgoing: ALLOW
       Logging: ENABLED

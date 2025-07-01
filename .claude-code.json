@@ -1,0 +1,74 @@
+{
+  "autonomous_mode": true,
+  "batch_execution": true,
+  "auto_continue": true,
+  "session_timeout": 1800,
+  
+  "safety_constraints": {
+    "restrict_to_cwd": true,
+    "block_symlink_traversal": true,
+    "block_parent_directory": true,
+    "max_file_size": "10MB",
+    "max_files_created": 100,
+    "forbidden_commands": [
+      "git", "sudo", "rm -rf", "chmod 777", 
+      "curl", "wget", "ssh", "scp", "rsync",
+      "brew install", "npm install -g", "pip install --user", "pip3 install --user",
+      "docker", "launchctl", "pkill", "killall",
+      "diskutil", "hdiutil", "security", "defaults write",
+      "xcode-select", "softwareupdate", "mas install"
+    ],
+    "allowed_paths": ["./", "./**", "./.*"],
+    "blocked_paths": [
+      "~/", "/", "../", "../../", "../*/../", 
+      "/System/", "/Library/", "/Applications/", "/User", "/usr/", "/opt/", "/etc/", "/var/",
+      "~/Library/", "~/Applications/", "~/Desktop/", "~/Documents/", "~/Downloads/",
+      "~/.ssh/", "~/.aws/", "~/.config/", "~/.zshrc", "~/.zprofile", "~/.zshenv",
+      "~/.bash_profile", "~/.profile", "~/.bashrc",
+      "/Volumes/", "/private/", "/dev/", "/cores/"
+    ]
+  },
+
+  "confirmation_prompts": {
+    "file_operations": false,
+    "directory_creation": false,
+    "package_installs": false,
+    "script_execution": false,
+    "dependency_changes": true,
+    "destructive_operations": true,
+    "permission_changes": true
+  },
+
+  "execution_limits": {
+    "max_execution_time": 1800,
+    "max_cpu_usage": 80,
+    "max_memory_usage": "4GB",
+    "max_network_requests": 50,
+    "rate_limit_commands": 10,
+    "max_processes": 20
+  },
+
+  "macos_specific": {
+    "respect_sandboxing": true,
+    "avoid_system_directories": true,
+    "use_local_homebrew": false,
+    "respect_sip": true,
+    "avoid_kernel_extensions": true
+  },
+
+  "logging": {
+    "detailed_logs": true,
+    "progress_file": "./claude-progress.log",
+    "error_file": "./claude-errors.log",
+    "completion_webhook": null,
+    "use_macos_logging": true
+  },
+
+  "recovery_options": {
+    "auto_backup": true,
+    "backup_directory": "./.claude-backups/",
+    "rollback_on_error": false,
+    "continue_on_error": true,
+    "use_time_machine_exclusion": true
+  }
+}

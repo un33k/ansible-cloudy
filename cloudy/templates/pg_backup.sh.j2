@@ -1,0 +1,133 @@
+#!/bin/bash
+# {{ ansible_managed }}
+# PostgreSQL Backup Script - Cloudy
+
+set -euo pipefail
+
+# Configuration
+BACKUP_DIR="/var/lib/postgresql/backups"
+ARCHIVE_DIR="/var/lib/postgresql/archive"
+LOG_DIR="/var/log/postgresql"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+DATE=$(date +%Y%m%d)
+RETENTION_DAYS={{ pg_backup_retention_days | default(7) }}
+PGUSER="postgres"
+
+# Ensure log directory exists
+mkdir -p "$LOG_DIR"
+
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_DIR/backup.log"
+}
+
+# Error handling
+error_exit() {
+    log "ERROR: $1"
+    exit 1
+}
+
+# Backup type from argument
+BACKUP_TYPE="${1:-base}"
+
+case "$BACKUP_TYPE" in
+    base)
+        log "Starting base backup..."
+        
+        # Create base backup directory
+        BACKUP_PATH="$BACKUP_DIR/base/backup_${TIMESTAMP}"
+        mkdir -p "$BACKUP_PATH"
+        
+        # Perform base backup
+        if pg_basebackup -D "$BACKUP_PATH" -Ft -z -P -c fast -l "Base backup $TIMESTAMP"; then
+            log "Base backup completed successfully: $BACKUP_PATH"
+            
+            # Create latest symlink
+            ln -sfn "$BACKUP_PATH" "$BACKUP_DIR/base/latest"
+        else
+            error_exit "Base backup failed"
+        fi
+        ;;
+        
+    wal)
+        log "Archiving WAL files..."
+        
+        # Archive WAL files
+        if [ -d "$ARCHIVE_DIR" ]; then
+            WAL_COUNT=$(find "$ARCHIVE_DIR" -name "*.gz" -mmin -60 | wc -l)
+            log "Found $WAL_COUNT recent WAL files"
+            
+            # Compress older WAL files
+            find "$ARCHIVE_DIR" -name "*" -type f ! -name "*.gz" -mmin +5 -exec pigz {} \;
+        fi
+        ;;
+        
+    full)
+        log "Starting full cluster backup..."
+        
+        # Create full backup directory
+        FULL_BACKUP_DIR="$BACKUP_DIR/full/full_${DATE}"
+        mkdir -p "$FULL_BACKUP_DIR"
+        
+        # Get list of databases
+        DATABASES=$(psql -U "$PGUSER" -At -c "SELECT datname FROM pg_database WHERE datistemplate = false AND datname != 'postgres';")
+        
+        # Dump globals (roles, tablespaces)
+        log "Dumping global objects..."
+        pg_dumpall -U "$PGUSER" --globals-only | pigz > "$FULL_BACKUP_DIR/globals.sql.gz"
+        
+        # Dump each database
+        for DB in $DATABASES; do
+            log "Dumping database: $DB"
+            pg_dump -U "$PGUSER" -d "$DB" -Fc -Z0 | pigz > "$FULL_BACKUP_DIR/${DB}.dump.gz"
+        done
+        
+        # Create manifest
+        {
+            echo "Backup Date: $(date)"
+            echo "PostgreSQL Version: $(psql -U "$PGUSER" -At -c 'SELECT version();')"
+            echo "Databases:"
+            echo "$DATABASES"
+        } > "$FULL_BACKUP_DIR/manifest.txt"
+        
+        log "Full cluster backup completed: $FULL_BACKUP_DIR"
+        ;;
+        
+    test)
+        log "Testing backup configuration..."
+        
+        # Test PostgreSQL connection
+        if ! psql -U "$PGUSER" -c "SELECT 1;" >/dev/null 2>&1; then
+            error_exit "Cannot connect to PostgreSQL"
+        fi
+        
+        # Test backup directories
+        for dir in "$BACKUP_DIR" "$ARCHIVE_DIR" "$LOG_DIR"; do
+            if [ ! -w "$dir" ]; then
+                error_exit "Cannot write to directory: $dir"
+            fi
+        done
+        
+        # Test backup tools
+        for tool in pg_basebackup pg_dump pg_dumpall pigz; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+                error_exit "Required tool not found: $tool"
+            fi
+        done
+        
+        log "Backup configuration test passed"
+        exit 0
+        ;;
+        
+    *)
+        error_exit "Unknown backup type: $BACKUP_TYPE. Use: base, wal, full, or test"
+        ;;
+esac
+
+# Cleanup old backups
+log "Cleaning up old backups..."
+find "$BACKUP_DIR/base" -name "backup_*" -type d -mtime +$RETENTION_DAYS -exec rm -rf {} \; 2>/dev/null || true
+find "$BACKUP_DIR/full" -name "full_*" -type d -mtime +$RETENTION_DAYS -exec rm -rf {} \; 2>/dev/null || true
+find "$ARCHIVE_DIR" -name "*.gz" -type f -mtime +$((RETENTION_DAYS * 2)) -delete 2>/dev/null || true
+
+log "Backup process completed"
