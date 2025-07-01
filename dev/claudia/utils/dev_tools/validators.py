@@ -18,7 +18,7 @@ class ValidationTools:
     def __init__(self, config):
         self.config = config
         self.dev_dir = config.project_root / "dev"
-        self.claudia_dir = self.dev_dir / "cli"
+        self.claudia_dir = self.dev_dir / "claudia"
     
     def validate_precommit(self) -> int:
         """Run essential pre-commit validation suite"""
