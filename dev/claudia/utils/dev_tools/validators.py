@@ -18,7 +18,7 @@ class ValidationTools:
     def __init__(self, config):
         self.config = config
         self.dev_dir = config.project_root / "dev"
-        self.claudia_dir = self.dev_dir / "claudia"
+        self.claudia_dir = self.dev_dir / "cli"
     
     def validate_precommit(self) -> int:
         """Run essential pre-commit validation suite"""
@@ -194,7 +194,7 @@ class ValidationTools:
                 error("flake8 not available. Install with: pip install flake8")
                 return 1
             
-            # Run flake8 on the claudia directory with dev config
+            # Run flake8 on the cli directory with dev config
             flake8_config = self.dev_dir / ".flake8"
             if flake8_config.exists():
                 result = subprocess.run(

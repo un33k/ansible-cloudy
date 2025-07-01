@@ -117,6 +117,6 @@
           🚀 Core server foundation ready for service deployments!
           
           📚 Next Steps:
-             • Deploy services: ./claudia psql --install, ./claudia django --install, etc.
+             • Deploy services: ./cli psql --install, ./cli django --install, etc.
              • Service User Mode: {{ 'Grunt user (' + grunt_user + ') for service processes' if vault_grunt_user is defined else 'Root user for all operations' }}
              • All automation continues as root with SSH key authentication

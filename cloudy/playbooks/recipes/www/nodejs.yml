@@ -1,6 +1,6 @@
 # Recipe: Node.js Web Application Server
 # Purpose: Deploy Node.js applications with PM2, Nginx, and production optimizations
-# Usage: ./claudia nodejs --install [--node-version 18] [--app-repo https://github.com/user/app.git]
+# Usage: ./cli nodejs --install [--node-version 18] [--app-repo https://github.com/user/app.git]
 
 ---
 - name: Node.js Web Application Server Setup

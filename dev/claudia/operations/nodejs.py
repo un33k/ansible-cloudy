@@ -50,8 +50,8 @@ class NodeJSOperations(BaseServiceOperations):
         print(f"{Colors.DIM}Deploy Node.js applications with PM2 process manager and optional Nginx{Colors.RESET}\n")
         
         print(f"{Colors.GREEN}USAGE:{Colors.RESET}")
-        print(f"  {Colors.YELLOW}claudia nodejs{Colors.RESET} --install [OPTIONS]")
-        print(f"  {Colors.YELLOW}claudia nodejs{Colors.RESET} --help\n")
+        print(f"  {Colors.YELLOW}cli nodejs{Colors.RESET} --install [OPTIONS]")
+        print(f"  {Colors.YELLOW}cli nodejs{Colors.RESET} --help\n")
         
         print(f"{Colors.GREEN}OPTIONS:{Colors.RESET}")
         print(f"  {Colors.CYAN}--install{Colors.RESET}              Install Node.js and deploy application")
@@ -83,16 +83,16 @@ class NodeJSOperations(BaseServiceOperations):
         
         print(f"{Colors.GREEN}EXAMPLES:{Colors.RESET}")
         print(f"  # Install with sample application")
-        print(f"  {Colors.YELLOW}claudia nodejs --install{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli nodejs --install{Colors.RESET}")
         print()
         print(f"  # Deploy from Git repository")
-        print(f"  {Colors.YELLOW}claudia nodejs --install --app-repo https://github.com/user/app.git{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli nodejs --install --app-repo https://github.com/user/app.git{Colors.RESET}")
         print()
         print(f"  # Production deploy with domain and SSL")
-        print(f"  {Colors.YELLOW}claudia nodejs --install --prod --domain api.example.com --ssl{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli nodejs --install --prod --domain api.example.com --ssl{Colors.RESET}")
         print()
         print(f"  # Custom configuration")
-        print(f"  {Colors.YELLOW}claudia nodejs --install --node-version 20 --pm2-instances 4 --app-port 8080{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli nodejs --install --node-version 20 --pm2-instances 4 --app-port 8080{Colors.RESET}")
         print()
         
         print(f"{Colors.GREEN}PM2 FEATURES:{Colors.RESET}")

@@ -54,8 +54,8 @@ class StandaloneOperations(BaseServiceOperations):
         print(f"{Colors.DIM}Deploy complete stack (PostgreSQL, Redis, Nginx, App) on a single server{Colors.RESET}\n")
         
         print(f"{Colors.GREEN}USAGE:{Colors.RESET}")
-        print(f"  {Colors.YELLOW}claudia standalone{Colors.RESET} --install [OPTIONS]")
-        print(f"  {Colors.YELLOW}claudia standalone{Colors.RESET} --help\n")
+        print(f"  {Colors.YELLOW}cli standalone{Colors.RESET} --install [OPTIONS]")
+        print(f"  {Colors.YELLOW}cli standalone{Colors.RESET} --help\n")
         
         print(f"{Colors.GREEN}OPTIONS:{Colors.RESET}")
         print(f"  {Colors.CYAN}--install{Colors.RESET}              Install complete stack")
@@ -87,16 +87,16 @@ class StandaloneOperations(BaseServiceOperations):
         
         print(f"{Colors.GREEN}EXAMPLES:{Colors.RESET}")
         print(f"  # Deploy Django stack with defaults")
-        print(f"  {Colors.YELLOW}claudia standalone --install{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli standalone --install{Colors.RESET}")
         print()
         print(f"  # Deploy Node.js stack with domain")
-        print(f"  {Colors.YELLOW}claudia standalone --install --app-type nodejs --domain api.example.com{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli standalone --install --app-type nodejs --domain api.example.com{Colors.RESET}")
         print()
         print(f"  # Custom ports and passwords")
-        print(f"  {Colors.YELLOW}claudia standalone --install --pg-port 5433 --redis-port 6380{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli standalone --install --pg-port 5433 --redis-port 6380{Colors.RESET}")
         print()
         print(f"  # Deploy from Git repository")
-        print(f"  {Colors.YELLOW}claudia standalone --install --app-repo https://github.com/user/app.git{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli standalone --install --app-repo https://github.com/user/app.git{Colors.RESET}")
         print()
         
         print(f"{Colors.GREEN}STACK COMPONENTS:{Colors.RESET}")

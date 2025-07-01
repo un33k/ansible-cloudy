@@ -138,7 +138,7 @@ Understanding the Ansible Cloudy architecture is crucial for effective contribut
 
 ```
 ansible-cloudy/
-├── claudia                    # Main CLI entry point (bash wrapper)
+├── cli                    # Main CLI entry point (bash wrapper)
 ├── bootstrap.sh              # Development environment setup
 ├── cloudy/                   # Ansible automation core
 │   ├── playbooks/recipes/    # High-level service deployment

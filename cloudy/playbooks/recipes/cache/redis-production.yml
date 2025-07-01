@@ -1,6 +1,6 @@
 # Recipe: Production Redis Cache Server with Enterprise Features
 # Purpose: Production-grade Redis with persistence, security, and monitoring
-# Usage: ./claudia redis --install --prod [--port 6379]
+# Usage: ./cli redis --install --prod [--port 6379]
 
 ---
 - name: Production Redis Cache Server Setup

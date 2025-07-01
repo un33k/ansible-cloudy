@@ -24,31 +24,31 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=ColoredHelpFormatter,
         epilog=f"""
 {Colors.YELLOW}Examples:{Colors.NC}
-  {Colors.GREEN}claudia security --install{Colors.NC}         Setup server security (run first!)
-  {Colors.GREEN}claudia base --install --prod{Colors.NC}      Setup base config in production
-  {Colors.GREEN}claudia psql --install --ci{Colors.NC}        Install PostgreSQL in CI environment
-  {Colors.GREEN}claudia psql --install --port 5544{Colors.NC} Install PostgreSQL on custom port
-  {Colors.GREEN}claudia psql --install --pgis{Colors.NC}      Install PostgreSQL with PostGIS
-  {Colors.GREEN}claudia psql --adduser foo --password 1234{Colors.NC}  Create PostgreSQL user
+  {Colors.GREEN}cli security --install{Colors.NC}         Setup server security (run first!)
+  {Colors.GREEN}cli base --install --prod{Colors.NC}      Setup base config in production
+  {Colors.GREEN}cli psql --install --ci{Colors.NC}        Install PostgreSQL in CI environment
+  {Colors.GREEN}cli psql --install --port 5544{Colors.NC} Install PostgreSQL on custom port
+  {Colors.GREEN}cli psql --install --pgis{Colors.NC}      Install PostgreSQL with PostGIS
+  {Colors.GREEN}cli psql --adduser foo --password 1234{Colors.NC}  Create PostgreSQL user
   
-  {Colors.GREEN}claudia redis --install --memory 512{Colors.NC}  Install Redis with 512MB memory
-  {Colors.GREEN}claudia --list-services{Colors.NC}            Show all available services
+  {Colors.GREEN}cli redis --install --memory 512{Colors.NC}  Install Redis with 512MB memory
+  {Colors.GREEN}cli --list-services{Colors.NC}            Show all available services
   
-  {Colors.GREEN}claudia dev validate{Colors.NC}               Run comprehensive validation
-  {Colors.GREEN}claudia dev syntax{Colors.NC}                Quick syntax checking  
-  {Colors.GREEN}claudia dev test{Colors.NC}                  Authentication testing
+  {Colors.GREEN}cli dev validate{Colors.NC}               Run comprehensive validation
+  {Colors.GREEN}cli dev syntax{Colors.NC}                Quick syntax checking  
+  {Colors.GREEN}cli dev test{Colors.NC}                  Authentication testing
 
 {Colors.YELLOW}Environment Selection:{Colors.NC}
-  {Colors.GREEN}claudia security --install --dev{Colors.NC}   Use development environment (default)
-  {Colors.GREEN}claudia security --install --prod{Colors.NC}  Use production environment
-  {Colors.GREEN}claudia security --install --ci{Colors.NC}    Use CI environment
-  {Colors.GREEN}claudia security --install -i my-inventory.yml{Colors.NC}  Use custom inventory
-  {Colors.GREEN}claudia security --install -e vault/prod.yml{Colors.NC}    Use custom vault file
+  {Colors.GREEN}cli security --install --dev{Colors.NC}   Use development environment (default)
+  {Colors.GREEN}cli security --install --prod{Colors.NC}  Use production environment
+  {Colors.GREEN}cli security --install --ci{Colors.NC}    Use CI environment
+  {Colors.GREEN}cli security --install -i my-inventory.yml{Colors.NC}  Use custom inventory
+  {Colors.GREEN}cli security --install -e vault/prod.yml{Colors.NC}    Use custom vault file
 
 {Colors.YELLOW}Advanced:{Colors.NC}
-  {Colors.GREEN}claudia psql --install -- --tags postgresql{Colors.NC}  Pass args to ansible-playbook
-  {Colors.GREEN}claudia psql --install -- -e "grunt_user=myuser"{Colors.NC}  Override variables
-  {Colors.GREEN}claudia redis --install -- --skip-tags firewall{Colors.NC}  Skip specific tasks
+  {Colors.GREEN}cli psql --install -- --tags postgresql{Colors.NC}  Pass args to ansible-playbook
+  {Colors.GREEN}cli psql --install -- -e "grunt_user=myuser"{Colors.NC}  Override variables
+  {Colors.GREEN}cli redis --install -- --skip-tags firewall{Colors.NC}  Skip specific tasks
   
 {Colors.BLUE}Authentication Flow:{Colors.NC}
   1. {Colors.YELLOW}Security Setup{Colors.NC}: Uses root password, installs SSH keys
@@ -137,7 +137,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 
 def split_arguments():
-    """Split command line arguments into claudia and ansible args"""
+    """Split command line arguments into cli and ansible args"""
     # Parse arguments, splitting on -- for ansible args
     if "--" in sys.argv:
         split_idx = sys.argv.index("--")
@@ -152,7 +152,7 @@ def split_arguments():
 
 def parse_arguments(claudia_args):
     """Parse command line arguments"""
-    # Parse claudia arguments
+    # Parse cli arguments
     parser = create_parser()
     args, remaining_args = parser.parse_known_args(claudia_args)
     

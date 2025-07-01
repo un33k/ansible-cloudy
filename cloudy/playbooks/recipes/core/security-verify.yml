@@ -120,5 +120,5 @@
           🔐 Server Security Status: {{ 'SECURE' if (admin_user_exists is not changed and ssh_key_test is succeeded and root_login_check is not changed and password_auth_check is not changed and 'Status: active' in ufw_status.stdout) else 'NEEDS ATTENTION' }}
           
           {% if not (admin_user_exists is not changed and ssh_key_test is succeeded and root_login_check is not changed and password_auth_check is not changed and 'Status: active' in ufw_status.stdout) %}
-          ⚠️  Issues Found - Consider running './claudia security --install' to fix configuration
+          ⚠️  Issues Found - Consider running './cli security --install' to fix configuration
           {% endif %}

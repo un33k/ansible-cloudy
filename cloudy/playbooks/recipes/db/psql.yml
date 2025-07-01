@@ -1,6 +1,6 @@
 # Recipe: PostgreSQL Database Server with PostGIS Support
 # Purpose: Orchestrates security, base setup, and PostgreSQL installation
-# Usage: ./claudia psql --install [--pgis] [--port 5432]
+# Usage: ./cli psql --install [--pgis] [--port 5432]
 
 ---
 # PostgreSQL-specific setup (security and base should be run separately)
@@ -38,8 +38,8 @@
           Target: {{ inventory_hostname }} ({{ ansible_host }})
           
           📋 Prerequisites:
-          ├── ✅ Security Setup (run separately: ./claudia security --install)
-          ├── ✅ Base Configuration (run separately: ./claudia base --install)
+          ├── ✅ Security Setup (run separately: ./cli security --install)
+          ├── ✅ Base Configuration (run separately: ./cli base --install)
           └── 🔄 PostgreSQL Installation (current phase)
           
           🗄️  Database Configuration:

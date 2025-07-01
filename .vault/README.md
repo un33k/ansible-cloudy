@@ -16,7 +16,7 @@ This directory contains configuration templates for different environments.
 
 3. **Use in playbooks:**
    ```bash
-   ./claudia psql --install -- -e @.vault/my-dev.yml
+   ./cli psql --install -- -e @.vault/my-dev.yml
    ```
 
 ## Environment Templates
@@ -39,7 +39,7 @@ All vault variables use the `vault_*` prefix for clear organization:
 
 ### With Claudia CLI
 ```bash
-./claudia psql --install -- -e @.vault/my-dev.yml
+./cli psql --install -- -e @.vault/my-dev.yml
 ```
 
 ### Direct Ansible
@@ -50,10 +50,10 @@ ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbooks/recipes/db
 ### Multiple Environments
 ```bash
 # Development
-./claudia psql --install -- -e @.vault/dev-local.yml
+./cli psql --install -- -e @.vault/dev-local.yml
 
 # Production  
-./claudia psql --install --prod -- -e @.vault/prod-secrets.yml
+./cli psql --install --prod -- -e @.vault/prod-secrets.yml
 ```
 
 ## Security Notes

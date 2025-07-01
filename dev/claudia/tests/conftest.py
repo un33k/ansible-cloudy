@@ -11,7 +11,7 @@ import shutil
 import os
 from unittest.mock import Mock
 
-# Add the parent directory to the path so we can import claudia modules
+# Add the parent directory to the path so we can import cli modules
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -29,7 +29,7 @@ def temp_project_dir():
         (project_dir / "cloudy" / "playbooks" / "recipes").mkdir(parents=True)
         (project_dir / "cloudy" / "tasks").mkdir(parents=True)
         (project_dir / "cloudy" / "inventory").mkdir(parents=True)
-        (project_dir / "dev" / "claudia").mkdir(parents=True)
+        (project_dir / "dev" / "cli").mkdir(parents=True)
         (project_dir / ".vault").mkdir(parents=True)
         
         yield project_dir
@@ -44,7 +44,7 @@ def mock_config(temp_project_dir):
     config.recipes_dir = temp_project_dir / "cloudy" / "playbooks" / "recipes"
     config.tasks_dir = temp_project_dir / "cloudy" / "tasks"
     config.inventory_dir = temp_project_dir / "cloudy" / "inventory"
-    config.claudia_dir = temp_project_dir / "dev" / "claudia"
+    config.claudia_dir = temp_project_dir / "dev" / "cli"
     return config
 
 

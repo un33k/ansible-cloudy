@@ -184,12 +184,12 @@ class BaseServiceOperations(ABC):
     def _show_installation_help(self):
         """Show installation parameters (override in subclasses for custom help)"""
         print(f"{Colors.BLUE}Recipe Installation:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia {self.service_name} --install{Colors.NC}                    Install {self.service_name}")
+        print(f"  {Colors.GREEN}cli {self.service_name} --install{Colors.NC}                    Install {self.service_name}")
         
         # Show parameter examples
         param_mapping = self._get_parameter_mapping()
         if param_mapping:
-            print(f"  {Colors.GREEN}claudia {self.service_name} --install [options]{Colors.NC}       Install with custom parameters")
+            print(f"  {Colors.GREEN}cli {self.service_name} --install [options]{Colors.NC}       Install with custom parameters")
             print()
             print(f"{Colors.BLUE}Available Parameters:{Colors.NC}")
             for cli_param, ansible_var in param_mapping.items():

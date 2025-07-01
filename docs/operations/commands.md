@@ -238,12 +238,12 @@ cd ansible-cloudy/
 # Activate development environment
 source .venv/bin/activate
 
-# After activation, use 'cli' (short alias) or 'claudia' (full name)
+# After activation, use 'cli' (short alias) or 'cli' (full name)
 # Both commands are identical - 'cli' saves keystrokes for frequent use
 
 # Verify installation
-cli dev syntax  # or claudia dev syntax
-cli --help      # or claudia --help
+cli dev syntax  # or cli dev syntax
+cli --help      # or cli --help
 ```
 
 **What bootstrap.sh provides:**

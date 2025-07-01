@@ -187,9 +187,9 @@ class ServiceScanner:
                 print(f"    {Colors.CYAN}Operations:{Colors.NC} {ops_display}")
             
         print(f"\n{Colors.YELLOW}Usage:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia <service> --help{Colors.NC}     Show service operations")
-        print(f"  {Colors.GREEN}claudia <service> --install{Colors.NC}  Install/setup service")
-        print(f"  {Colors.GREEN}claudia psql --adduser foo{Colors.NC}   Create PostgreSQL user")
+        print(f"  {Colors.GREEN}cli <service> --help{Colors.NC}     Show service operations")
+        print(f"  {Colors.GREEN}cli <service> --install{Colors.NC}  Install/setup service")
+        print(f"  {Colors.GREEN}cli psql --adduser foo{Colors.NC}   Create PostgreSQL user")
 
     def get_service_operations(self, service_name: str) -> Dict[str, str]:
         """Get operations for a specific service"""

@@ -40,7 +40,7 @@ class VaultChecker:
             for var in found_vars:
                 print(f"     {Colors.RED}export {var}=...{Colors.NC}")
             print(f"  2. Restart your terminal or run: {Colors.GREEN}unset {' '.join(found_vars)}{Colors.NC}")
-            print(f"  3. Use simple vault files: {Colors.GREEN}./claudia psql --install -- -e @.vault/my-dev.yml{Colors.NC}\n")
+            print(f"  3. Use simple vault files: {Colors.GREEN}./cli psql --install -- -e @.vault/my-dev.yml{Colors.NC}\n")
             
             print(f"{Colors.YELLOW}For now, temporarily unsetting these variables...{Colors.NC}")
             for var in found_vars:

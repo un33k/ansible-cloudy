@@ -259,7 +259,7 @@ source .venv/bin/activate
 ./bootstrap.sh
 
 # Permission issues
-chmod +x claudia dev/*.py dev/*.sh
+chmod +x cli dev/*.py dev/*.sh
 ```
 
 ### **Validation Failures**

@@ -422,15 +422,15 @@ test_myservice_deployment() {
     log_info "Testing MyService deployment"
     
     # Install MyService
-    run_claudia "myservice" "--install" "--port" "8090"
+    run_cli "myservice" "--install" "--port" "8090"
     
     # Verify installation
     verify_service_running "myservice"
     verify_port_open 8090
     
     # Test operations
-    run_claudia "myservice" "--add-user" "testuser" "--password" "testpass"
-    run_claudia "myservice" "--list-users"
+    run_cli "myservice" "--add-user" "testuser" "--password" "testpass"
+    run_cli "myservice" "--list-users"
 }
 
 # Run tests
@@ -540,7 +540,7 @@ if args.verbose:
 
 ```bash
 # Run directly without installation
-cd dev/claudia
+cd dev/cli
 python -m cli.main myservice --help
 
 # Test with mock data

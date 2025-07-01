@@ -220,13 +220,13 @@ install_deps() {
     # Install Ansible and development tools from pyproject.toml
     pip install -e ".[dev]"
     
-    # Install claudia wrapper into venv
-    log "Installing claudia command..."
+    # Install cli wrapper into venv
+    log "Installing cli command..."
     cp "$SCRIPT_DIR/dev/bin/claudia-venv" "$VENV_DIR/bin/claudia"
     chmod +x "$VENV_DIR/bin/claudia"
     
-    # Create cli alias for claudia
-    log "Creating 'cli' alias for claudia..."
+    # Create cli alias for cli
+    log "Creating 'cli' alias for cli..."
     ln -sf "$VENV_DIR/bin/claudia" "$VENV_DIR/bin/cli"
     
     log "Ansible dependencies installed successfully"
@@ -263,15 +263,15 @@ main() {
     log "Bootstrap complete!"
     echo -e "${GREEN}To activate the environment:${NC} source $VENV_DIR/bin/activate"
     echo -e "${GREEN}To test the setup:${NC}"
-    echo "  claudia dev syntax    # Quick syntax check"
-    echo "  claudia dev yaml      # YAML syntax validation"
-    echo "  claudia dev lint      # Complete linting (YAML + Ansible)"
-    echo "  claudia dev validate  # Full validation"
+    echo "  cli dev syntax    # Quick syntax check"
+    echo "  cli dev yaml      # YAML syntax validation"
+    echo "  cli dev lint      # Complete linting (YAML + Ansible)"
+    echo "  cli dev validate  # Full validation"
     echo
     echo -e "${GREEN}To run recipes:${NC}"
-    echo "  claudia security --install      # Security hardening"
-    echo "  claudia django --install        # Django web server"
-    echo "  claudia psql --install          # PostgreSQL database"
+    echo "  cli security --install      # Security hardening"
+    echo "  cli django --install        # Django web server"
+    echo "  cli psql --install          # PostgreSQL database"
     echo
     echo -e "${YELLOW}Remember to activate the environment first: source .venv/bin/activate${NC}"
 }

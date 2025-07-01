@@ -34,7 +34,7 @@
           🔧 Fix:
           1. Target 'security_targets' group in inventory
           2. Ensure vault_root_password is set
-          3. Use: ./claudia security --install
+          3. Use: ./cli security --install
       when: ansible_user != 'root'
     
     - name: Display security setup information
@@ -191,4 +191,4 @@
           🚀 Next Steps:
              • All automation continues as root (no connection switching)
              • Grunt access: {{ 'ssh ' + emergency_user + '@' + ansible_host + ':' + (target_ssh_port|string) if vault_grunt_user is defined else 'No grunt user configured - using root for all operations' }}
-             • Deploy services: ./claudia base --install, ./claudia psql --install, etc.
+             • Deploy services: ./cli base --install, ./cli psql --install, etc.

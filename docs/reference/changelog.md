@@ -14,26 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for up to 16,000 dimensions
   - IVFFlat and HNSW index types
   - Example schemas and usage documentation
-  - CLI: `claudia pgvector --install --dimensions 1536`
+  - CLI: `cli pgvector --install --dimensions 1536`
 
 - **Node.js Application Deployment** - Full-featured Node.js application hosting
   - PM2 process management with cluster mode
   - Zero-downtime deployments
   - Automatic restarts and memory limits
   - Nginx reverse proxy integration
-  - CLI: `claudia nodejs --install --app-repo <url> --pm2-instances 4`
+  - CLI: `cli nodejs --install --app-repo <url> --pm2-instances 4`
 
 - **Standalone All-in-One Server** - Complete stack on single server
   - Combines PostgreSQL, Redis, Nginx, and application layer
   - Supports both Django and Node.js applications
   - Automatic resource optimization based on available RAM
-  - CLI: `claudia standalone --install --app-type django --domain example.com`
+  - CLI: `cli standalone --install --app-type django --domain example.com`
 
 - **PgBouncer Connection Pooling** - Database optimization
   - Transaction pooling for web applications
   - Distributed architecture (runs on web servers)
   - Configurable ports and pool sizes
-  - CLI: `claudia pgbouncer --install --pool-size 30`
+  - CLI: `cli pgbouncer --install --pool-size 30`
 
 #### Production Hardening
 - **Kernel Security** - Comprehensive sysctl hardening

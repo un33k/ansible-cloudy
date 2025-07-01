@@ -106,19 +106,19 @@ redis_password: "secret123"
 
 **Before:**
 ```bash
-./claudia psql --install -- -e "pg_port=5433"
-./claudia redis --install -- -e "redis_memory=512"
+./cli psql --install -- -e "pg_port=5433"
+./cli redis --install -- -e "redis_memory=512"
 ```
 
 **After:**
 ```bash
 # Now using universal parameters (recommended)
-./claudia psql --install --port 5433
-./claudia redis --install --memory 512
+./cli psql --install --port 5433
+./cli redis --install --memory 512
 
 # Or with new variable names
-./claudia psql --install -- -e "postgresql_port=5433"
-./claudia redis --install -- -e "redis_memory_mb=512"
+./cli psql --install -- -e "postgresql_port=5433"
+./cli redis --install -- -e "redis_memory_mb=512"
 ```
 
 ## Backward Compatibility

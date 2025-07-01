@@ -24,7 +24,7 @@
       Actual: ansible_user is '{{ ansible_user }}'
       
       🔧 Fix:
-      1. Run security setup first: ./claudia security --install
+      1. Run security setup first: ./cli security --install
       2. Ensure you're targeting 'service_targets' group, not 'security_targets'
   when: ansible_user == 'root'
 
@@ -39,7 +39,7 @@
       
       🔧 Fix:
       1. Remove ansible_ssh_pass from inventory
-      2. Ensure SSH keys are installed: ./claudia security --install
+      2. Ensure SSH keys are installed: ./cli security --install
       3. Use SSH key authentication only
   when: ansible_ssh_pass is defined
 
@@ -54,7 +54,7 @@
       Actual: ansible_port is {{ ansible_port }}
       
       🔧 Fix:
-      1. Run security setup first: ./claudia security --install
+      1. Run security setup first: ./cli security --install
       2. Ensure inventory uses the secure SSH port (22022)
   when: ansible_port == 22
 
@@ -75,7 +75,7 @@
       🔧 Fix:
       1. Verify admin user exists on server
       2. Check SSH key permissions
-      3. Run security setup: ./claudia security --install
+      3. Run security setup: ./cli security --install
   when: current_user.stdout != 'root'
 
 - name: Test SSH key authentication
@@ -92,7 +92,7 @@
       The authorized_keys file is missing or empty.
       
       🔧 Fix:
-      1. Run security setup: ./claudia security --install
+      1. Run security setup: ./cli security --install
       2. Verify SSH key installation completed successfully
   when: not ssh_keys.stat.exists
 
@@ -112,7 +112,7 @@
       Actual: sudo requires password or fails
       
       🔧 Fix:
-      1. Run security setup: ./claudia security --install
+      1. Run security setup: ./cli security --install
       2. Verify sudoers configuration is correct
   when: sudo_test.rc != 0 or sudo_test.stdout != 'root'
 

@@ -1,6 +1,6 @@
 # Recipe: Production Nginx Load Balancer with Enterprise Features
 # Purpose: Production-grade Nginx with SSL, caching, rate limiting, and monitoring
-# Usage: ./claudia nginx --install --prod --domain example.com --ssl
+# Usage: ./cli nginx --install --prod --domain example.com --ssl
 
 ---
 - name: Production Nginx Load Balancer Setup

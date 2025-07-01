@@ -1,6 +1,6 @@
 # Recipe: All-in-One Standalone Server
 # Purpose: Deploy complete stack (PostgreSQL, Redis, Nginx, App) on single server
-# Usage: ./claudia standalone --install [--app-type django|nodejs] [--domain example.com]
+# Usage: ./cli standalone --install [--app-type django|nodejs] [--domain example.com]
 
 ---
 - name: All-in-One Standalone Server Setup

@@ -210,16 +210,16 @@ class RecipeHelpParser:
         if help_info["usage"]:
             print(f"  {help_info['usage']}")
         print(
-            f"  claudia {recipe_name}                    # Show this help (default action)"
+            f"  cli {recipe_name}                    # Show this help (default action)"
         )
-        print(f"  claudia {recipe_name} --install          # Execute recipe on test environment")
-        print(f"  claudia {recipe_name} --install --prod   # Execute recipe on production")
-        print(f"  claudia {recipe_name} --install --check  # Dry run (no changes)")
-        print(f"  claudia {recipe_name} --install --verbose # Verbose output")
+        print(f"  cli {recipe_name} --install          # Execute recipe on test environment")
+        print(f"  cli {recipe_name} --install --prod   # Execute recipe on production")
+        print(f"  cli {recipe_name} --install --check  # Dry run (no changes)")
+        print(f"  cli {recipe_name} --install --verbose # Verbose output")
         
         # Add security-specific options
         if recipe_name == "security":
-            print(f"  claudia {recipe_name} --verify           # Run security verification/check")
+            print(f"  cli {recipe_name} --verify           # Run security verification/check")
 
         # Display key variables (combine inventory and recipe variables)
         all_variables = {}
@@ -252,22 +252,22 @@ class RecipeHelpParser:
         # Usage examples with variables and tags
         print(f"\n{Colors.YELLOW}Advanced Examples:{Colors.NC}")
         print(
-            f'  claudia {recipe_name} --install -- -e "admin_user=myuser"  # Override variables'
+            f'  cli {recipe_name} --install -- -e "admin_user=myuser"  # Override variables'
         )
         print(
-            f"  claudia {recipe_name} --install -- --tags ssh              # Run only SSH tasks"
+            f"  cli {recipe_name} --install -- --tags ssh              # Run only SSH tasks"
         )
         print(
-            f"  claudia {recipe_name} --install -- --skip-tags firewall    # Skip firewall tasks"
+            f"  cli {recipe_name} --install -- --skip-tags firewall    # Skip firewall tasks"
         )
         print(
-            f"  claudia {recipe_name} --install -- --limit test-server     # Run on specific host"
+            f"  cli {recipe_name} --install -- --limit test-server     # Run on specific host"
         )
         
         # Add security-specific advanced examples
         if recipe_name == "security":
             print(
-                f"  claudia {recipe_name} --verify --prod                      # Verify production security"
+                f"  cli {recipe_name} --verify --prod                      # Verify production security"
             )
 
 
@@ -289,11 +289,11 @@ def list_recipes(config: ClaudiaConfig) -> None:
             print(f"  • {recipe_name}")
 
     print(f"\n{Colors.YELLOW}Usage examples:{Colors.NC}")
-    print("  claudia security                # Show security recipe help")
-    print("  claudia security --install      # Execute core/security.yml on test")
-    print("  claudia django --install --prod # Execute www/django.yml on production")
-    print("  claudia redis --install --check # Dry run cache/redis.yml")
-    print("  claudia nginx --install -- --tags ssl # Execute nginx with --tags ssl")
+    print("  cli security                # Show security recipe help")
+    print("  cli security --install      # Execute core/security.yml on test")
+    print("  cli django --install --prod # Execute www/django.yml on production")
+    print("  cli redis --install --check # Dry run cache/redis.yml")
+    print("  cli nginx --install -- --tags ssl # Execute nginx with --tags ssl")
     print(
-        f"\n{Colors.CYAN}💡 Tip:{Colors.NC} Use 'claudia RECIPE' to see detailed help and available options"
+        f"\n{Colors.CYAN}💡 Tip:{Colors.NC} Use 'cli RECIPE' to see detailed help and available options"
     )

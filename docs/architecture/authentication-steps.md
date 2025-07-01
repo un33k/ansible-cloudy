@@ -68,7 +68,7 @@ This document tracks the systematic cleanup of MySQL, pgbouncer, and memcached f
 
 ## Layer 7: Final Verification
 ### Testing & Validation
-- [x] Run `./claudia --list-services` to verify removed services don't appear
+- [x] Run `./cli --list-services` to verify removed services don't appear
 - [x] Search codebase for any remaining references: `grep -r "mysql\|pgbouncer\|memcached"`
 - [x] Test security and base playbooks still work
 - [x] Test remaining services (psql, redis, nginx, etc.) work correctly

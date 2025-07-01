@@ -172,18 +172,18 @@ class NginxOperations(BaseServiceOperations):
     def _show_installation_help(self):
         """Show Nginx installation parameters"""
         print(f"{Colors.BLUE}Recipe Installation:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia nginx --install{Colors.NC}                    Install Nginx load balancer")
-        print(f"  {Colors.GREEN}claudia nginx --install --domain example.com{Colors.NC} Install with domain")
-        print(f"  {Colors.GREEN}claudia nginx --install --ssl{Colors.NC}             Install with SSL enabled")
-        print(f"  {Colors.GREEN}claudia nginx --install --protocol https{Colors.NC}  Install with HTTPS protocol")
-        print(f"  {Colors.GREEN}claudia nginx --install --backends '192.168.1.10:8080,192.168.1.11:8080'{Colors.NC} With backend servers")
+        print(f"  {Colors.GREEN}cli nginx --install{Colors.NC}                    Install Nginx load balancer")
+        print(f"  {Colors.GREEN}cli nginx --install --domain example.com{Colors.NC} Install with domain")
+        print(f"  {Colors.GREEN}cli nginx --install --ssl{Colors.NC}             Install with SSL enabled")
+        print(f"  {Colors.GREEN}cli nginx --install --protocol https{Colors.NC}  Install with HTTPS protocol")
+        print(f"  {Colors.GREEN}cli nginx --install --backends '192.168.1.10:8080,192.168.1.11:8080'{Colors.NC} With backend servers")
         print()
 
     def _show_granular_operations_help(self):
         """Show Nginx granular operations help"""
         print(f"{Colors.BLUE}Configuration Operations:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia nginx --add-domain example.com{Colors.NC}    Add new domain configuration")
-        print(f"  {Colors.GREEN}claudia nginx --setup-ssl example.com{Colors.NC}     Setup SSL for domain")
-        print(f"  {Colors.GREEN}claudia nginx --reload{Colors.NC}                   Reload Nginx configuration")
-        print(f"  {Colors.GREEN}claudia nginx --test-config{Colors.NC}              Test Nginx configuration")
+        print(f"  {Colors.GREEN}cli nginx --add-domain example.com{Colors.NC}    Add new domain configuration")
+        print(f"  {Colors.GREEN}cli nginx --setup-ssl example.com{Colors.NC}     Setup SSL for domain")
+        print(f"  {Colors.GREEN}cli nginx --reload{Colors.NC}                   Reload Nginx configuration")
+        print(f"  {Colors.GREEN}cli nginx --test-config{Colors.NC}              Test Nginx configuration")
         print()

@@ -98,7 +98,7 @@ class CommandRouter:
                     help_parser.display_recipe_help(service_name, recipe_path)
                     return True
                 else:
-                    error(f"Service '{service_name}' not found. Use 'claudia --list-services' to see available services.")
+                    error(f"Service '{service_name}' not found. Use 'cli --list-services' to see available services.")
             except Exception as e:
                 error(f"Configuration error: {e}")
         
@@ -109,14 +109,14 @@ class CommandRouter:
         from utils.colors import Colors
         
         print(f"""
-{Colors.CYAN}claudia dev test{Colors.NC} - Authentication Flow Testing
+{Colors.CYAN}cli dev test{Colors.NC} - Authentication Flow Testing
 
 {Colors.YELLOW}DESCRIPTION:{Colors.NC}
     Tests the authentication setup process to validate server configuration.
     Verifies grunt user creation, SSH keys, firewall, and sudo access.
 
 {Colors.YELLOW}USAGE:{Colors.NC}
-    claudia dev test [OPTIONS] [-- ANSIBLE_ARGS]
+    cli dev test [OPTIONS] [-- ANSIBLE_ARGS]
 
 {Colors.YELLOW}OPTIONS:{Colors.NC}
     --check, --dry-run    Run in check mode (don't make changes)
@@ -124,10 +124,10 @@ class CommandRouter:
     -h, --help           Show this help message
 
 {Colors.YELLOW}EXAMPLES:{Colors.NC}
-    claudia dev test                           # Run authentication test
-    claudia dev test --check                   # Dry run test
-    claudia dev test --verbose                 # Show detailed output
-    claudia dev test -- -e "vault_ssh_port=22" # Override SSH port
+    cli dev test                           # Run authentication test
+    cli dev test --check                   # Dry run test
+    cli dev test --verbose                 # Show detailed output
+    cli dev test -- -e "vault_ssh_port=22" # Override SSH port
 
 {Colors.YELLOW}CONFIGURABLE VARIABLES:{Colors.NC}
     Override test parameters using Ansible variable syntax:
@@ -149,16 +149,16 @@ class CommandRouter:
 
 {Colors.YELLOW}VARIABLE OVERRIDE EXAMPLES:{Colors.NC}
     # Test with standard SSH port
-    claudia dev test -- -e "vault_ssh_port=22"
+    cli dev test -- -e "vault_ssh_port=22"
     
     # Test with different grunt user
-    claudia dev test -- -e "vault_grunt_user=deploy" -e "grunt_user=deploy"
+    cli dev test -- -e "vault_grunt_user=deploy" -e "grunt_user=deploy"
     
     # Test with custom server
-    claudia dev test -- -e "ansible_host=192.168.1.100" -e "vault_ssh_port=22"
+    cli dev test -- -e "ansible_host=192.168.1.100" -e "vault_ssh_port=22"
     
     # Multiple overrides
-    claudia dev test -- -e "vault_root_password=mypass" -e "vault_ssh_port=22" -e "grunt_user=myuser"
+    cli dev test -- -e "vault_root_password=mypass" -e "vault_ssh_port=22" -e "grunt_user=myuser"
 
 {Colors.YELLOW}WHAT IT TESTS:{Colors.NC}
     • Server connectivity and authentication
@@ -193,14 +193,14 @@ class CommandRouter:
         from utils.colors import Colors
         
         print(f"""
-{Colors.CYAN}claudia dev precommit{Colors.NC} - Run all validation checks before commit
+{Colors.CYAN}cli dev precommit{Colors.NC} - Run all validation checks before commit
 
 {Colors.YELLOW}DESCRIPTION:{Colors.NC}
     Runs a comprehensive suite of validation checks to ensure code quality
     before committing. This is the recommended command to run before any commit.
 
 {Colors.YELLOW}USAGE:{Colors.NC}
-    claudia dev precommit [OPTIONS]
+    cli dev precommit [OPTIONS]
 
 {Colors.YELLOW}OPTIONS:{Colors.NC}
     --verbose, -v         Show detailed output
@@ -214,8 +214,8 @@ class CommandRouter:
     5. {Colors.GREEN}Spell Check{Colors.NC}      - Documentation spelling validation
 
 {Colors.YELLOW}EXAMPLES:{Colors.NC}
-    claudia dev precommit                   # Run all pre-commit checks
-    claudia dev precommit --verbose         # Show detailed output
+    cli dev precommit                   # Run all pre-commit checks
+    cli dev precommit --verbose         # Show detailed output
 
 {Colors.YELLOW}EXIT CODES:{Colors.NC}
     0 - All checks passed
@@ -225,7 +225,7 @@ class CommandRouter:
     • This command runs all validation checks in sequence
     • Any failed check will be clearly indicated
     • Use individual commands (syntax, lint, etc.) to debug specific issues
-    • For structural validation only, use 'claudia dev validate'
+    • For structural validation only, use 'cli dev validate'
 """)
     
     def _show_dev_command_help(self, command):
@@ -244,18 +244,18 @@ class CommandRouter:
         desc = descriptions.get(command, f"Development command: {command}")
         
         print(f"""
-{Colors.CYAN}claudia dev {command}{Colors.NC} - {desc}
+{Colors.CYAN}cli dev {command}{Colors.NC} - {desc}
 
 {Colors.YELLOW}USAGE:{Colors.NC}
-    claudia dev {command} [OPTIONS]
+    cli dev {command} [OPTIONS]
 
 {Colors.YELLOW}OPTIONS:{Colors.NC}
     --verbose, -v         Show detailed output
     -h, --help           Show this help message
 
 {Colors.YELLOW}EXAMPLES:{Colors.NC}
-    claudia dev {command}                      # Run {command} check
-    claudia dev {command} --verbose            # Show detailed output
+    cli dev {command}                      # Run {command} check
+    cli dev {command} --verbose            # Show detailed output
 """)
     
     def handle_list_services(self):
@@ -310,7 +310,7 @@ class CommandRouter:
         recipe_path = finder.find_recipe(service_name)
         
         if not recipe_path:
-            error(f"Service '{service_name}' not found. Use 'claudia --list-services' to see available services.")
+            error(f"Service '{service_name}' not found. Use 'cli --list-services' to see available services.")
         
         # Show service help by default
         if not args.install:

@@ -12,7 +12,7 @@ from pathlib import Path
 
 def main():
     """Run the test suite"""
-    # Change to the claudia directory
+    # Change to the cli directory
     claudia_dir = Path(__file__).parent
     
     # Basic pytest command

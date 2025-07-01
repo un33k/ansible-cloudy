@@ -35,7 +35,7 @@ class ClaudiaConfig:
                 return path
 
         error(
-            "Could not find project root. Run claudia from the ansible-cloudy project directory."
+            "Could not find project root. Run cli from the ansible-cloudy project directory."
         )
 
     def _validate_structure(self) -> None:

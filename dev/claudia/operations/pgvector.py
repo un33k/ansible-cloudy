@@ -48,8 +48,8 @@ class PgVectorOperations(BaseServiceOperations):
         print(f"{Colors.DIM}PostgreSQL with pgvector extension for AI/ML embedding storage and similarity search{Colors.RESET}\n")
         
         print(f"{Colors.GREEN}USAGE:{Colors.RESET}")
-        print(f"  {Colors.YELLOW}claudia pgvector{Colors.RESET} --install [OPTIONS]")
-        print(f"  {Colors.YELLOW}claudia pgvector{Colors.RESET} --help\n")
+        print(f"  {Colors.YELLOW}cli pgvector{Colors.RESET} --install [OPTIONS]")
+        print(f"  {Colors.YELLOW}cli pgvector{Colors.RESET} --help\n")
         
         print(f"{Colors.GREEN}OPTIONS:{Colors.RESET}")
         print(f"  {Colors.CYAN}--install{Colors.RESET}              Install PostgreSQL with pgvector extension")
@@ -76,13 +76,13 @@ class PgVectorOperations(BaseServiceOperations):
         
         print(f"{Colors.GREEN}EXAMPLES:{Colors.RESET}")
         print(f"  # Install pgvector with defaults")
-        print(f"  {Colors.YELLOW}claudia pgvector --install{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli pgvector --install{Colors.RESET}")
         print()
         print(f"  # Install with custom port and dimensions")
-        print(f"  {Colors.YELLOW}claudia pgvector --install --port 5433 --dimensions 768{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli pgvector --install --port 5433 --dimensions 768{Colors.RESET}")
         print()
         print(f"  # Production install with PostGIS")
-        print(f"  {Colors.YELLOW}claudia pgvector --install --prod --pgis --create-examples{Colors.RESET}")
+        print(f"  {Colors.YELLOW}cli pgvector --install --prod --pgis --create-examples{Colors.RESET}")
         print()
         
         print(f"{Colors.GREEN}VECTOR DATABASE FEATURES:{Colors.RESET}")

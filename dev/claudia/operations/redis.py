@@ -168,18 +168,18 @@ class RedisOperations(BaseServiceOperations):
     def _show_installation_help(self):
         """Show Redis installation parameters"""
         print(f"{Colors.BLUE}Recipe Installation:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia redis --install{Colors.NC}                    Install Redis server")
-        print(f"  {Colors.GREEN}claudia redis --install --port 6380{Colors.NC}       Install on custom port")
-        print(f"  {Colors.GREEN}claudia redis --install --memory 512{Colors.NC}      Install with 512MB memory")
-        print(f"  {Colors.GREEN}claudia redis --install --password secret{Colors.NC} Install with password")
-        print(f"  {Colors.GREEN}claudia redis --install --interface 127.0.0.1{Colors.NC} Bind to specific interface")
+        print(f"  {Colors.GREEN}cli redis --install{Colors.NC}                    Install Redis server")
+        print(f"  {Colors.GREEN}cli redis --install --port 6380{Colors.NC}       Install on custom port")
+        print(f"  {Colors.GREEN}cli redis --install --memory 512{Colors.NC}      Install with 512MB memory")
+        print(f"  {Colors.GREEN}cli redis --install --password secret{Colors.NC} Install with password")
+        print(f"  {Colors.GREEN}cli redis --install --interface 127.0.0.1{Colors.NC} Bind to specific interface")
         print()
 
     def _show_granular_operations_help(self):
         """Show Redis granular operations help"""
         print(f"{Colors.BLUE}Configuration Operations:{Colors.NC}")
-        print(f"  {Colors.GREEN}claudia redis --configure-port 6380{Colors.NC}       Change Redis port")
-        print(f"  {Colors.GREEN}claudia redis --set-password mypass{Colors.NC}       Set Redis password")
-        print(f"  {Colors.GREEN}claudia redis --configure-memory 1024{Colors.NC}     Set memory limit (MB)")
-        print(f"  {Colors.GREEN}claudia redis --restart{Colors.NC}                   Restart Redis service")
+        print(f"  {Colors.GREEN}cli redis --configure-port 6380{Colors.NC}       Change Redis port")
+        print(f"  {Colors.GREEN}cli redis --set-password mypass{Colors.NC}       Set Redis password")
+        print(f"  {Colors.GREEN}cli redis --configure-memory 1024{Colors.NC}     Set memory limit (MB)")
+        print(f"  {Colors.GREEN}cli redis --restart{Colors.NC}                   Restart Redis service")
         print()

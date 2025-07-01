@@ -25,7 +25,7 @@ source .venv/bin/activate
 pip install ansible
 ```
 
-> **💡 Tip:** After activation, you can use either `claudia` or its short alias `cli`. Both commands are identical - `cli` saves keystrokes for frequent use.
+> **💡 Tip:** After activation, you can use either `cli` or its short alias `cli`. Both commands are identical - `cli` saves keystrokes for frequent use.
 
 ### Basic Usage
 ```bash
@@ -110,7 +110,7 @@ cli security --install -v
 
 ```
 ansible-cloudy/
-├── claudia                    # Main CLI entry point
+├── cli                    # Main CLI entry point
 ├── bootstrap.sh              # Environment setup script
 ├── cloudy/                   # Ansible automation core
 │   ├── playbooks/recipes/    # High-level deployment recipes

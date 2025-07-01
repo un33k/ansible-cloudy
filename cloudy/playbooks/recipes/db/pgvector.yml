@@ -1,6 +1,6 @@
 # Recipe: PostgreSQL with pgvector Extension for Vector Databases
 # Purpose: PostgreSQL with pgvector for AI/ML embedding storage and similarity search
-# Usage: ./claudia pgvector --install [--port 5432]
+# Usage: ./cli pgvector --install [--port 5432]
 
 ---
 # PostgreSQL with pgvector setup
@@ -44,8 +44,8 @@
           Target: {{ inventory_hostname }} ({{ ansible_host }})
           
           📋 Prerequisites:
-          ├── ✅ Security Setup (run separately: ./claudia security --install)
-          ├── ✅ Base Configuration (run separately: ./claudia base --install)
+          ├── ✅ Security Setup (run separately: ./cli security --install)
+          ├── ✅ Base Configuration (run separately: ./cli base --install)
           └── 🔄 PostgreSQL + pgvector Installation (current phase)
           
           🗄️  Database Configuration:

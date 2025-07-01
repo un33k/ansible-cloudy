@@ -102,7 +102,7 @@ class TestRunner:
 └── {Colors.GREEN}✅ Admin SSH access ready{Colors.NC}
 
 {Colors.BLUE}🚀 Next Steps:{Colors.NC}
-├── Run {Colors.GREEN}'./claudia security --install'{Colors.NC} for full security setup
+├── Run {Colors.GREEN}'./cli security --install'{Colors.NC} for full security setup
 ├── This will restart SSH service on the configured port
 └── After setup, connect using admin user with SSH keys
 

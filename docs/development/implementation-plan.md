@@ -141,7 +141,7 @@ Utils Layer                   → Configuration, colors, dev tools
 ### File System Organization
 ```
 ansible-cloudy/
-├── claudia                    # Bash wrapper script (entry point)
+├── cli                    # Bash wrapper script (entry point)
 ├── bootstrap.sh              # Environment setup with Python venv
 ├── cloudy/                   # Ansible automation core
 │   ├── playbooks/recipes/    # High-level service workflows
