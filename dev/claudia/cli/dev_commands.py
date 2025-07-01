@@ -33,9 +33,12 @@ class DevCommandsHandler:
         dev_tools = DevTools(self.config)
         
         # Route to appropriate dev command
-        if args.subcommand == "validate":
+        if args.subcommand == "precommit":
             exit_code = dev_tools.validate_precommit()
+        elif args.subcommand == "validate":
+            exit_code = dev_tools.validate()
         elif args.subcommand == "comprehensive":
+            # Keep for backward compatibility
             exit_code = dev_tools.validate()
         elif args.subcommand == "syntax":
             exit_code = dev_tools.syntax()

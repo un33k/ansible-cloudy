@@ -45,6 +45,9 @@ class CommandRouter:
             if subcommand == "validate":
                 show_validate_help()
                 return True
+            elif subcommand == "precommit":
+                self._show_precommit_help()
+                return True
             elif subcommand == "test":
                 self._show_dev_test_help()
                 return True
@@ -183,6 +186,46 @@ class CommandRouter:
     • Uses root user with password authentication
     • Configures grunt user with SSH keys
     • Tests firewall and security settings
+""")
+    
+    def _show_precommit_help(self):
+        """Show help for dev precommit command"""
+        from utils.colors import Colors
+        
+        print(f"""
+{Colors.CYAN}claudia dev precommit{Colors.NC} - Run all validation checks before commit
+
+{Colors.YELLOW}DESCRIPTION:{Colors.NC}
+    Runs a comprehensive suite of validation checks to ensure code quality
+    before committing. This is the recommended command to run before any commit.
+
+{Colors.YELLOW}USAGE:{Colors.NC}
+    claudia dev precommit [OPTIONS]
+
+{Colors.YELLOW}OPTIONS:{Colors.NC}
+    --verbose, -v         Show detailed output
+    -h, --help           Show this help message
+
+{Colors.YELLOW}WHAT IT RUNS:{Colors.NC}
+    1. {Colors.GREEN}Syntax Check{Colors.NC}     - Validates all Ansible YAML files
+    2. {Colors.GREEN}Ansible Linting{Colors.NC}  - Code quality and best practices
+    3. {Colors.GREEN}YAML Formatting{Colors.NC}  - Consistent formatting validation
+    4. {Colors.GREEN}Python Quality{Colors.NC}   - Flake8 code quality checks
+    5. {Colors.GREEN}Spell Check{Colors.NC}      - Documentation spelling validation
+
+{Colors.YELLOW}EXAMPLES:{Colors.NC}
+    claudia dev precommit                   # Run all pre-commit checks
+    claudia dev precommit --verbose         # Show detailed output
+
+{Colors.YELLOW}EXIT CODES:{Colors.NC}
+    0 - All checks passed
+    1 - One or more checks failed
+
+{Colors.YELLOW}TIPS:{Colors.NC}
+    • This command runs all validation checks in sequence
+    • Any failed check will be clearly indicated
+    • Use individual commands (syntax, lint, etc.) to debug specific issues
+    • For structural validation only, use 'claudia dev validate'
 """)
     
     def _show_dev_command_help(self, command):
