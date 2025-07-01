@@ -167,14 +167,16 @@ all:
 ```
 
 ### 2. Vault Configuration (Recommended)
-For production deployments, use Ansible Vault for credentials:
+For production deployments, create vault files to store credentials separately:
 ```bash
-# Create encrypted vault
-cli vault --create
+# Copy vault template
+cp .vault/dev.yml.example .vault/my-dev.yml
 
-# Edit vault with real credentials
-cli vault --edit
+# Edit with your credentials (keep this file private!)
+vim .vault/my-dev.yml
 ```
+
+**⚠️ Important**: `.vault/*.yml` files contain sensitive credentials and should NEVER be committed to git. Only `.vault/*.example` templates are tracked.
 
 Example vault content:
 ```yaml
