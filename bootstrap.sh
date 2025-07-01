@@ -225,9 +225,11 @@ install_deps() {
     cp "$SCRIPT_DIR/dev/bin/claudia-venv" "$VENV_DIR/bin/claudia"
     chmod +x "$VENV_DIR/bin/claudia"
     
-    # Create cli alias for cli
-    log "Creating 'cli' alias for cli..."
-    ln -sf "$VENV_DIR/bin/claudia" "$VENV_DIR/bin/cli"
+    # Create cli alias for claudia
+    log "Creating 'cli' alias for claudia..."
+    cd "$VENV_DIR/bin"
+    ln -sf claudia cli
+    cd "$SCRIPT_DIR"
     
     log "Ansible dependencies installed successfully"
 }
