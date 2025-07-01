@@ -6,8 +6,8 @@
 
 - **🔐 Enterprise Security**: Two-phase authentication with SSH keys and secure firewall configuration
 - **🧠 Intelligent CLI**: Auto-discovery of services and operations with intuitive parameter mapping
-- **⚡ Universal Parameters**: `./claudia redis --install --port 6380 --memory 512` instead of complex Ansible variables
-- **🔄 Granular Operations**: Service-specific tasks like `./claudia psql --adduser foo --password 1234`
+- **⚡ Universal Parameters**: `cli redis --install --port 6380 --memory 512` instead of complex Ansible variables
+- **🔄 Granular Operations**: Service-specific tasks like `cli psql --adduser foo --password 1234`
 - **🛡️ Production-Ready**: Secure defaults, comprehensive validation, and enterprise-grade security model
 - **🚀 New Deployment Flavors**: pgvector for AI/ML, Node.js with PM2, standalone all-in-one deployments
 - **⚙️ Production Hardening**: Kernel security, SSH hardening, audit logging, DDoS protection
@@ -25,38 +25,38 @@ source .venv/bin/activate
 pip install ansible
 ```
 
-> **💡 Tip:** After activation, you can use either `claudia` or `cli` ([C]laudia [L]ine [I]nterface). Both commands are identical - `cli` is a convenient short alias for faster typing.
+> **💡 Tip:** After activation, you can use either `claudia` or its short alias `cli`. Both commands are identical - `cli` saves keystrokes for frequent use.
 
 ### Basic Usage
 ```bash
 # Show help and configuration options (default action)
-./claudia security    # View security setup help and available variables
-./claudia psql        # View PostgreSQL setup help and configuration
-./claudia redis       # View Redis setup help and all parameters
+cli security    # View security setup help and available variables
+cli psql        # View PostgreSQL setup help and configuration
+cli redis       # View Redis setup help and all parameters
 
 # Execute recipes with universal parameter support
-./claudia security --install                           # Security setup (admin user, SSH keys, firewall)
-./claudia base --install                               # Base configuration (hostname, git, timezone, swap)
-./claudia psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
-./claudia redis --install --port 6380 --memory 512    # Redis with custom port and memory
-./claudia nginx --install --domain example.com --ssl  # Nginx with SSL domain
+cli security --install                           # Security setup (admin user, SSH keys, firewall)
+cli base --install                               # Base configuration (hostname, git, timezone, swap)
+cli psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
+cli redis --install --port 6380 --memory 512    # Redis with custom port and memory
+cli nginx --install --domain example.com --ssl  # Nginx with SSL domain
 
 # Environment selection
-./claudia psql --install --dev                        # Use dev environment (default)
-./claudia psql --install --prod                       # Use production environment
-./claudia psql --install --ci                         # Use CI environment
-./claudia psql --install -i custom-inventory.yml      # Use custom inventory file
+cli psql --install --dev                        # Use dev environment (default)
+cli psql --install --prod                       # Use production environment
+cli psql --install --ci                         # Use CI environment
+cli psql --install -i custom-inventory.yml      # Use custom inventory file
 
 # New deployment flavors
-./claudia pgvector --install --dimensions 1536        # PostgreSQL with AI/ML embeddings
-./claudia nodejs --install --app-name api --pm2      # Node.js with PM2 process manager
-./claudia standalone --install --app-type django     # All-in-one server deployment
+cli pgvector --install --dimensions 1536        # PostgreSQL with AI/ML embeddings
+cli nodejs --install --app-name api --pm2      # Node.js with PM2 process manager
+cli standalone --install --app-type django     # All-in-one server deployment
 
 # Granular operations (no recipe installation)
-./claudia psql --adduser myuser --password secret123  # Add PostgreSQL user
-./claudia redis --configure-port 6379                 # Change Redis port
-./claudia nginx --setup-ssl example.com               # Setup SSL for domain
-./claudia pgbouncer --configure-port 6433            # Configure connection pooler
+cli psql --adduser myuser --password secret123  # Add PostgreSQL user
+cli redis --configure-port 6379                 # Change Redis port
+cli nginx --setup-ssl example.com               # Setup SSL for domain
+cli pgbouncer --configure-port 6433            # Configure connection pooler
 ```
 
 ## 🏗️ Architecture Overview
@@ -94,16 +94,16 @@ The **Claudia CLI** is the heart of Ansible Cloudy, providing:
 ### 📊 Output Control
 ```bash
 # Show help by default (safe exploration)
-./claudia security
+cli security
 
 # Execute with clean output (show only changes and failures)
-./claudia security --install
+cli security --install
 
 # Compact output
-ANSIBLE_STDOUT_CALLBACK=minimal ./claudia security --install
+ANSIBLE_STDOUT_CALLBACK=minimal cli security --install
 
 # Verbose debugging
-./claudia security --install -v
+cli security --install -v
 ```
 
 ## 📁 Project Structure
@@ -170,10 +170,10 @@ all:
 For production deployments, use Ansible Vault for credentials:
 ```bash
 # Create encrypted vault
-./claudia vault --create
+cli vault --create
 
 # Edit vault with real credentials
-./claudia vault --edit
+cli vault --edit
 ```
 
 Example vault content:
@@ -205,102 +205,102 @@ ansible_port: "{{ vault_ssh_port | default(22022) }}"
 ### Complete Web Application Stack
 ```bash
 # Step 1: Secure server foundation (creates admin user, SSH keys, firewall)
-./claudia security --install
+cli security --install
 
 # Step 2: Base server configuration (hostname, git, timezone, swap)
-./claudia base --install
+cli base --install
 
 # Step 3: Database layer with custom parameters
-./claudia psql --install --port 5544 --pgis
+cli psql --install --port 5544 --pgis
 
 # Step 4: Web application layer
-./claudia django --install
+cli django --install
 
 # Step 5: Load balancer with SSL domain
-./claudia nginx --install --domain example.com --ssl
+cli nginx --install --domain example.com --ssl
 ```
 
 ### Redis Cache Server with Custom Configuration
 ```bash
 # View Redis configuration options
-./claudia redis
+cli redis
 
 # Install Redis with custom port and memory limit
-./claudia redis --install --port 6380 --memory 512 --password secret123
+cli redis --install --port 6380 --memory 512 --password secret123
 
 # Granular operations (without recipe installation)
-./claudia redis --configure-port 6379    # Change port
-./claudia redis --set-password newpass   # Update password
+cli redis --configure-port 6379    # Change port
+cli redis --set-password newpass   # Update password
 ```
 
 ### PostgreSQL Database Management
 ```bash
 # Install PostgreSQL with PostGIS on custom port
-./claudia psql --install --port 5544 --pgis
+cli psql --install --port 5544 --pgis
 
 # Database user management (granular operations)
-./claudia psql --adduser myapp --password secret123
-./claudia psql --adddb myapp_db --owner myapp
-./claudia psql --list-users
-./claudia psql --list-databases
+cli psql --adduser myapp --password secret123
+cli psql --adddb myapp_db --owner myapp
+cli psql --list-users
+cli psql --list-databases
 ```
 
 ### VPN Server Deployment
 ```bash
 # View OpenVPN configuration options
-./claudia openvpn
+cli openvpn
 
 # Deploy complete VPN server with Docker
-./claudia openvpn --install
+cli openvpn --install
 ```
 
 ### PostgreSQL with pgvector for AI/ML
 ```bash
 # View pgvector configuration options
-./claudia pgvector
+cli pgvector
 
 # Install PostgreSQL with pgvector extension
-./claudia pgvector --install --dimensions 1536 --index-type hnsw
+cli pgvector --install --dimensions 1536 --index-type hnsw
 
 # Production deployment with custom settings
-./claudia pgvector --install --prod --port 5433 --create-examples
+cli pgvector --install --prod --port 5433 --create-examples
 ```
 
 ### Node.js Application Deployment
 ```bash
 # View Node.js deployment options
-./claudia nodejs
+cli nodejs
 
 # Deploy Node.js application with PM2
-./claudia nodejs --install --app-repo https://github.com/user/app.git
+cli nodejs --install --app-repo https://github.com/user/app.git
 
 # Production deployment with domain and SSL
-./claudia nodejs --install --prod --domain api.example.com --ssl --pm2-instances 4
+cli nodejs --install --prod --domain api.example.com --ssl --pm2-instances 4
 ```
 
 ### Standalone All-in-One Server
 ```bash
 # View standalone deployment options
-./claudia standalone
+cli standalone
 
 # Deploy complete stack on single server
-./claudia standalone --install --app-type django --domain example.com --ssl
+cli standalone --install --app-type django --domain example.com --ssl
 
 # Custom configuration with specific components
-./claudia standalone --install --with-postgresql --with-redis --pg-port 5433
+cli standalone --install --with-postgresql --with-redis --pg-port 5433
 ```
 
 ### Database Connection Pooling with PgBouncer
 ```bash
 # Install PgBouncer on web servers
-./claudia pgbouncer --install
+cli pgbouncer --install
 
 # Configure with custom settings
-./claudia pgbouncer --install --port 6433 --pool-size 30
+cli pgbouncer --install --port 6433 --pool-size 30
 
 # Granular operations
-./claudia pgbouncer --configure-port 6433
-./claudia pgbouncer --set-pool-size 50
+cli pgbouncer --configure-port 6433
+cli pgbouncer --set-pool-size 50
 ```
 
 ## 🧪 Development & Validation
@@ -313,11 +313,11 @@ Ansible Cloudy includes comprehensive development tools:
 source .venv/bin/activate         # Activate development environment
 
 # Validation commands via Claudia CLI
-./claudia dev syntax              # Quick syntax check
-./claudia dev validate            # Comprehensive validation suite
-./claudia dev lint                # Ansible linting with rules
-./claudia dev test                # Authentication flow testing
-./claudia dev spell               # Spell check documentation
+cli dev syntax              # Quick syntax check
+cli dev validate            # Comprehensive validation suite
+cli dev lint                # Ansible linting with rules
+cli dev test                # Authentication flow testing
+cli dev spell               # Spell check documentation
 
 # Direct development tools
 ./dev/validate.py                 # Python validation script
@@ -357,6 +357,6 @@ source .venv/bin/activate         # Activate development environment
 
 ## 🤝 Contributing
 
-**Quick Start**: Fork the repo → run `./bootstrap.sh` → make changes → run `./claudia dev validate` → commit → PR
+**Quick Start**: Fork the repo → run `./bootstrap.sh` → make changes → run `cli dev validate` → commit → PR
 
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed development guidelines and workflow.

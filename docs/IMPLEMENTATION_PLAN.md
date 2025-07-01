@@ -48,13 +48,13 @@ Utils Layer                   → Configuration, colors, dev tools
 #### **Phase 1: Initial Security Setup**
 - **Connection**: Root user with SSH keys (preferred) or password fallback
 - **Purpose**: Install SSH keys, create grunt user, secure server  
-- **Command**: `./claudia security --install`
+- **Command**: `cli security --install`
 - **Security Features**: UFW firewall, custom SSH port, fail2ban installation
 
 #### **Phase 2: Service Operations**
 - **Connection**: Grunt user with SSH keys only (no passwords)
 - **Purpose**: All service installations and configurations
-- **Commands**: `./claudia base --install`, `./claudia psql --install`, etc.
+- **Commands**: `cli base --install`, `cli psql --install`, etc.
 - **Security Features**: NOPASSWD sudo, connection validation, consistent context
 
 ### Smart Connection Management
@@ -97,7 +97,7 @@ Utils Layer                   → Configuration, colors, dev tools
 ### ✅ Phase 3: Development Infrastructure (COMPLETE)
 - [x] **Development Tools**
   - [x] Bootstrap script for environment setup
-  - [x] Comprehensive validation suite (`./claudia dev validate`)
+  - [x] Comprehensive validation suite (`cli dev validate`)
   - [x] Syntax checking and linting integration
   - [x] Spell checking with technical dictionary (480+ terms)
   - [x] Authentication flow testing
@@ -257,8 +257,8 @@ ansible_ssh_private_key_file: ~/.ssh/id_rsa
 - **Enterprise Hardening**: fail2ban, connection limits, secure SSH configuration
 
 ### ✅ **Operational Simplicity**
-- **Universal Parameters**: `./claudia redis --install --port 6380 --memory 512`
-- **Granular Operations**: `./claudia psql --adduser foo --password 1234`
+- **Universal Parameters**: `cli redis --install --port 6380 --memory 512`
+- **Granular Operations**: `cli psql --adduser foo --password 1234`
 - **Smart Help System**: Context-aware help for every service and operation
 - **Clean Output**: Shows only changes and failures by default
 

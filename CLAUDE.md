@@ -11,10 +11,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Be direct and concise**: Get straight to implementation without excessive commentary
 
 ### Claudia CLI Mandatory Usage
-- **ALWAYS use `claudia` for operations**: Unless debugging internal mechanisms, use Claudia CLI for all testing and execution (requires activated venv)
-- **NO direct ansible-playbook calls**: Use `claudia [service] --install` instead of direct Ansible commands
-- **Testing**: Use `claudia [service] --install --check` for dry runs
-- **Granular operations**: Use `claudia psql --adduser foo --password 1234` for specific tasks
+- **ALWAYS use `claudia` or `cli` for operations**: Unless debugging internal mechanisms, use Claudia CLI for all testing and execution (requires activated venv)
+- **NO direct ansible-playbook calls**: Use `cli [service] --install` instead of direct Ansible commands
+- **Testing**: Use `cli [service] --install --check` for dry runs
+- **Granular operations**: Use `cli psql --adduser foo --password 1234` for specific tasks
 
 ### Claudia Architecture Standards
 - **Smart intuitive interface**: Make Claudia CLI intelligent and user-friendly with auto-discovery
@@ -26,9 +26,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development Workflow
 1. **Activate venv**: `source .venv/bin/activate` before using claudia
-2. **Use Claudia CLI**: `claudia [service] --install` for recipe operations
-3. **Use granular operations**: `claudia psql --adduser foo --password 1234` for specific tasks
-4. **Test with dry runs**: `claudia [service] --install --check` before real execution  
+2. **Use Claudia CLI**: `cli [service] --install` for recipe operations
+3. **Use granular operations**: `cli psql --adduser foo --password 1234` for specific tasks
+4. **Test with dry runs**: `cli [service] --install --check` before real execution  
 4. **Maintain modularity**: Keep recipes focused, use `import_playbook` for orchestration
 5. **File organization**: `/claudia/` for CLI, `/tasks/` for reusable components, `/recipes/` for orchestration
 6. **Auto-discovery**: Add Claudia metadata headers to tasks for automatic CLI integration
@@ -48,7 +48,7 @@ source .venv/bin/activate
 cd ansible-cloudy/
 ```
 
-**Note:** Once activated, you can use either `claudia` or its shorter alias `cli` (Claudia Line Interface). Both commands are identical - `cli` is simply a convenient short alias for faster typing.
+**Note:** Once activated, you can use either `claudia` or its shorter alias `cli`. Both commands are identical - `cli` is simply a convenient short alias for faster typing.
 
 ### Core Development Commands
 

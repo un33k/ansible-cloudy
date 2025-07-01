@@ -16,7 +16,7 @@ cd ansible-cloudy/
 source .venv/bin/activate
 
 # Verify installation
-./claudia dev syntax
+cli dev syntax
 ```
 
 **What bootstrap.sh provides:**
@@ -29,16 +29,16 @@ source .venv/bin/activate
 
 1. **Understand the Architecture**: Familiarize yourself with the Claudia CLI system
    ```bash
-   ./claudia --help                    # View all available services
-   ./claudia security                  # View service-specific help
-   ./claudia dev                       # View development commands
+   cli --help                    # View all available services
+   cli security                  # View service-specific help
+   cli dev                       # View development commands
    ```
 
 2. **Run Pre-Development Validation**: Always validate before making changes
    ```bash
-   ./claudia dev syntax               # Quick syntax check
-   ./claudia dev validate             # Comprehensive validation suite
-   ./claudia dev spell                # Spell check documentation
+   cli dev syntax               # Quick syntax check
+   cli dev validate             # Comprehensive validation suite
+   cli dev spell                # Spell check documentation
    ```
 
 3. **Make Changes**: Follow project architecture and conventions
@@ -49,11 +49,11 @@ source .venv/bin/activate
 
 4. **Test Changes**: Comprehensive validation
    ```bash
-   ./claudia dev syntax               # Quick syntax validation
-   ./claudia dev validate             # Full validation suite
-   ./claudia dev lint                 # Ansible linting (if available)
-   ./claudia dev test                 # Authentication flow testing
-   ./claudia [service] --check        # Dry run specific services
+   cli dev syntax               # Quick syntax validation
+   cli dev validate             # Full validation suite
+   cli dev lint                 # Ansible linting (if available)
+   cli dev test                 # Authentication flow testing
+   cli [service] --check        # Dry run specific services
    ```
 
 5. **Commit Changes**: Follow semantic commit conventions
@@ -69,12 +69,12 @@ Before committing, run the development tools:
 
 ```bash
 # Quick validation (recommended)
-./claudia dev syntax
+cli dev syntax
 
 # Full validation (comprehensive)
-./claudia dev validate
-./claudia dev spell
-./claudia dev lint      # If ansible-lint installed
+cli dev validate
+cli dev spell
+cli dev lint      # If ansible-lint installed
 ```
 
 ### Running GitHub Actions Locally
@@ -109,12 +109,12 @@ Run the workflow steps manually:
 ```bash
 # This runs the same validation as GitHub Actions
 ./bootstrap.sh -y && source .venv/bin/activate
-./claudia dev syntax
-./claudia dev lint
-./claudia dev validate
-./claudia dev test -- --syntax-check
-./claudia security --check
-./claudia django --check
+cli dev syntax
+cli dev lint
+cli dev validate
+cli dev test -- --syntax-check
+cli security --check
+cli django --check
 ```
 
 ### Testing Changes
@@ -123,11 +123,11 @@ Test your recipes safely with check mode:
 
 ```bash
 # Test specific recipes (dry run)
-./claudia security --check    # Test security recipe
-./claudia django --check      # Test django recipe
+cli security --check    # Test security recipe
+cli django --check      # Test django recipe
 
 # Test authentication flow
-./claudia dev test
+cli dev test
 ```
 
 ## 📁 Project Architecture
@@ -334,11 +334,11 @@ all:
 
 ```bash
 # Full test suite via Claudia CLI
-./claudia dev validate
+cli dev validate
 
 # Individual validations
-./claudia dev syntax
-./claudia dev lint
+cli dev syntax
+cli dev lint
 ```
 
 ### Test Categories
@@ -403,7 +403,7 @@ When adding new functionality:
 ```yaml
 # Recipe: Purpose and Scope
 # Based on: original-implementation-reference (if applicable)
-# Usage: ./claudia [service] --install
+# Usage: cli [service] --install
 
 ---
 - name: Descriptive Recipe Name
@@ -436,10 +436,10 @@ When adding new functionality:
 **Syntax Errors:**
 ```bash
 # Check YAML syntax and Ansible validation
-./claudia dev syntax
+cli dev syntax
 
 # Comprehensive validation
-./claudia dev validate
+cli dev validate
 ```
 
 **Missing Dependencies:**

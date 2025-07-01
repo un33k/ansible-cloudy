@@ -23,13 +23,13 @@ cd ansible-cloudy/
 source .venv/bin/activate
 
 # Comprehensive validation
-./claudia dev validate
+cli dev validate
 
 # Quick syntax check
-./claudia dev syntax
+cli dev syntax
 
 # Test authentication flow
-./claudia dev test
+cli dev test
 ```
 
 ## 🧠 Claudia CLI Implementation
@@ -71,32 +71,32 @@ source .venv/bin/activate
 #### **Auto-Discovery System**
 ```python
 # Services automatically discovered from filesystem
-./claudia redis      # Found via cloudy/playbooks/recipes/cache/redis.yml
-./claudia psql       # Found via cloudy/playbooks/recipes/db/psql.yml
-./claudia nginx      # Found via cloudy/playbooks/recipes/lb/nginx.yml
+cli redis      # Found via cloudy/playbooks/recipes/cache/redis.yml
+cli psql       # Found via cloudy/playbooks/recipes/db/psql.yml
+cli nginx      # Found via cloudy/playbooks/recipes/lb/nginx.yml
 ```
 
 #### **Universal Parameter Mapping**
 ```python
 # Intuitive CLI parameters mapped to Ansible variables
-./claudia redis --install --port 6380 --memory 512
+cli redis --install --port 6380 --memory 512
 # Becomes: redis_port=6380, redis_memory_mb=512
 
-./claudia nginx --install --domain example.com --ssl
+cli nginx --install --domain example.com --ssl
 # Becomes: nginx_domain=example.com, nginx_ssl_enabled=true
 ```
 
 #### **Granular Operations**
 ```python
 # Service-specific operations without full recipe installation
-./claudia psql --adduser myuser --password secret123
-./claudia redis --configure-port 6379
-./claudia nginx --setup-ssl example.com
+cli psql --adduser myuser --password secret123
+cli redis --configure-port 6379
+cli nginx --setup-ssl example.com
 ```
 
 ## 🛠️ Development Tools
 
-### **`./claudia dev validate`** - Comprehensive Validation Suite
+### **`cli dev validate`** - Comprehensive Validation Suite
 **What it validates:**
 - ✅ Project directory structure and organization
 - ✅ YAML syntax for all playbooks, tasks, and inventory files
@@ -105,26 +105,26 @@ source .venv/bin/activate
 - ✅ Service discovery and CLI integration
 - ✅ Documentation consistency and spell checking
 
-### **`./claudia dev syntax`** - Quick Syntax Validation
+### **`cli dev syntax`** - Quick Syntax Validation
 **What it checks:**
 - ✅ Ansible playbook syntax for all recipes
 - ✅ YAML structure validation
 - ✅ Basic file accessibility and permissions
 
-### **`./claudia dev test`** - Authentication Flow Testing
+### **`cli dev test`** - Authentication Flow Testing
 **What it tests:**
 - ✅ Server connection validation
 - ✅ Two-phase authentication workflow
 - ✅ SSH key and password authentication
 - ✅ Inventory configuration validation
 
-### **`./claudia dev lint`** - Code Quality Validation
+### **`cli dev lint`** - Code Quality Validation
 **What it analyzes:**
 - ✅ Ansible-lint rules and best practices
 - ✅ YAML formatting and style consistency
 - ✅ Python code quality (for CLI implementation)
 
-### **`./claudia dev spell`** - Documentation Spell Checking
+### **`cli dev spell`** - Documentation Spell Checking
 **What it validates:**
 - ✅ Documentation files (*.md) spell checking
 - ✅ Technical dictionary with 480+ terms
@@ -169,9 +169,9 @@ class MySQLOperations(BaseServiceOperations):
 
 #### 4. **Test Integration**
 ```bash
-./claudia dev validate     # Validate all components
-./claudia mysql            # Verify auto-discovery
-./claudia mysql --help     # Check parameter mapping
+cli dev validate     # Validate all components
+cli mysql            # Verify auto-discovery
+cli mysql --help     # Check parameter mapping
 ```
 
 ### **Development Standards**
@@ -193,31 +193,31 @@ class MySQLOperations(BaseServiceOperations):
 ### **Pre-Development Validation**
 ```bash
 # Always validate before making changes
-./claudia dev validate
+cli dev validate
 ```
 
 ### **During Development**
 ```bash
 # Quick syntax checking while developing
-./claudia dev syntax
+cli dev syntax
 
 # Test specific services
-./claudia [service] --check  # Dry run validation
+cli [service] --check  # Dry run validation
 ```
 
 ### **Pre-Commit Validation**
 ```bash
 # Comprehensive validation before committing
-./claudia dev validate
-./claudia dev spell          # Documentation spell check
-./claudia dev lint           # Code quality validation
+cli dev validate
+cli dev spell          # Documentation spell check
+cli dev lint           # Code quality validation
 ```
 
 ### **CI/CD Integration**
 ```bash
 # Bootstrap environment and run full validation
 ./bootstrap.sh -y && source .venv/bin/activate
-./claudia dev syntax && ./claudia dev validate
+cli dev syntax && cli dev validate
 ```
 
 ## ⚙️ Configuration Files
@@ -265,35 +265,35 @@ chmod +x claudia dev/*.py dev/*.sh
 ### **Validation Failures**
 ```bash
 # Syntax errors in recipes
-./claudia dev syntax
+cli dev syntax
 
 # YAML formatting issues
-./claudia dev lint
+cli dev lint
 
 # Missing or incorrect file structure
-./claudia dev validate
+cli dev validate
 ```
 
 ### **CLI Development Issues**
 ```bash
 # Service not discovered
-./claudia --list-services
+cli --list-services
 
 # Parameter mapping not working
-./claudia [service] --help
+cli [service] --help
 
 # Connection validation failing
-./claudia dev test
+cli dev test
 ```
 
 ## 🎯 Best Practices
 
 ### **Development Workflow**
 1. **Environment Setup**: Use `./bootstrap.sh` for consistent development environment
-2. **Validation First**: Run `./claudia dev validate` before making changes
-3. **Incremental Testing**: Use `./claudia dev syntax` for quick feedback during development
+2. **Validation First**: Run `cli dev validate` before making changes
+3. **Incremental Testing**: Use `cli dev syntax` for quick feedback during development
 4. **Documentation**: Update documentation for all new features and services
-5. **Integration Testing**: Verify CLI integration with `./claudia [service] --help`
+5. **Integration Testing**: Verify CLI integration with `cli [service] --help`
 
 ### **Code Quality**
 - Keep all files under 200 LOC for maintainability

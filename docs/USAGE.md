@@ -26,103 +26,103 @@ Complete reference for the **Claudia CLI** - an intelligent command-line interfa
 #### Infrastructure Foundation
 ```bash
 # Security Setup (Two-phase authentication model)
-./claudia security                  # Show help and configuration options
-./claudia security --install       # Execute security setup (SSH keys, grunt user, firewall)
+cli security                  # Show help and configuration options
+cli security --install       # Execute security setup (SSH keys, grunt user, firewall)
 
 # Base Configuration  
-./claudia base                      # Show help and available variables
-./claudia base --install           # Execute base setup (hostname, git, timezone, swap)
+cli base                      # Show help and available variables
+cli base --install           # Execute base setup (hostname, git, timezone, swap)
 ```
 
 #### Database Services with Universal Parameters
 ```bash
 # PostgreSQL with intuitive parameters
-./claudia psql                                    # Show help and all parameters
-./claudia psql --install                         # Standard PostgreSQL installation
-./claudia psql --install --port 5544 --pgis      # Custom port with PostGIS extensions
+cli psql                                    # Show help and all parameters
+cli psql --install                         # Standard PostgreSQL installation
+cli psql --install --port 5544 --pgis      # Custom port with PostGIS extensions
 
 # Granular database operations (no recipe installation)
-./claudia psql --adduser myapp --password secret123    # Add user
-./claudia psql --adddb myapp_db --owner myapp          # Add database
-./claudia psql --list-users                            # List all users
-./claudia psql --list-databases                        # List all databases
+cli psql --adduser myapp --password secret123    # Add user
+cli psql --adddb myapp_db --owner myapp          # Add database
+cli psql --list-users                            # List all users
+cli psql --list-databases                        # List all databases
 ```
 
 #### Cache Services with Smart Configuration
 ```bash
 # Redis with universal parameters
-./claudia redis                                         # Show help and parameters
-./claudia redis --install                              # Standard Redis installation
-./claudia redis --install --port 6380 --memory 512 --password secret  # Custom configuration
+cli redis                                         # Show help and parameters
+cli redis --install                              # Standard Redis installation
+cli redis --install --port 6380 --memory 512 --password secret  # Custom configuration
 
 # Granular Redis operations
-./claudia redis --configure-port 6379                  # Change port
-./claudia redis --set-password newpass                 # Update password
-./claudia redis --restart                              # Restart service
+cli redis --configure-port 6379                  # Change port
+cli redis --set-password newpass                 # Update password
+cli redis --restart                              # Restart service
 ```
 
 #### Web Services with Domain Management
 ```bash
 # Nginx with SSL and domain support
-./claudia nginx                                         # Show help and SSL options
-./claudia nginx --install                              # Standard Nginx installation
-./claudia nginx --install --domain example.com --ssl   # Nginx with SSL domain
+cli nginx                                         # Show help and SSL options
+cli nginx --install                              # Standard Nginx installation
+cli nginx --install --domain example.com --ssl   # Nginx with SSL domain
 
 # Granular web operations
-./claudia nginx --setup-ssl example.com                # Setup SSL for domain
-./claudia nginx --add-domain api.example.com           # Add new domain
+cli nginx --setup-ssl example.com                # Setup SSL for domain
+cli nginx --add-domain api.example.com           # Add new domain
 
 # Django web applications
-./claudia django                                        # Show deployment options
-./claudia django --install                             # Django web server
-./claudia django --install --prod                      # Production deployment
+cli django                                        # Show deployment options
+cli django --install                             # Django web server
+cli django --install --prod                      # Production deployment
 ```
 
 #### VPN Services
 ```bash
 # OpenVPN with Docker
-./claudia openvpn                                       # Show VPN configuration help
-./claudia openvpn --install                            # Deploy OpenVPN server
+cli openvpn                                       # Show VPN configuration help
+cli openvpn --install                            # Deploy OpenVPN server
 ```
 
 #### AI/ML Database Services
 ```bash
 # PostgreSQL with pgvector for embeddings
-./claudia pgvector                                      # Show pgvector configuration
-./claudia pgvector --install                           # Install with defaults (1536 dimensions)
-./claudia pgvector --install --dimensions 768 --index-type hnsw  # Custom dimensions and HNSW index
-./claudia pgvector --install --prod --create-examples  # Production with example schemas
+cli pgvector                                      # Show pgvector configuration
+cli pgvector --install                           # Install with defaults (1536 dimensions)
+cli pgvector --install --dimensions 768 --index-type hnsw  # Custom dimensions and HNSW index
+cli pgvector --install --prod --create-examples  # Production with example schemas
 ```
 
 #### Node.js Application Deployment
 ```bash
 # Node.js with PM2 process manager
-./claudia nodejs                                        # Show Node.js deployment options
-./claudia nodejs --install                             # Deploy sample Node.js app
-./claudia nodejs --install --app-repo https://github.com/user/app.git  # Deploy from Git
-./claudia nodejs --install --prod --domain api.example.com --ssl --pm2-instances 4  # Production deployment
+cli nodejs                                        # Show Node.js deployment options
+cli nodejs --install                             # Deploy sample Node.js app
+cli nodejs --install --app-repo https://github.com/user/app.git  # Deploy from Git
+cli nodejs --install --prod --domain api.example.com --ssl --pm2-instances 4  # Production deployment
 ```
 
 #### All-in-One Standalone Server
 ```bash
 # Complete stack on single server
-./claudia standalone                                    # Show standalone options
-./claudia standalone --install                         # Deploy complete Django stack
-./claudia standalone --install --app-type nodejs      # Deploy complete Node.js stack
-./claudia standalone --install --domain example.com --ssl --production  # Production deployment
+cli standalone                                    # Show standalone options
+cli standalone --install                         # Deploy complete Django stack
+cli standalone --install --app-type nodejs      # Deploy complete Node.js stack
+cli standalone --install --domain example.com --ssl --production  # Production deployment
 ```
 
 #### Database Connection Pooling
 ```bash
 # PgBouncer for optimal database connections
-./claudia pgbouncer                                     # Show PgBouncer configuration
-./claudia pgbouncer --install                          # Install with defaults
-./claudia pgbouncer --install --port 6433 --pool-size 30  # Custom configuration
+cli pgbouncer                                     # Show PgBouncer configuration
+cli pgbouncer --install                          # Install with defaults
+cli pgbouncer --install --port 6433 --pool-size 30  # Custom configuration
 
 # Granular PgBouncer operations
-./claudia pgbouncer --configure-port 6433              # Change port
-./claudia pgbouncer --set-pool-size 50                # Update pool size
-./claudia pgbouncer --restart                          # Restart service
+cli pgbouncer --configure-port 6433              # Change port
+cli pgbouncer --set-pool-size 50                # Update pool size
+cli pgbouncer --restart                          # Restart service
 ```
 
 #### Simple Vault Configuration
@@ -134,22 +134,22 @@ cp .vault/dev.yml.example .vault/my-dev.yml
 vim .vault/my-dev.yml
 
 # Use with Claudia commands
-./claudia psql --install -- -e @.vault/my-dev.yml
+cli psql --install -- -e @.vault/my-dev.yml
 ```
 
 ### 🛠️ Development & Validation Commands
 
 ```bash
 # Comprehensive development tools
-./claudia dev validate      # Full validation suite (YAML, Ansible, structure)
-./claudia dev syntax        # Quick syntax checking for all playbooks
-./claudia dev lint          # Ansible-lint validation with rules
-./claudia dev test          # Authentication flow testing
-./claudia dev spell         # Spell check documentation with technical dictionary
+cli dev validate      # Full validation suite (YAML, Ansible, structure)
+cli dev syntax        # Quick syntax checking for all playbooks
+cli dev lint          # Ansible-lint validation with rules
+cli dev test          # Authentication flow testing
+cli dev spell         # Spell check documentation with technical dictionary
 
 # Service discovery and help
-./claudia --list-services   # Show all available services and operations
-./claudia --help            # Complete CLI usage guide
+cli --list-services   # Show all available services and operations
+cli --help            # Complete CLI usage guide
 ```
 
 ### ⚙️ Universal Options
@@ -178,38 +178,38 @@ Available with any service command:
 
 #### Help and Discovery (Default Action)
 ```bash
-./claudia security         # Show security help and configuration options
-./claudia django           # Show Django help and deployment variables
-./claudia redis             # Show Redis help and memory configuration
+cli security         # Show security help and configuration options
+cli django           # Show Django help and deployment variables
+cli redis             # Show Redis help and memory configuration
 ```
 
 #### Recipe Execution (Requires --install Flag)
 ```bash
-./claudia security --install          # Execute security setup on test environment
-./claudia django --install --prod     # Execute Django deployment on production  
-./claudia redis --install --check     # Dry run Redis installation
+cli security --install          # Execute security setup on test environment
+cli django --install --prod     # Execute Django deployment on production  
+cli redis --install --check     # Dry run Redis installation
 ```
 
 #### Development Workflow
 ```bash
-./claudia dev syntax       # Quick validation
-./claudia dev validate     # Full validation  
-./claudia dev spell        # Check spelling
-./claudia dev test         # Test auth flow
+cli dev syntax       # Quick validation
+cli dev validate     # Full validation  
+cli dev spell        # Check spelling
+cli dev test         # Test auth flow
 ```
 
 #### Advanced Usage  
 ```bash
-./claudia nginx --install --ssl                      # Execute nginx with SSL configuration
-./claudia django --install --prod --verbose          # Production execution with debug output
-./claudia security --install --check                 # Dry run security setup
+cli nginx --install --ssl                      # Execute nginx with SSL configuration
+cli django --install --prod --verbose          # Production execution with debug output
+cli security --install --check                 # Dry run security setup
 ```
 
 #### Discovery Commands
 ```bash
-./claudia --list           # Show all recipes
-./claudia dev              # Show all dev commands  
-./claudia --help           # Show complete usage
+cli --list           # Show all recipes
+cli dev              # Show all dev commands  
+cli --help           # Show complete usage
 ```
 
 ### 📊 Command Summary
@@ -238,9 +238,12 @@ cd ansible-cloudy/
 # Activate development environment
 source .venv/bin/activate
 
+# After activation, use 'cli' (short alias) or 'claudia' (full name)
+# Both commands are identical - 'cli' saves keystrokes for frequent use
+
 # Verify installation
-./claudia dev syntax
-./claudia --help
+cli dev syntax  # or claudia dev syntax
+cli --help      # or claudia --help
 ```
 
 **What bootstrap.sh provides:**
@@ -256,7 +259,7 @@ pip install ansible ansible-lint yamllint pyyaml passlib
 
 # Verify installation
 ansible --version
-./claudia dev syntax
+cli dev syntax
 ```
 
 ### SSH Key Requirements
@@ -286,12 +289,12 @@ Ansible Cloudy uses a sophisticated two-phase authentication approach:
 **Phase 1 - Initial Security Setup** (Root + Password):
 - Connection: Root user with password authentication
 - Purpose: Install SSH keys, create grunt user, secure server
-- Command: `./claudia security --install`
+- Command: `cli security --install`
 
 **Phase 2 - Service Operations** (Admin + SSH Keys):
 - Connection: Grunt user with SSH key authentication
 - Purpose: All service installations and configurations  
-- Commands: `./claudia base --install`, `./claudia psql --install`, etc.
+- Commands: `cli base --install`, `cli psql --install`, etc.
 
 ### 2. Inventory Configuration
 
@@ -317,7 +320,7 @@ all:
 ```
 
 #### After Security Setup (Production Use)
-Update inventory after running `./claudia security --install`:
+Update inventory after running `cli security --install`:
 ```yaml
 all:
   vars:
@@ -381,13 +384,13 @@ all:
 
 ```bash
 # Test initial connection (fresh server)
-./claudia dev test
+cli dev test
 
 # Test specific inventory configuration
 ansible -i cloudy/inventory/dev.yml my-server -m ping
 
 # Test authentication flow with vault
-./claudia security --install -- -e @.vault/my-dev.yml
+cli security --install -- -e @.vault/my-dev.yml
 ```
 
 ## Server Deployment Workflows
@@ -397,8 +400,8 @@ Sets up secure SSH, user management, and firewall.
 
 ```bash
 # Deploy secure foundation (two-step process)
-./claudia security --install    # Security setup (SSH keys, grunt user, firewall)
-./claudia base --install        # Base configuration (hostname, git, timezone)
+cli security --install    # Security setup (SSH keys, grunt user, firewall)
+cli base --install        # Base configuration (hostname, git, timezone)
 ```
 
 **What it does:**
@@ -413,7 +416,7 @@ Deploys OpenVPN using Docker containers.
 
 ```bash
 # Deploy VPN server (includes foundation setup)
-./claudia openvpn --install
+cli openvpn --install
 ```
 
 **What it includes:**
@@ -428,7 +431,7 @@ Complete web application stack.
 
 ```bash
 # Deploy web server
-./claudia django --install
+cli django --install
 ```
 
 **What it includes:**
@@ -443,7 +446,7 @@ PostgreSQL with spatial extensions.
 
 ```bash
 # Deploy database server
-./claudia psql --install --pgis
+cli psql --install --pgis
 ```
 
 **What it includes:**
@@ -457,7 +460,7 @@ Redis caching solution.
 
 ```bash
 # Deploy cache server
-./claudia redis --install
+cli redis --install
 ```
 
 **What it includes:**
@@ -471,7 +474,7 @@ Nginx load balancer with SSL.
 
 ```bash
 # Deploy load balancer
-./claudia nginx --install --ssl
+cli nginx --install --ssl
 ```
 
 **What it includes:**
@@ -485,31 +488,31 @@ Nginx load balancer with SSL.
 ### Default Output (Clean)
 Shows only changes and failures:
 ```bash
-./claudia security --install
+cli security --install
 ```
 
 ### Compact Output
 Single line per task:
 ```bash
-ANSIBLE_STDOUT_CALLBACK=minimal ./claudia security --install
+ANSIBLE_STDOUT_CALLBACK=minimal cli security --install
 ```
 
 ### One-Line Output
 Extremely compact:
 ```bash
-ANSIBLE_STDOUT_CALLBACK=oneline ./claudia security --install
+ANSIBLE_STDOUT_CALLBACK=oneline cli security --install
 ```
 
 ### Verbose Output
 Full debugging information:
 ```bash
-./claudia security --install -v
+cli security --install -v
 ```
 
 ### Ultra-Verbose Output
 Maximum detail:
 ```bash
-./claudia security --install -vvv
+cli security --install -vvv
 ```
 
 ## Common Scenarios
@@ -518,27 +521,27 @@ Maximum detail:
 
 ```bash
 # 1. Start with fresh server, deploy foundation
-./claudia security --install   # Create grunt user, SSH keys, firewall
-./claudia base --install       # Base configuration
+cli security --install   # Create grunt user, SSH keys, firewall
+cli base --install       # Base configuration
 
 # 2. Update inventory to use grunt user on port 22022
 # Edit inventory: ansible_user: admin, ansible_port: 22022
 
 # 3. Deploy database layer
-./claudia psql --install --pgis
+cli psql --install --pgis
 
 # 4. Deploy web application layer
-./claudia django --install
+cli django --install
 
 # 5. Optional: Deploy load balancer
-./claudia nginx --install --ssl
+cli nginx --install --ssl
 ```
 
 ### Scenario 2: VPN-Only Server
 
 ```bash
 # Single command deployment (includes security setup)
-./claudia openvpn --install
+cli openvpn --install
 
 # Inventory automatically updated for grunt user access
 ```
@@ -547,10 +550,10 @@ Maximum detail:
 
 ```bash
 # Deploy Redis cache server with custom configuration
-./claudia redis --install --port 6380 --memory 512
+cli redis --install --port 6380 --memory 512
 
 # Or with production settings
-./claudia redis --install --prod --memory 1024
+cli redis --install --prod --memory 1024
 ```
 
 ### Scenario 4: Multi-Server Environment
@@ -592,10 +595,10 @@ all:
 Deploy:
 ```bash
 # Deploy web servers
-./claudia django --install --prod
+cli django --install --prod
 
 # Deploy database servers  
-./claudia psql --install --prod --pgis
+cli psql --install --prod --pgis
 ```
 
 ## Troubleshooting
@@ -635,7 +638,7 @@ Deploy:
 **Problem:** Tasks fail during execution
 
 **Solutions:**
-1. Run with verbose output: `./claudia [service] --install -v`
+1. Run with verbose output: `cli [service] --install -v`
 2. Check specific task error messages in output
 3. Verify server has sufficient resources (disk, memory)
 4. Check internet connectivity for package downloads
@@ -646,7 +649,7 @@ Deploy:
 
 **Solutions:**
 1. Use default clean output (configured in `ansible.cfg`)
-2. Try minimal callback: `ANSIBLE_STDOUT_CALLBACK=minimal ./claudia [service] --install`
+2. Try minimal callback: `ANSIBLE_STDOUT_CALLBACK=minimal cli [service] --install`
 3. Focus on changed tasks only (default behavior)
 
 ### Re-running Commands
@@ -655,7 +658,7 @@ Deploy:
 
 ```bash
 # Re-run safely - only changes will be applied
-./claudia security --install
+cli security --install
 ```
 
 ### Testing Before Production
@@ -663,13 +666,13 @@ Deploy:
 **Always test with dry runs first:**
 ```bash
 # Test with dry run mode
-./claudia security --install --check
+cli security --install --check
 
 # Test authentication flow
-./claudia dev test
+cli dev test
 
 # If successful, proceed with actual installation
-./claudia security --install
+cli security --install
 ```
 
 ## Advanced Usage
@@ -696,16 +699,16 @@ all:
 Use specific operations for targeted changes:
 ```bash
 # PostgreSQL specific operations
-./claudia psql --adduser myapp --password secret123
-./claudia psql --configure-port 5544
+cli psql --adduser myapp --password secret123
+cli psql --configure-port 5544
 
 # Redis specific operations  
-./claudia redis --configure-port 6380
-./claudia redis --set-password newpass
+cli redis --configure-port 6380
+cli redis --set-password newpass
 
 # Nginx specific operations
-./claudia nginx --setup-ssl example.com
-./claudia nginx --add-domain api.example.com
+cli nginx --setup-ssl example.com
+cli nginx --add-domain api.example.com
 ```
 
 ### Dry Run Mode
@@ -713,8 +716,8 @@ Use specific operations for targeted changes:
 Test without making changes:
 ```bash
 # Check what would change
-./claudia security --install --check
-./claudia psql --install --check --port 5544
+cli security --install --check
+cli psql --install --check --port 5544
 ```
 
 This guide covers the most common usage patterns. For detailed command reference, see `CLAUDE.md`.
