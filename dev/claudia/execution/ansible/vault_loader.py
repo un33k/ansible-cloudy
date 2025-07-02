@@ -54,7 +54,8 @@ class VaultAutoLoader:
                         import yaml
                         with open(vault_file, 'r') as f:
                             vault_data = yaml.safe_load(f)
-                            return vault_data.get('vault_ssh_port', 22)
+                            # Try new variable name first, then fall back to old name
+                            return vault_data.get('vault_ssh_port_final', vault_data.get('vault_ssh_port', 22))
         except Exception:
             pass
         return 22

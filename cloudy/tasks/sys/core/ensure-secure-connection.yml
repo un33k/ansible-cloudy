@@ -1,6 +1,7 @@
 # Ensure Secure Connection - Connection Validation Task
 # Validates that the current connection is using root user with SSH keys
 # This task should be included in all service recipes to ensure proper authentication
+# Note: Skip validation for harden_targets group which uses password auth
 
 ---
 - name: Validate connection user
@@ -24,11 +25,12 @@
       Actual: ansible_user is '{{ ansible_user }}'
       
       🔧 Fix:
-      1. Run security setup first: ./cli security --install
+      1. Run hardening first: ./cli harden --install
+      2. Then run security setup: ./cli security --install
       2. Ensure you're targeting 'service_targets' group with root user
   when: ansible_user != 'root'
 
-- name: Fail if using password authentication
+- name: Fail if using password authentication (except harden_targets)
   fail:
     msg: |
       ❌ AUTHENTICATION ERROR: Password authentication detected!
@@ -39,24 +41,25 @@
       
       🔧 Fix:
       1. Remove ansible_ssh_pass from inventory
-      2. Ensure SSH keys are installed: ./cli security --install
+      2. Ensure SSH keys are installed: ./cli harden --install
       3. Use SSH key authentication only
-  when: ansible_ssh_pass is defined
+  when: ansible_ssh_pass is defined and 'harden_targets' not in group_names
 
-- name: Fail if using default SSH port
+- name: Fail if using default SSH port (except harden_targets)
   fail:
     msg: |
       ❌ PORT ERROR: Using default SSH port 22!
       
       This recipe should connect to the secure SSH port.
       
-      Expected: ansible_port should be 22022 (or custom secure port)
+      Expected: ansible_port should be {{ vault_ssh_port_final | default(22022) }} (or custom secure port)
       Actual: ansible_port is {{ ansible_port }}
       
       🔧 Fix:
-      1. Run security setup first: ./cli security --install
-      2. Ensure inventory uses the secure SSH port (22022)
-  when: ansible_port == 22
+      1. Run hardening first: ./cli harden --install
+      2. Then run security setup: ./cli security --install
+      3. Ensure inventory uses the secure SSH port
+  when: ansible_port == 22 and 'harden_targets' not in group_names
 
 - name: Validate current user
   command: whoami
