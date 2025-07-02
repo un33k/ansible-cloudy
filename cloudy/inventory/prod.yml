@@ -69,8 +69,8 @@ all:
     # Generic Foundation Servers
     generic_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"  # Required
+        admin_user: "{{ vault_grunt_user | default('admin') }}"
+        admin_password: "{{ vault_grunt_password }}"  # Required if grunt user defined
         admin_groups: "admin,www-data"
         ssh_disable_root: true
         ssh_enable_password_auth: false
@@ -88,8 +88,8 @@ all:
     # Web Application Servers
     web_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"  # Required
+        admin_user: "{{ vault_grunt_user | default('admin') }}"
+        admin_password: "{{ vault_grunt_password }}"  # Required if grunt user defined
         admin_groups: "admin,www-data"
         webserver: gunicorn
         webserver_port: 8181
@@ -110,8 +110,8 @@ all:
     # Database Servers
     database_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"  # Required
+        admin_user: "{{ vault_grunt_user | default('admin') }}"
+        admin_password: "{{ vault_grunt_password }}"  # Required if grunt user defined
         admin_groups: "admin,www-data"
         postgresql_version: "15"
         postgis_version: "3.3"
@@ -132,8 +132,8 @@ all:
     # Cache Servers  
     cache_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"  # Required
+        admin_user: "{{ vault_grunt_user | default('admin') }}"
+        admin_password: "{{ vault_grunt_password }}"  # Required if grunt user defined
         admin_groups: "admin,www-data"
         redis_memory: 512  # MB
         redis_interface: "0.0.0.0"
@@ -148,8 +148,8 @@ all:
     # VPN Servers
     vpn_servers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"  # Required
+        admin_user: "{{ vault_grunt_user | default('admin') }}"
+        admin_password: "{{ vault_grunt_password }}"  # Required if grunt user defined
         admin_groups: "admin,www-data,docker"
         
       hosts:
@@ -168,8 +168,8 @@ all:
     # Load Balancers
     load_balancers:
       vars:
-        admin_user: "{{ vault_admin_user }}"
-        admin_password: "{{ vault_admin_password }}"  # Required
+        admin_user: "{{ vault_grunt_user | default('admin') }}"
+        admin_password: "{{ vault_grunt_password }}"  # Required if grunt user defined
         admin_groups: "admin,www-data"
         
       hosts:

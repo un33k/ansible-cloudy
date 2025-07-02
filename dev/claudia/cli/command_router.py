@@ -89,6 +89,11 @@ class CommandRouter:
                     standalone_ops = StandaloneOperations(config)
                     standalone_ops.show_help()
                     return True
+                elif service_name == "harden":
+                    from operations.harden import HardenOperations
+                    harden_ops = HardenOperations(config)
+                    harden_ops.show_help()
+                    return True
                 
                 # Handle other services with recipe help
                 finder = RecipeFinder(config)
@@ -295,6 +300,11 @@ class CommandRouter:
             standalone_ops = StandaloneOperations(config)
             exit_code = standalone_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
+        elif service_name == "harden":
+            from operations.harden import HardenOperations
+            harden_ops = HardenOperations(config)
+            exit_code = harden_ops.handle_operation(args, ansible_args)
+            sys.exit(exit_code)
         else:
             return False  # Service not handled by specific operations
         
@@ -325,6 +335,10 @@ class CommandRouter:
             ansible_args.insert(0, "-v")
         
         environment = self._get_environment(args)
+        
+        # Check if we need production hardening for security
+        if service_name == 'security' and getattr(args, 'production_hardening', False):
+            ansible_args.extend(['-e', 'use_production_hardening=true'])
         
         exit_code = dependency_manager.execute_with_dependencies(
             service_name=service_name,

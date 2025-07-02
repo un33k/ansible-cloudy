@@ -1,0 +1,82 @@
+---
+# Recipe: Atomic SSH Hardening
+# Purpose: Harden SSH access - install keys, disable passwords, change port
+# Connection: Root user with password on initial port
+# Timeout: Gracefully handle already-hardened servers
+
+- name: Atomic SSH Hardening
+  hosts: harden_targets
+  gather_facts: false
+  become: true
+  
+  vars:
+    # Connection timeout for already-hardened servers
+    ansible_timeout: 10
+    
+  pre_tasks:
+    # Try to gather facts with timeout
+    - name: Attempt connection and gather facts
+      setup:
+      timeout: "{{ ansible_timeout }}"
+      register: facts_result
+      ignore_errors: true
+    
+    # Exit gracefully if can't connect (already hardened)
+    - name: Server appears to be already hardened
+      meta: end_play
+      when: facts_result is failed
+  
+  tasks:
+    # 1. Install SSH public key
+    - name: Install SSH public key for root
+      authorized_key:
+        user: "{{ vault_root_user }}"
+        key: "{{ lookup('file', vault_root_ssh_private_key_file + '.pub') }}"
+        state: present
+    
+    # 2. Configure SSH security
+    - name: Configure SSH for key-only authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: true
+      loop:
+        - regexp: '^#?PasswordAuthentication'
+          line: "PasswordAuthentication {{ 'no' if not vault_root_ssh_password_authentication else 'yes' }}"
+        - regexp: '^#?PermitRootLogin'
+          line: 'PermitRootLogin prohibit-password'
+        - regexp: '^#?PubkeyAuthentication'
+          line: 'PubkeyAuthentication yes'
+    
+    # 3. Change SSH port
+    - name: Change SSH port
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Port\s+'
+        line: "Port {{ vault_ssh_port_final }}"
+      when: vault_ssh_port_initial != vault_ssh_port_final
+    
+    # 4. Validate configuration
+    - name: Validate SSH configuration
+      command: sshd -t
+      changed_when: false
+    
+    # 5. Restart SSH service
+    - name: Restart SSH service
+      service:
+        name: ssh
+        state: restarted
+    
+    # 6. Success message
+    - name: Display hardening status
+      debug:
+        msg: |
+          ✅ SSH Hardening Complete!
+          
+          Server is now accessible via:
+          - User: {{ vault_root_user }}
+          - Port: {{ vault_ssh_port_final }}
+          - Auth: SSH keys only
+          
+          Next step: cli security --install

@@ -197,9 +197,9 @@ ansible_port: 22
 
 **Phase 2 - Service Operations** (Root + SSH Keys):
 ```yaml
-# After security setup - inventory configuration
-ansible_user: "{{ vault_ansible_user }}"
-ansible_port: "{{ vault_ssh_port }}"
+# After hardening - inventory configuration
+ansible_user: "{{ vault_root_user }}"
+ansible_port: "{{ vault_ssh_port_final }}"
 # Now using SSH keys only, no passwords
 ```
 
@@ -207,16 +207,22 @@ ansible_port: "{{ vault_ssh_port }}"
 
 ### Complete Web Application Stack
 ```bash
-# Step 1: Secure server foundation (creates admin user, SSH keys, firewall)
+# Step 1: Harden SSH access (install keys, disable passwords, change port)
+cli harden --install
+
+# Step 2: Secure server foundation (creates grunt user, firewall, monitoring)
 cli security --install
 
-# Step 2: Base server configuration (hostname, git, timezone, swap)
+# Or for production environments with maximum security:
+# cli security --install --production-hardening
+
+# Step 3: Base server configuration (hostname, git, timezone, swap)
 cli base --install
 
-# Step 3: Database layer with custom parameters
+# Step 4: Database layer with custom parameters
 cli psql --install --port 5544 --pgis
 
-# Step 4: Web application layer
+# Step 5: Web application layer
 cli django --install
 
 # Step 5: Load balancer with SSL domain
@@ -333,6 +339,30 @@ cli dev spell               # Spell check documentation
 - ✅ **Comprehensive Validation**: YAML, Ansible, inventory, and template validation
 - ✅ **Clean Architecture**: Modular design with clear separation of concerns
 - ✅ **File Size Limits**: All files kept under 200 LOC for maintainability
+
+## 🧪 Testing & Scripts
+
+### Utility Scripts
+The `scripts/` directory contains helpful testing and deployment scripts:
+
+```bash
+# Quick syntax validation
+./scripts/test/test-simple.sh
+
+# Verify variable mappings
+./scripts/verify/verify-variable-mapping.sh
+
+# Full integration test with Docker
+./scripts/test/run-complete-test.sh
+
+# Check if a server needs hardening
+./scripts/examples/check-server-status.sh <server-ip>
+
+# Deploy to a fresh server (example)
+./scripts/examples/deploy-fresh-server.sh
+```
+
+See `scripts/README.md` for detailed documentation.
 
 ## 📚 Documentation
 

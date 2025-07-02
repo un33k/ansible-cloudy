@@ -45,11 +45,17 @@ hosts:
     hostname: my-server.example.com
 ```
 
-### 3. Run security setup
+### 3. Deploy your first server
 
 ```bash
-# Initial security setup (uses root password)
+# Step 1: Harden SSH access (uses root password initially)
+cli harden --install
+
+# Step 2: Security setup (uses SSH keys on new port)
 cli security --install
+
+# Step 3: Base configuration
+cli base --install
 ```
 
 ### 4. Deploy services

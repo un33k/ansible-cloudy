@@ -16,11 +16,14 @@ All variables follow a consistent naming pattern:
 
 | Variable | Default | Description | Required |
 |----------|---------|-------------|----------|
-| `vault_root_password` | - | Root password for initial connection | Yes (Phase 1) |
-| `vault_ansible_user` | `root` | User for SSH connections | No |
-| `vault_initial_ssh_port` | `22` | SSH port before security setup | No |
-| `vault_ssh_port` | `22022` | SSH port after security setup | No |
-| `vault_ansible_ssh_private_key_file` | `~/.ssh/id_rsa` | SSH private key path | No |
+| `vault_root_user` | `root` | Root user for SSH connections | No |
+| `vault_root_password` | - | Root password for initial connection | Yes (Harden only) |
+| `vault_root_ssh_private_key_file` | `~/.ssh/id_rsa` | Root user SSH private key path | No |
+| `vault_root_ssh_password_authentication` | `false` | Allow password auth for root | No |
+| `vault_ssh_port_initial` | `22` | SSH port before hardening | No |
+| `vault_ssh_port_final` | `22022` | SSH port after hardening | No |
+| `vault_ssh_host_key_checking` | `false` | SSH host key checking | No |
+| `vault_ssh_common_args` | `-o StrictHostKeyChecking=no` | Common SSH arguments | No |
 
 ### Optional Grunt User
 
