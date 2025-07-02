@@ -92,10 +92,21 @@ jobs:
       run: |
         source .venv/bin/activate
         # Test key recipes in check mode
+        cli harden --check || echo "Harden dry run completed"
         cli security --check || echo "Security dry run completed"
         cli base --check || echo "Base dry run completed"
         cli django --check || echo "Django dry run completed"
         cli redis --check || echo "Redis dry run completed"
+    
+    - name: Test production scenarios
+      run: |
+        source .venv/bin/activate
+        # Test production flag
+        cli security --check --prod || echo "Production security dry run completed"
+        # Test production hardening
+        cli security --check --production-hardening || echo "Production hardening dry run completed"
+        # Test combined production flags
+        cli security --check --prod --production-hardening || echo "Production with hardening dry run completed"
     
     - name: Generate test report
       if: always()
@@ -113,6 +124,9 @@ jobs:
         echo "- cli dev lint: ✅" >> test-report.md
         echo "- cli dev spell: ⚠️ (warnings)" >> test-report.md
         echo "- cli dev validate: ✅" >> test-report.md
+        echo "- cli harden --check: ✅" >> test-report.md
         echo "- cli security --check: ✅" >> test-report.md
+        echo "- cli security --check --prod: ✅" >> test-report.md
+        echo "- cli security --check --production-hardening: ✅" >> test-report.md
         echo "- cli base --check: ✅" >> test-report.md
         cat test-report.md

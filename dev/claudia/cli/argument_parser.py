@@ -132,6 +132,11 @@ def create_parser() -> argparse.ArgumentParser:
         dest="target_host",
         help="Target host IP address (overrides inventory)",
     )
+    parser.add_argument(
+        "--production-hardening",
+        action="store_true",
+        help="Use production security hardening (security-production.yml)",
+    )
 
     return parser
 

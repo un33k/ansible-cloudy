@@ -213,6 +213,9 @@ cli harden --install
 # Step 2: Secure server foundation (creates grunt user, firewall, monitoring)
 cli security --install
 
+# Or for production environments with maximum security:
+# cli security --install --production-hardening
+
 # Step 3: Base server configuration (hostname, git, timezone, swap)
 cli base --install
 

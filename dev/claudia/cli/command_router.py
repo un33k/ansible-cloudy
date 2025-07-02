@@ -336,6 +336,10 @@ class CommandRouter:
         
         environment = self._get_environment(args)
         
+        # Check if we need production hardening for security
+        if service_name == 'security' and getattr(args, 'production_hardening', False):
+            ansible_args.extend(['-e', 'use_production_hardening=true'])
+        
         exit_code = dependency_manager.execute_with_dependencies(
             service_name=service_name,
             environment=environment,

@@ -94,8 +94,17 @@ class SmartSecurityRunner:
                 "ansible_user=root",
             ] + extra_args
 
+            # Check if production hardening is requested
+            recipe_path = "core/security.yml"
+            for i, arg in enumerate(extra_args):
+                if arg == '-e' and i + 1 < len(extra_args):
+                    if 'use_production_hardening=true' in extra_args[i + 1]:
+                        recipe_path = "core/security-production.yml"
+                        info("🔒 Using production security hardening")
+                        break
+            
             return self.ansible_runner.run_recipe(
-                recipe_path="core/security.yml",
+                recipe_path=recipe_path,
                 inventory_path=inventory_path,
                 extra_args=temp_args,
                 dry_run=dry_run,
@@ -123,8 +132,16 @@ class SmartSecurityRunner:
             "-e", "skip_ssh_port_change=true",  # Skip port change in first phase
         ] + extra_args
 
+        # Check if production hardening is requested
+        recipe_path = "core/security.yml"
+        for i, arg in enumerate(extra_args):
+            if arg == '-e' and i + 1 < len(extra_args):
+                if 'use_production_hardening=true' in extra_args[i + 1]:
+                    recipe_path = "core/security-production.yml"
+                    break
+
         result = self.ansible_runner.run_recipe(
-            recipe_path="core/security.yml",
+            recipe_path=recipe_path,
             inventory_path=inventory_path,
             extra_args=temp_args,
             dry_run=False,
@@ -145,8 +162,16 @@ class SmartSecurityRunner:
             "-e", "ssh_port_change_only=true",  # Only do port change tasks
         ] + extra_args
 
+        # Check if production hardening is requested (for phase 2 as well)
+        recipe_path = "core/security.yml"
+        for i, arg in enumerate(extra_args):
+            if arg == '-e' and i + 1 < len(extra_args):
+                if 'use_production_hardening=true' in extra_args[i + 1]:
+                    recipe_path = "core/security-production.yml"
+                    break
+
         result = self.ansible_runner.run_recipe(
-            recipe_path="core/security.yml",
+            recipe_path=recipe_path,
             inventory_path=inventory_path,
             extra_args=temp_args,
             dry_run=False,
