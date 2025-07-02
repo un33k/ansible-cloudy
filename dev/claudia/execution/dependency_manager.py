@@ -243,7 +243,7 @@ class DependencyManager:
         production = (environment == 'prod')
         
         # Use smart security detection
-        connection_info = self.smart_security._smart_port_detection(production, target_host)
+        connection_info = self.smart_security.smart_port_detection(production, target_host)
         
         # If we can connect on a non-22 port with SSH keys, security is likely configured
         if connection_info['success'] and connection_info['port'] != 22:

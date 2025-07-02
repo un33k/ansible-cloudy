@@ -11,22 +11,22 @@
       Current port: {{ ansible_port }}
       Target: {{ ansible_host }}:{{ ansible_port }}
 
-- name: Fail if connecting as root user
+- name: Fail if NOT connecting as root user
   fail:
     msg: |
-      ❌ SECURITY ERROR: Connected as root user!
+      ❌ SECURITY ERROR: Not connected as root user!
       
       This recipe requires root user connection with SSH keys.
       
-      Root access should only be used for initial security setup.
+      Root access is required for service operations.
       
       Expected: ansible_user should be 'root'
       Actual: ansible_user is '{{ ansible_user }}'
       
       🔧 Fix:
       1. Run security setup first: ./cli security --install
-      2. Ensure you're targeting 'service_targets' group, not 'security_targets'
-  when: ansible_user == 'root'
+      2. Ensure you're targeting 'service_targets' group with root user
+  when: ansible_user != 'root'
 
 - name: Fail if using password authentication
   fail:
