@@ -8,7 +8,7 @@ Ansible Cloudy is a layered infrastructure automation framework built on top of 
 
 ```
 ┌─────────────────────────────────────────┐
-│          Claudia CLI Interface          │  User Interface Layer
+│          CLI Interface          │  User Interface Layer
 ├─────────────────────────────────────────┤
 │         Service Operations              │  Business Logic Layer
 ├─────────────────────────────────────────┤
@@ -24,7 +24,7 @@ Ansible Cloudy is a layered infrastructure automation framework built on top of 
 
 ## Component Architecture
 
-### 1. Claudia CLI (`/dev/claudia/`)
+### 1. CLI (`/dev/cli/`)
 
 The intelligent command-line interface that provides:
 - **Auto-discovery**: Automatically finds available services and operations
@@ -33,7 +33,7 @@ The intelligent command-line interface that provides:
 - **Help system**: Context-aware help for all commands
 - **Validation**: Pre-flight checks before execution
 
-### 2. Service Operations (`/dev/claudia/operations/`)
+### 2. Service Operations (`/dev/cli/operations/`)
 
 Service-specific logic for:
 - **PostgreSQL**: Database operations, user management, backups
@@ -113,7 +113,7 @@ Each component is:
 ## Data Flow
 
 ```
-User Command → Claudia CLI → Argument Parser → Service Handler
+User Command → CLI → Argument Parser → Service Handler
                                                       ↓
 Ansible Core ← Recipe Playbook ← Task Selection ← Operation Logic
       ↓
@@ -135,7 +135,7 @@ ansible-cloudy/
 │   ├── tasks/             # Modular tasks
 │   └── templates/         # Config templates
 ├── dev/                    # Development tools
-│   ├── claudia/           # CLI implementation
+│   ├── cli/           # CLI implementation
 │   └── validate.py        # Validation tools
 ├── docs/                   # Documentation
 ├── test/                   # Test suites
@@ -148,7 +148,7 @@ ansible-cloudy/
 
 1. Create service tasks in `/cloudy/tasks/[category]/[service]/`
 2. Add recipe playbook in `/cloudy/playbooks/recipes/[category]/`
-3. Create operation handler in `/dev/claudia/operations/`
+3. Create operation handler in `/dev/cli/operations/`
 4. Add defaults in `/cloudy/defaults/[service].yml`
 
 ### Custom Deployments

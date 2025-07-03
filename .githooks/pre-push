@@ -48,19 +48,19 @@ if [[ ${#unencrypted_files[@]} -gt 0 ]]; then
     
     echo -e "\n${YELLOW}To encrypt these files:${NC}"
     echo -e "${GREEN}# Encrypt all vault files in .secrets/:${NC}"
-    echo -e "  ./claudia vault encrypt --all"
+    echo -e "  ./cli vault encrypt --all"
     
     echo -e "\n${GREEN}# Or encrypt individual files:${NC}"
     for file in "${unencrypted_files[@]}"; do
         filename=$(basename "$file" .yml)
-        echo -e "  ./claudia vault encrypt --file $filename"
+        echo -e "  ./cli vault encrypt --file $filename"
     done
     
-    echo -e "\n${BLUE}💡 Claudia vault commands:${NC}"
-    echo -e "  ./claudia vault create       # Create new vault file"
-    echo -e "  ./claudia vault edit         # Edit vault file"
-    echo -e "  ./claudia vault encrypt --all # Encrypt all vault files"
-    echo -e "  ./claudia vault decrypt --all # Decrypt all for editing"
+    echo -e "\n${BLUE}💡 CLI vault commands:${NC}"
+    echo -e "  ./cli vault create       # Create new vault file"
+    echo -e "  ./cli vault edit         # Edit vault file"
+    echo -e "  ./cli vault encrypt --all # Encrypt all vault files"
+    echo -e "  ./cli vault decrypt --all # Decrypt all for editing"
     
     echo -e "\n${YELLOW}After encrypting, commit and push again.${NC}"
     exit 1

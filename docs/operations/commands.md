@@ -1,18 +1,18 @@
 # Ansible Cloudy - Complete Usage Guide
 
-Comprehensive guide for using **Ansible Cloudy** with the **Claudia CLI** for infrastructure automation and server management.
+Comprehensive guide for using **Ansible Cloudy** with the **CLI** for infrastructure automation and server management.
 
 ## Table of Contents
-- [Claudia CLI Command Reference](#claudia-cli-command-reference)
+- [CLI Command Reference](#cli-cli-command-reference)
 - [Prerequisites & Setup](#prerequisites--setup)
 - [Configuration Guide](#configuration-guide)
 - [Server Deployment Workflows](#server-deployment-workflows)
 - [Advanced Usage Patterns](#advanced-usage-patterns)
 - [Troubleshooting & Support](#troubleshooting--support)
 
-## Claudia CLI Command Reference
+## CLI Command Reference
 
-Complete reference for the **Claudia CLI** - an intelligent command-line interface with auto-discovery and universal parameter support.
+Complete reference for the **CLI** - an intelligent command-line interface with auto-discovery and universal parameter support.
 
 ### 🧠 Intelligent CLI Features
 - **Auto-Discovery**: Services automatically discovered from filesystem
@@ -145,7 +145,7 @@ cp .vault/dev.yml.example .vault/my-dev.yml
 # Edit with your real credentials
 vim .vault/my-dev.yml
 
-# Use with Claudia commands
+# Use with CLI commands
 cli psql --install -- -e @.vault/my-dev.yml
 ```
 
@@ -687,7 +687,7 @@ cli psql --install --prod --pgis
 
 ### Re-running Commands
 
-**Best Practice:** Claudia commands are idempotent - safe to re-run.
+**Best Practice:** CLI commands are idempotent - safe to re-run.
 
 ```bash
 # Re-run safely - only changes will be applied

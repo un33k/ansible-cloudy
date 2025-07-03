@@ -132,10 +132,10 @@ cloudy/templates/
 
 ## Development Directory (`/dev/`)
 
-### Claudia CLI
+### CLI
 
 ```
-dev/claudia/
+dev/cli/
 ├── cli/                  # CLI interface
 │   ├── main.py          # Entry point
 │   ├── argument_parser.py
@@ -208,7 +208,7 @@ docs/
 │   ├── guide.md
 │   ├── testing.md
 │   ├── contributing.md
-│   └── claudia-cli.md
+│   └── cli-cli.md
 ├── operations/          # User guides
 │   ├── commands.md
 │   ├── recipes.md
@@ -260,7 +260,7 @@ docs/
 1. Create defaults: `/cloudy/defaults/myservice.yml`
 2. Create tasks: `/cloudy/tasks/services/myservice/`
 3. Create recipe: `/cloudy/playbooks/recipes/services/myservice.yml`
-4. Add handler: `/dev/claudia/operations/myservice.py`
+4. Add handler: `/dev/cli/operations/myservice.py`
 5. Create templates: `/cloudy/templates/myservice/`
 
 ### New Feature

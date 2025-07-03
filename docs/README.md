@@ -15,7 +15,7 @@
 ### Development
 - [Development Guide](development/guide.md) - Contributing to Ansible Cloudy
 - [Testing](development/testing.md) - Running tests and validation
-- [Claudia CLI Development](development/claudia-cli.md) - Extending the CLI
+- [CLI Development](development/cli-cli.md) - Extending the CLI
 
 ### Operations
 - [Command Reference](operations/commands.md) - All available commands
@@ -31,7 +31,7 @@
 
 Ansible Cloudy is a production-ready infrastructure automation framework that simplifies server deployment and management. Built on top of Ansible, it provides:
 
-- **Claudia CLI**: Intelligent command-line interface for infrastructure management
+- **CLI**: Intelligent command-line interface for infrastructure management
 - **Two-Phase Security**: Secure authentication flow from initial setup to production
 - **Production-Ready Recipes**: Pre-configured deployments for common architectures
 - **Modular Design**: Reusable components for custom configurations

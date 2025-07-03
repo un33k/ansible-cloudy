@@ -84,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Health check endpoints
 
 ### Enhanced
-- **Claudia CLI Auto-discovery** - Improved service detection
+- **CLI Auto-discovery** - Improved service detection
   - Automatic recognition of new services
   - Operation discovery from task files
   - Intelligent parameter mapping
@@ -109,7 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-12-15
 
 ### Initial Release
-- Core infrastructure automation with Claudia CLI
+- Core infrastructure automation with CLI
 - Basic service deployments (PostgreSQL, Redis, Nginx, Django)
 - Two-phase security model
 - Auto-discovery of services and operations

@@ -1,5 +1,5 @@
 """
-Claudia CLI Test Suite
+CLI Test Suite
 
-Unit and integration tests for the Claudia infrastructure management tool.
+Unit and integration tests for the CLI infrastructure management tool.
 """

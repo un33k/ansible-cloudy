@@ -48,9 +48,9 @@ This document tracks the systematic cleanup of MySQL, pgbouncer, and memcached f
 - [x] `/.vault/prod.yml.example` - Remove `vault_mysql_root_password`
 - [x] `/.vault/README.md` - Remove MySQL password reference
 
-## Layer 5: Claudia CLI Cleanup
+## Layer 5: CLI Cleanup
 ### Dependency Manager Update
-- [x] `/dev/claudia/execution/dependency_manager.py` - Remove mysql and memcached from dependency mappings
+- [x] `/dev/cli/execution/dependency_manager.py` - Remove mysql and memcached from dependency mappings
 
 ### Service Discovery
 - [x] Verify no service modules exist for mysql, pgbouncer, memcached (already confirmed none exist)
@@ -78,7 +78,7 @@ This document tracks the systematic cleanup of MySQL, pgbouncer, and memcached f
 2. **Templates** (Layer 2) - Remove configuration templates
 3. **Playbooks** (Layer 3) - Update any references
 4. **Configuration** (Layer 4) - Clean inventory and vault files
-5. **Claudia CLI** (Layer 5) - Update dependency manager
+5. **CLI** (Layer 5) - Update dependency manager
 6. **Documentation** (Layer 6) - Update all docs
 7. **Verification** (Layer 7) - Test everything works
 

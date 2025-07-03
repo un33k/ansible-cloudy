@@ -1,7 +1,7 @@
 """
 Tests for Configuration Module
 
-Tests for ClaudiaConfig and InventoryManager classes.
+Tests for CliConfig and InventoryManager classes.
 """
 
 import pytest

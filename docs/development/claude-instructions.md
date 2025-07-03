@@ -10,15 +10,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **NO enthusiastic confirmations**: Avoid phrases like "You're absolutely right!" or "Excellent point!" unless answering a specific question
 - **Be direct and concise**: Get straight to implementation without excessive commentary
 
-### Claudia CLI Mandatory Usage
-- **ALWAYS use `cli` or `cli` for operations**: Unless debugging internal mechanisms, use Claudia CLI for all testing and execution (requires activated venv)
+### CLI Mandatory Usage
+- **ALWAYS use `cli` or `cli` for operations**: Unless debugging internal mechanisms, use CLI for all testing and execution (requires activated venv)
 - **NO direct ansible-playbook calls**: Use `cli [service] --install` instead of direct Ansible commands
 - **Testing**: Use `cli [service] --install --check` for dry runs
 - **Granular operations**: Use `cli psql --adduser foo --password 1234` for specific tasks
 
-### Claudia Architecture Standards
-- **Smart intuitive interface**: Make Claudia CLI intelligent and user-friendly with auto-discovery
-- **Proper organization**: Keep everything under `dev/claudia/` directory with clear separation of responsibilities
+### CLI Architecture Standards
+- **Smart intuitive interface**: Make CLI intelligent and user-friendly with auto-discovery
+- **Proper organization**: Keep everything under `dev/cli/` directory with clear separation of responsibilities
 - **File size limits**: Keep ALL files under 200 LOC, target 100 LOC maximum
 - **Modular design**: Each component handles one responsibility (discovery, operations, execution, etc.)
 - **Auto-discovery**: Services and operations automatically discovered from filesystem structure
@@ -26,12 +26,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development Workflow
 1. **Activate venv**: `source .venv/bin/activate` before using cli
-2. **Use Claudia CLI**: `cli [service] --install` for recipe operations
+2. **Use CLI**: `cli [service] --install` for recipe operations
 3. **Use granular operations**: `cli psql --adduser foo --password 1234` for specific tasks
 4. **Test with dry runs**: `cli [service] --install --check` before real execution  
 4. **Maintain modularity**: Keep recipes focused, use `import_playbook` for orchestration
-5. **File organization**: `/claudia/` for CLI, `/tasks/` for reusable components, `/recipes/` for orchestration
-6. **Auto-discovery**: Add Claudia metadata headers to tasks for automatic CLI integration
+5. **File organization**: `/cli/` for CLI, `/tasks/` for reusable components, `/recipes/` for orchestration
+6. **Auto-discovery**: Add CLI metadata headers to tasks for automatic CLI integration
 
 ## Development Commands
 
@@ -52,7 +52,7 @@ cd ansible-cloudy/
 
 ### Core Development Commands
 
-#### Simplified Server Setup (Recommended) - Using Claudia CLI
+#### Simplified Server Setup (Recommended) - Using CLI
 
 **🔒 Simplified Authentication Model:**
 
@@ -90,8 +90,8 @@ cd ansible-cloudy/
 
 #### Development Tools
 - **Bootstrap**: `./bootstrap.sh` - Sets up .venv with all development tools
-- **Claudia CLI**: `cli security --install` - Intelligent infrastructure management
-- **Claudia Dev Commands**: `cli dev validate` (pre-commit suite), `cli dev syntax`, `cli dev comprehensive`, `cli dev lint`, `cli dev test`
+- **CLI**: `cli security --install` - Intelligent infrastructure management
+- **CLI Dev Commands**: `cli dev validate` (pre-commit suite), `cli dev syntax`, `cli dev comprehensive`, `cli dev lint`, `cli dev test`
 - **Authentication test**: `cli dev test` - Test server authentication flow
 - **Service discovery**: `cli --list-services` - Show all auto-discovered services
 - **Clean output**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
@@ -208,10 +208,10 @@ cli nginx --install   # Nginx load balancer
 - ✅ **Always Shown**: Changed tasks, failed tasks, unreachable hosts
 - ✅ **Hidden by Default**: Successful unchanged tasks, skipped tasks
 
-### Claudia Recipe Examples
+### CLI Recipe Examples
 
 ```bash
-# Claudia CLI - Universal Parameter Support
+# CLI - Universal Parameter Support
 # Help and Discovery (default action)
 cli security                  # Show security help and configuration options
 cli base                      # Show base setup help and variables
@@ -297,7 +297,7 @@ cli --list-services               # Show all available services and operations
 ## Environment Configuration
 
 ### Environment Selection
-Claudia supports multiple environments with flexible configuration options:
+CLI supports multiple environments with flexible configuration options:
 
 **Built-in Environments:**
 - `--dev` (default): Development environment using `inventory/dev.yml`
@@ -399,7 +399,7 @@ Example recipe structure:
 
 ## Test Suite
 
-Claudia includes a comprehensive pytest-based test suite:
+CLI includes a comprehensive pytest-based test suite:
 
 ```bash
 # Run all tests
@@ -438,7 +438,7 @@ pip install ansible
 cd ansible-cloudy/
 ```
 
-### Core Claudia Commands
+### Core CLI Commands
 - **Show service help**: `cli [service-name]` (security, base, psql, redis, nginx, etc.)
 - **Execute recipes with parameters**: `cli [service-name] --install [options]` (requires explicit flag for safety)
 - **Granular operations**: `cli psql --adduser foo --password 1234` (no recipe installation)
@@ -450,7 +450,7 @@ cd ansible-cloudy/
   - `ANSIBLE_STDOUT_CALLBACK=oneline cli ... --install` (one line per task)
   - Standard verbose: `cli ... --install -v` (detailed debugging)
 
-### Claudia Service Examples
+### CLI Service Examples
 ```bash
 # Help and configuration (default action)
 cli security              # Show security help and options
@@ -538,7 +538,7 @@ This shows only:
 
 ## 🔒 Simple Vault Configuration
 
-Claudia uses a simple vault system for credential management without encryption complexity.
+CLI uses a simple vault system for credential management without encryption complexity.
 
 ### Vault Directory Structure
 
@@ -559,7 +559,7 @@ cp .vault/dev.yml.example .vault/my-dev.yml
 # Edit with your real credentials
 vim .vault/my-dev.yml
 
-# Use with Claudia commands
+# Use with CLI commands
 cli psql --install -- -e @.vault/my-dev.yml
 ```
 
@@ -572,7 +572,7 @@ cli psql --install -- -e @.vault/my-dev.yml
 ### Usage with Playbooks
 
 ```bash
-# Use vault with Claudia commands
+# Use vault with CLI commands
 cli psql --install -- -e @.vault/my-dev.yml
 
 # Production deployment

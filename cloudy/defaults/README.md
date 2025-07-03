@@ -37,7 +37,7 @@ Variables can be overridden at multiple levels (from lowest to highest precedenc
 2. Inventory group_vars
 3. Inventory host_vars
 4. Playbook vars
-5. Command line with `-e` or Claudia CLI parameters
+5. Command line with `-e` or CLI parameters
 
 ## Backward Compatibility
 

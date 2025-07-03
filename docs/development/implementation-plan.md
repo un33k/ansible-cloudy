@@ -4,19 +4,19 @@
 
 **Vision**: Create an enterprise-grade infrastructure automation platform with an intelligent CLI that makes complex Ansible operations accessible through intuitive commands.
 
-**Solution**: **Ansible Cloudy** with **Claudia CLI** - combining the power of Ansible automation with intelligent auto-discovery, universal parameter mapping, and a sophisticated two-phase security model.
+**Solution**: **Ansible Cloudy** with **CLI** - combining the power of Ansible automation with intelligent auto-discovery, universal parameter mapping, and a sophisticated two-phase security model.
 
 ---
 
 ## 🏗️ Core Architecture
 
-### Claudia CLI - Intelligent Command Interface
+### CLI - Intelligent Command Interface
 
-The **Claudia CLI** is a sophisticated Python-based command interface with:
+The **CLI** is a sophisticated Python-based command interface with:
 
 #### **Auto-Discovery System**
 - **Service Discovery**: Automatically scans `cloudy/playbooks/recipes/` for available services
-- **Operation Discovery**: Extracts operations from task files using Claudia-Operation headers
+- **Operation Discovery**: Extracts operations from task files using CLI-Operation headers
 - **Dynamic Routing**: Maps filesystem structure to CLI commands (`db/postgresql` → `psql`)
 - **Self-Documenting**: Help and parameters automatically generated from discovered metadata
 
@@ -68,7 +68,7 @@ Utils Layer                   → Configuration, colors, dev tools
 ## 📋 Implementation Status
 
 ### ✅ Phase 1: Foundation Architecture (COMPLETE)
-- [x] **Claudia CLI Core Structure**
+- [x] **CLI Core Structure**
   - [x] Modular Python architecture with layered design
   - [x] Auto-discovery system for services and operations
   - [x] Universal parameter mapping framework
@@ -111,7 +111,7 @@ Utils Layer                   → Configuration, colors, dev tools
 ### ✅ Phase 4: Documentation & User Experience (COMPLETE)
 - [x] **Comprehensive Documentation**
   - [x] Updated README.md with current architecture overview
-  - [x] Complete USAGE.md with Claudia CLI reference
+  - [x] Complete USAGE.md with CLI reference
   - [x] Detailed CONTRIBUTING.md with development guidelines
   - [x] Technical implementation documentation
 
@@ -149,7 +149,7 @@ ansible-cloudy/
 │   ├── templates/            # Jinja2 configuration templates
 │   ├── inventory/            # Server inventory configurations
 │   └── ansible.cfg           # Clean output configuration
-├── dev/claudia/              # Python CLI implementation
+├── dev/cli/              # Python CLI implementation
 │   ├── cli/main.py          # Command parsing and routing
 │   ├── operations/          # Service-specific operations
 │   ├── discovery/           # Auto-discovery system
@@ -192,7 +192,7 @@ class PostgreSQLOperations(BaseServiceOperations):
 - **Service Normalization**: Converts `postgresql` → `psql`, `postgis` → `psql --pgis`
 
 #### **Operation Discovery**
-- **Header Parsing**: Extracts Claudia-Operation headers from task files
+- **Header Parsing**: Extracts CLI-Operation headers from task files
 - **Filename Analysis**: Uses task filenames to infer operations
 - **Parameter Extraction**: Identifies required parameters from task documentation
 
@@ -275,7 +275,7 @@ ansible_ssh_private_key_file: ~/.ssh/id_rsa
 **Overall Progress**: **90% Complete** (4.5/5 phases)
 
 ### **Completed Phases:**
-1. ✅ **Foundation Architecture** - Core Claudia CLI structure and auto-discovery
+1. ✅ **Foundation Architecture** - Core CLI structure and auto-discovery
 2. ✅ **Universal Parameter System** - Intelligent parameter mapping and service operations
 3. ✅ **Development Infrastructure** - Validation tools, quality standards, development workflow
 4. ✅ **Documentation & UX** - Complete documentation suite and user-friendly interface

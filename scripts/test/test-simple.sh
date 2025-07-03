@@ -29,12 +29,12 @@ echo "All syntax checks passed!"
 
 # Test CLI commands
 echo "Testing CLI harden help..."
-python -m dev.claudia.cli.main harden --help
+python -m dev.cli.cli.main harden --help
 
 echo "Testing CLI security help..."
-python -m dev.claudia.cli.main security --help
+python -m dev.cli.cli.main security --help
 
 echo "Testing CLI base help..."
-python -m dev.claudia.cli.main base --help
+python -m dev.cli.cli.main base --help
 
 echo "All tests passed!"

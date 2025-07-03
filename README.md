@@ -1,6 +1,6 @@
 # Ansible Cloudy - Infrastructure Automation
 
-**Ansible Cloudy** is a comprehensive infrastructure automation toolkit featuring the **Claudia CLI** - an intelligent command-line interface that simplifies server deployment and management through Ansible playbooks.
+**Ansible Cloudy** is a comprehensive infrastructure automation toolkit featuring the **CLI** - an intelligent command-line interface that simplifies server deployment and management through Ansible playbooks.
 
 ## 🚀 Key Features
 
@@ -61,8 +61,8 @@ cli pgbouncer --configure-port 6433            # Configure connection pooler
 
 ## 🏗️ Architecture Overview
 
-### Claudia CLI - Intelligent Command Interface
-The **Claudia CLI** is the heart of Ansible Cloudy, providing:
+### CLI - Intelligent Command Interface
+The **CLI** is the heart of Ansible Cloudy, providing:
 
 - **🔍 Auto-Discovery**: Services and operations automatically discovered from filesystem
 - **📋 Universal Parameters**: Intuitive CLI with `--port`, `--domain`, `--ssl` instead of complex Ansible variables
@@ -321,7 +321,7 @@ Ansible Cloudy includes comprehensive development tools:
 ./bootstrap.sh                    # Setup Python virtual environment with all tools
 source .venv/bin/activate         # Activate development environment
 
-# Validation commands via Claudia CLI
+# Validation commands via CLI
 cli dev syntax              # Quick syntax check
 cli dev validate            # Comprehensive validation suite
 cli dev lint                # Ansible linting with rules

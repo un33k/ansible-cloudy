@@ -43,14 +43,14 @@ This document summarizes the complete implementation of the atomic SSH hardening
 
 ### 5. CLI Integration
 **New Files**:
-- `dev/claudia/operations/harden.py` - Harden operation handler
-- Updated `dev/claudia/cli/command_router.py` - Added harden routing
-- Updated `dev/claudia/execution/dependency_manager.py` - Added harden to dependency chain
+- `dev/cli/operations/harden.py` - Harden operation handler
+- Updated `dev/cli/cli/command_router.py` - Added harden routing
+- Updated `dev/cli/execution/dependency_manager.py` - Added harden to dependency chain
 
 **Dependency Chain**: `harden → security → base → service`
 
 ### 6. Port Detection Updates
-**File**: `dev/claudia/execution/ansible/vault_loader.py`
+**File**: `dev/cli/execution/ansible/vault_loader.py`
 - Updated to check for `vault_ssh_port_final` first, then fall back to `vault_ssh_port`
 
 ### 7. Validation Updates

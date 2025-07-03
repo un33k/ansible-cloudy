@@ -88,7 +88,7 @@
       "Bash(cli badarg)",
       "Bash(cli redis:*)",
       "Bash(ping:*)",
-      "Bash(./test-claudia-connection.sh:*)",
+      "Bash(./test-cli-connection.sh:*)",
       "Bash(./test-fresh-server.sh:*)",
       "Bash(cat:*)",
       "Bash(cli:*)",

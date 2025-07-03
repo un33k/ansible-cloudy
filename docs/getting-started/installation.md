@@ -51,7 +51,7 @@ The bootstrap script performs the following:
 
 1. **Creates Python virtual environment** in `.venv/`
 2. **Installs Ansible** and all dependencies
-3. **Sets up Claudia CLI** with aliases
+3. **Sets up CLI** with aliases
 4. **Configures development tools** (linters, validators)
 5. **Verifies installation** and displays status
 
@@ -60,7 +60,7 @@ The bootstrap script performs the following:
 ### 1. Verify Installation
 
 ```bash
-# Check Claudia CLI
+# Check CLI
 cli --version
 
 # List available services
@@ -148,7 +148,7 @@ pip install -r requirements.txt
 # Fix permissions if needed
 chmod +x bootstrap.sh
 chmod +x .venv/bin/cli
-chmod +x .venv/bin/claudia
+chmod +x .venv/bin/cli
 ```
 
 ## Next Steps

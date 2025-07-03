@@ -113,7 +113,7 @@ source .venv/bin/activate
 
 # Run harden playbook
 echo -e "${YELLOW}4. Running harden playbook...${NC}"
-python -m dev.claudia.cli.main harden --install -- \
+python -m dev.cli.cli.main harden --install -- \
   -i test-docker-inventory.yml \
   -e @.vault/dev.yml \
   -e vault_ssh_port_initial=2222 \
@@ -126,14 +126,14 @@ ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 22022 root@localhost 'echo "
 
 # Run security playbook
 echo -e "${YELLOW}6. Running security playbook...${NC}"
-python -m dev.claudia.cli.main security --install -- \
+python -m dev.cli.cli.main security --install -- \
   -i test-docker-inventory.yml \
   -e @.vault/dev.yml \
   -vv
 
 # Run base playbook
 echo -e "${YELLOW}7. Running base playbook...${NC}"
-python -m dev.claudia.cli.main base --install -- \
+python -m dev.cli.cli.main base --install -- \
   -i test-docker-inventory.yml \
   -e @.vault/dev.yml \
   -vv
