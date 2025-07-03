@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [{
+          "type": "command",
+          "command": "echo 'REMINDER: Review optimization-principles.md before proceeding'"
+        }]
+      }
+    ]
+  }
+}

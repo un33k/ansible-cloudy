@@ -82,3 +82,29 @@ Before submitting any code:
 - [ ] Verified no performance regression
 - [ ] Checked for security implications
 - [ ] Ensured backward compatibility
+
+## CODE GENERATION REQUEST TEMPLATE
+
+When asked to implement [FEATURE]:
+
+### Phase 1: Analysis (MUST COMPLETE FIRST)
+- [ ] Read optimization-principles.md
+- [ ] Find similar existing patterns
+- [ ] Complete complexity assessment
+- [ ] Score using Decision Framework
+
+### Phase 2: Implementation
+[Only proceed if score > 5]
+
+**Implementation Steps:**
+1. Search for reusable components
+2. Extend existing code where possible
+3. Apply LEVER principles throughout
+4. Document decisions inline
+5. Refactor iteratively
+
+**Review Requirements:**
+- Optimization score calculation
+- Performance impact assessment
+- Test coverage verification
+- Documentation completeness check
