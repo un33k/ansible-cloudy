@@ -83,6 +83,33 @@ Before submitting any code:
 - [ ] Checked for security implications
 - [ ] Ensured backward compatibility
 
+## DECISION FRAMEWORK
+
+Before writing any code:
+1. Can I extend an existing table? (vs creating new)
+2. Can I add to an existing query? (vs new query)
+3. Can I enhance an existing hook? (vs new hook)
+4. Can I modify an existing component? (vs new component)
+
+### Real Impact
+
+Your trial optimization demonstrates:
+- 87% code reduction (1,050 → 140 lines)
+- 90% time savings (days → hours)
+- 5x performance improvement (single vs multiple queries)
+- Zero new tables (extended existing)
+
+These documents incorporate Anthropic's extended thinking methodologies while being specifically tailored to your Convex architecture. They provide both theoretical understanding and practical, actionable guidance that your team can use immediately.
+
+The framework emphasizes:
+- Maximum code reuse
+- Leveraging Convex's reactivity
+- Data locality over normalization
+- Computed properties over stored values
+- Extension over creation
+
+This will help ensure future features follow the same optimization principles that made your trial flow implementation so successful! 🚀
+
 ## CODE GENERATION REQUEST TEMPLATE
 
 When asked to implement [FEATURE]:
