@@ -1,5 +1,62 @@
 # CODE OPTIMIZATION PROTOCOL FOR CLAUDE
 
+## CLAUDE-RECOMMENDED DEVELOPMENT PRINCIPLES
+
+### Core Development Philosophy
+Based on Claude's official documentation, the following principles guide optimal development:
+
+1. **Direct Integration**
+   - Work directly in your development environment
+   - Maintain project context awareness
+   - Perform real development operations safely
+
+2. **Security-First Approach**
+   - Direct API connections without intermediaries
+   - Granular permission controls
+   - Project-specific configurations
+
+3. **Extended Thinking Methodology**
+   - Use "think harder" for complex architectural changes
+   - Apply deeper reasoning for debugging intricate issues
+   - Create comprehensive implementation plans
+   - Evaluate approach tradeoffs systematically
+
+### Workflow Acceleration Techniques
+
+**Understanding Codebases:**
+- Start with broad architectural questions
+- Identify key patterns and data models
+- Map authentication and security mechanisms
+- Document findings for team reference
+
+**Code Improvement Process:**
+1. Find and fix bugs systematically
+2. Refactor legacy code incrementally
+3. Add comprehensive test coverage
+4. Generate contextual documentation
+5. Create detailed pull request descriptions
+
+**Productivity Amplifiers:**
+- Use domain-specific language
+- Refactor in small, testable increments
+- Request explanations alongside code
+- Leverage visual analysis for UI/UX
+- Control output formats for integration
+
+### Configuration Best Practices
+
+**Settings Hierarchy:**
+1. User settings: `~/.claude/settings.json`
+2. Project settings: `.claude/settings.json` (shared)
+3. Local overrides: `.claude/settings.local.json` (personal)
+
+**Recommended Configurations:**
+- Set appropriate tool permissions
+- Configure working directory access
+- Define output token limits
+- Enable/disable specific tools per project
+- Implement security hooks
+
 ## MANDATORY OPTIMIZATION FRAMEWORK
 
 ### Pre-Implementation Phase
@@ -135,3 +192,71 @@ When asked to implement [FEATURE]:
 - Performance impact assessment
 - Test coverage verification
 - Documentation completeness check
+
+## CLAUDE CODE INTEGRATION PRACTICES
+
+### Tool Usage Optimization
+
+**File Operations:**
+- Use Read before Edit to understand context
+- Batch multiple edits with MultiEdit
+- Prefer extending files over creating new ones
+- Always verify directory structure with LS
+
+**Search Strategies:**
+- Use Task for complex multi-step searches
+- Apply Glob for pattern matching
+- Leverage Grep for content searches
+- Combine tools for comprehensive analysis
+
+**Development Workflows:**
+1. **Bug Fixing:**
+   - Reproduce issue with test case
+   - Search for root cause systematically
+   - Fix with minimal code changes
+   - Verify fix doesn't break existing tests
+
+2. **Feature Implementation:**
+   - Review similar features first
+   - Extend existing patterns
+   - Add incremental tests
+   - Document architectural decisions
+
+3. **Refactoring:**
+   - Identify code smells with search tools
+   - Refactor in small, verifiable chunks
+   - Maintain backward compatibility
+   - Update tests alongside changes
+
+### Extended Thinking Application
+
+**When to Use Extended Thinking:**
+- Architectural decisions affecting multiple components
+- Complex debugging requiring deep analysis
+- Performance optimization strategies
+- Security vulnerability assessments
+- Migration planning for legacy systems
+
+**Extended Thinking Process:**
+1. Gather comprehensive context
+2. Analyze multiple solution approaches
+3. Evaluate tradeoffs systematically
+4. Document reasoning for decisions
+5. Create implementation roadmap
+
+### Continuous Improvement Metrics
+
+**Track and Optimize:**
+- Code reduction percentage per feature
+- Time saved through automation
+- Test coverage improvements
+- Documentation completeness
+- Performance benchmarks
+
+**Regular Reviews:**
+- Weekly: Code quality metrics
+- Monthly: Architecture decisions
+- Quarterly: Tool usage patterns
+- Annually: Framework effectiveness
+
+This comprehensive framework combines Claude's official recommendations with proven optimization strategies to ensure consistent, high-quality code generation.
