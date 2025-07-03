@@ -2,20 +2,6 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [{
-          "type": "command",
-          "command": "echo '📋 REMINDER: Review optimization-principles.md before proceeding'"
-        }]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [{
-          "type": "command",
-          "command": "echo '🚨 LEVER Check: Can you extend existing code instead of creating new?'"
-        }]
-      },
-      {
         "matcher": "Task",
         "hooks": [{
           "type": "command",
@@ -23,15 +9,7 @@
         }]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|MultiEdit|Write",
-        "hooks": [{
-          "type": "command",
-          "command": "echo '✅ Changes complete - Remember to test!'"
-        }]
-      }
-    ]
+    "PostToolUse": []
   },
   "templates": {
     "optimization_review": ".claude/templates/optimization-review.md"
