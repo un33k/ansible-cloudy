@@ -20,7 +20,7 @@ run_test_suite() {
     TEST_HOST="$LB_HOST"
     TEST_CONTAINER=$(get_container_name "$TEST_HOST")
     
-    run_claudia_command "nginx" "--install --domain test.local" || return 1
+    run_cli_command "nginx" "--install --domain test.local" || return 1
     
     # Wait for Nginx to start
     wait_for_service "$TEST_CONTAINER" "nginx" || return 1
@@ -40,7 +40,7 @@ run_test_suite() {
         TEST_HOST="$host"
         TEST_CONTAINER=$(get_container_name "$TEST_HOST")
         
-        run_claudia_command "django" "--install" || return 1
+        run_cli_command "django" "--install" || return 1
         
         # Verify services
         check_service_status "$TEST_CONTAINER" "nginx" || return 1
@@ -58,7 +58,7 @@ run_test_suite() {
         TEST_HOST="$host"
         TEST_CONTAINER=$(get_container_name "$TEST_HOST")
         
-        run_claudia_command "pgbouncer" "--install --pool-size 25" || return 1
+        run_cli_command "pgbouncer" "--install --pool-size 25" || return 1
         
         # Verify PgBouncer
         check_service_status "$TEST_CONTAINER" "pgbouncer" || return 1
@@ -71,7 +71,7 @@ run_test_suite() {
         TEST_HOST="web-01"
         TEST_CONTAINER=$(get_container_name "$TEST_HOST")
         
-        run_claudia_command "nodejs" "--install --app-name testapp --app-port 3000" || return 1
+        run_cli_command "nodejs" "--install --app-name testapp --app-port 3000" || return 1
         
         # Check PM2 process manager
         local pm2_status=$(docker exec "$TEST_CONTAINER" pm2 list 2>/dev/null || echo "")
@@ -91,7 +91,7 @@ run_test_suite() {
     TEST_CONTAINER=$(get_container_name "$TEST_HOST")
     
     # Note: Let's Encrypt won't work in Docker, so we test config only
-    run_claudia_command "nginx" "--setup-ssl test.local -- -e vault_enable_ssl=false" || return 1
+    run_cli_command "nginx" "--setup-ssl test.local -- -e vault_enable_ssl=false" || return 1
     
     # Verify SSL configuration exists
     if docker exec "$TEST_CONTAINER" test -f /etc/nginx/sites-available/test.local; then
@@ -114,7 +114,7 @@ run_test_suite() {
     
     # Test 7: Idempotency check
     log_test "Test 7: Idempotency check"
-    local output=$(run_claudia_command "nginx" "--install --check" 2>&1)
+    local output=$(run_cli_command "nginx" "--install --check" 2>&1)
     if echo "$output" | grep -q "changed=0"; then
         log_success "Nginx setup is idempotent"
     else

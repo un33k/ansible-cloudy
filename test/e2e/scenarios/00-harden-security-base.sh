@@ -25,7 +25,7 @@ run_test_suite() {
     
     # Test 1: Harden installation
     log_test "Test 1: Harden installation"
-    run_claudia_command "harden" "--install -i inventory/docker-harden.yml -e @vault/test-secrets.yml" || return 1
+    run_cli_command "harden" "--install -i inventory/docker-harden.yml -e @vault/test-secrets.yml" || return 1
     
     # Verify SSH port change
     log_test "Verifying SSH port change to 22022..."
@@ -47,7 +47,7 @@ run_test_suite() {
     
     # Test 2: Security installation
     log_test "Test 2: Security installation"
-    run_claudia_command "security" "--install -i inventory/docker-harden.yml -e @vault/test-secrets.yml" || return 1
+    run_cli_command "security" "--install -i inventory/docker-harden.yml -e @vault/test-secrets.yml" || return 1
     
     # Verify grunt user creation
     log_test "Verifying grunt user creation..."
@@ -68,7 +68,7 @@ run_test_suite() {
     
     # Test 3: Base installation
     log_test "Test 3: Base installation"
-    run_claudia_command "base" "--install -i inventory/docker-harden.yml -e @vault/test-secrets.yml" || return 1
+    run_cli_command "base" "--install -i inventory/docker-harden.yml -e @vault/test-secrets.yml" || return 1
     
     # Verify hostname
     log_test "Verifying hostname configuration..."

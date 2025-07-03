@@ -130,8 +130,8 @@ ansible-cloudy/
 │   ├── inventory/           # Server inventory configurations
 │   └── ansible.cfg          # Ansible configuration
 ├── dev/                     # Development tools and CLI implementation
-│   ├── claudia/             # Python CLI implementation
-│   │   ├── cli/             # Command parsing and routing
+│   ├── cli/                 # Python CLI implementation
+│   │   ├── cmd/             # Command parsing and routing
 │   │   ├── operations/      # Service-specific operations
 │   │   ├── discovery/       # Auto-discovery of services
 │   │   ├── execution/       # Ansible execution engine

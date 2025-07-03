@@ -34,7 +34,7 @@ echo -e "  - Install SSH keys"
 echo -e "  - Disable password authentication"
 echo -e "  - Change SSH port to 22022"
 
-python -m dev.claudia.cli.main harden --install -- \
+python -m dev.cli.cmd.main harden --install -- \
   -e ansible_host=${SERVER_IP} \
   -e @.vault/${ENVIRONMENT}.yml
 
@@ -45,7 +45,7 @@ echo -e "  - Create grunt user (if configured)"
 echo -e "  - Setup firewall"
 echo -e "  - Install fail2ban"
 
-python -m dev.claudia.cli.main security --install -- \
+python -m dev.cli.cmd.main security --install -- \
   -e ansible_host=${SERVER_IP} \
   -e @.vault/${ENVIRONMENT}.yml
 
@@ -56,7 +56,7 @@ echo -e "  - Configure timezone and locale"
 echo -e "  - Install common packages"
 echo -e "  - Setup system settings"
 
-python -m dev.claudia.cli.main base --install -- \
+python -m dev.cli.cmd.main base --install -- \
   -e ansible_host=${SERVER_IP} \
   -e @.vault/${ENVIRONMENT}.yml
 
