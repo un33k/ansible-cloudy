@@ -20,7 +20,7 @@ run_test_suite() {
     TEST_HOST="$DB_HOST"
     TEST_CONTAINER=$(get_container_name "$TEST_HOST")
     
-    run_claudia_command "pgvector" "--install --dimensions 1536 --index-type ivfflat --create-examples" || return 1
+    run_cli_command "pgvector" "--install --dimensions 1536 --index-type ivfflat --create-examples" || return 1
     
     # Verify pgvector extension
     local pgvector=$(docker exec "$TEST_CONTAINER" sudo -u postgres psql -t -c "SELECT extname FROM pg_extension WHERE extname='vector';" 2>/dev/null || echo "")
@@ -49,7 +49,7 @@ run_test_suite() {
     TEST_HOST="$WEB_HOST"
     TEST_CONTAINER=$(get_container_name "$TEST_HOST")
     
-    run_claudia_command "nodejs" "--install --app-name advancedapp --app-port 3001 --pm2-instances 2" || return 1
+    run_cli_command "nodejs" "--install --app-name advancedapp --app-port 3001 --pm2-instances 2" || return 1
     
     # Check PM2 status
     local pm2_list=$(docker exec "$TEST_CONTAINER" pm2 list --no-color 2>/dev/null || echo "")
@@ -77,7 +77,7 @@ run_test_suite() {
         TEST_CONTAINER=$(get_container_name "$TEST_HOST")
         
         # Note: OpenVPN in Docker requires special privileges
-        run_claudia_command "openvpn" "--install" || log_warning "OpenVPN installation may require additional Docker privileges"
+        run_cli_command "openvpn" "--install" || log_warning "OpenVPN installation may require additional Docker privileges"
         
         # Check if OpenVPN container exists
         if docker ps | grep -q "openvpn"; then
@@ -91,7 +91,7 @@ run_test_suite() {
     log_test "Test 4: Monitoring configuration"
     
     # Test with monitoring enabled
-    run_claudia_command "base" "--install -- -e vault_monitoring_enabled=true" || return 1
+    run_cli_command "base" "--install -- -e vault_monitoring_enabled=true" || return 1
     
     # Check for monitoring tools (basic checks)
     local has_htop=$(docker exec "$TEST_CONTAINER" which htop 2>/dev/null || echo "")
@@ -108,7 +108,7 @@ run_test_suite() {
     TEST_HOST="$DB_HOST"
     TEST_CONTAINER=$(get_container_name "$TEST_HOST")
     
-    run_claudia_command "psql" "--install -- -e vault_pg_enable_backups=true -e vault_backup_dir=/var/backups" || return 1
+    run_cli_command "psql" "--install -- -e vault_pg_enable_backups=true -e vault_backup_dir=/var/backups" || return 1
     
     # Check backup directory
     if docker exec "$TEST_CONTAINER" test -d /var/backups; then

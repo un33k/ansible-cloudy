@@ -1,0 +1,81 @@
+# Docker test inventory for harden/security/base testing
+# This inventory matches the structure in cloudy/inventory/dev.yml
+---
+all:
+  vars:
+    # Global Settings (from vault)
+    git_user_full_name: "{{ vault_git_user_full_name }}"
+    git_user_email: "{{ vault_git_user_email }}"
+    timezone: "{{ vault_timezone }}"
+    locale: "{{ vault_locale }}"
+    
+    # Default connection (root with SSH keys - for all operations)
+    ansible_user: "{{ vault_root_user }}"
+    ansible_port: "{{ vault_ssh_port_final }}"
+    ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
+    ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
+    ansible_ssh_common_args: "{{ vault_ssh_common_args }}"
+    
+    # Security Configuration - Optional Grunt User Section
+    grunt_user: "{{ vault_grunt_user }}"
+    grunt_password: "{{ vault_grunt_password }}"
+    grunt_groups: "{{ vault_grunt_groups | default('sudo,www-data') }}"
+    grunt_ssh_private_key_file: "{{ vault_grunt_ssh_private_key_file }}"
+    
+  # Group variables for connection switching
+  children:
+    # NEW: Harden targets - for initial SSH hardening
+    harden_targets:
+      vars:
+        ansible_user: "{{ vault_root_user }}"
+        ansible_port: "{{ vault_ssh_port_initial }}"
+        ansible_ssh_pass: "{{ vault_root_password }}"
+        ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
+        ansible_ssh_common_args: "{{ vault_ssh_common_args }}"
+      hosts:
+        test-docker-01: {}
+    
+    # Security targets - post-hardening, uses SSH keys on new port
+    security_targets:
+      vars:
+        ansible_user: "{{ vault_root_user }}"
+        ansible_port: "{{ vault_ssh_port_final }}"
+        ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
+        ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
+        ansible_ssh_common_args: "{{ vault_ssh_common_args }}"
+      hosts:
+        test-docker-01: {}
+    
+    # Service targets - for all service operations
+    service_targets:
+      vars:
+        ansible_user: "{{ vault_root_user }}"
+        ansible_port: "{{ vault_ssh_port_final }}"
+        ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
+        ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
+        ansible_ssh_common_args: "{{ vault_ansible_ssh_common_args }}"
+      hosts:
+        test-docker-01: {}
+
+  hosts:
+    # Main test server - used for all recipes
+    test-docker-01:
+      ansible_host: 172.20.0.10
+      hostname: test-docker-01.example.com
+      ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
+      
+      # PostgreSQL Databases to Create
+      postgresql_databases:
+        - name: myapp_db
+          owner: myapp_user
+          encoding: UTF8
+          lc_collate: en_US.UTF-8
+          lc_ctype: en_US.UTF-8
+      
+      # PostgreSQL Users to Create
+      postgresql_users:
+        - name: myapp_user
+          password: "{{ vault_postgres_password }}"
+          database: myapp_db
+          priv: ALL
+          role_attr_flags: CREATEDB,NOSUPERUSER

@@ -17,7 +17,7 @@ run_test_suite() {
     
     # Test 1: PostgreSQL installation
     log_test "Test 1: PostgreSQL installation"
-    run_claudia_command "psql" "--install --port 5432" || return 1
+    run_cli_command "psql" "--install --port 5432" || return 1
     
     # Wait for PostgreSQL to start
     wait_for_service "$TEST_CONTAINER" "postgresql" || return 1
@@ -33,16 +33,16 @@ run_test_suite() {
     log_test "Test 2: PostgreSQL granular operations"
     
     # Create user
-    run_claudia_command "psql" "--adduser testapp --password testpass123" || return 1
+    run_cli_command "psql" "--adduser testapp --password testpass123" || return 1
     
     # Create database
-    run_claudia_command "psql" "--adddb testdb --owner testapp" || return 1
+    run_cli_command "psql" "--adddb testdb --owner testapp" || return 1
     
     # List users
-    run_claudia_command "psql" "--list-users" || return 1
+    run_cli_command "psql" "--list-users" || return 1
     
     # List databases
-    run_claudia_command "psql" "--list-databases" || return 1
+    run_cli_command "psql" "--list-databases" || return 1
     
     # Verify user and database creation
     log_test "Verifying user and database creation..."
@@ -64,7 +64,7 @@ run_test_suite() {
     
     # Test 3: PostGIS installation
     log_test "Test 3: PostGIS extension"
-    run_claudia_command "psql" "--install-postgis" || return 1
+    run_cli_command "psql" "--install-postgis" || return 1
     
     # Verify PostGIS
     local postgis=$(docker exec "$TEST_CONTAINER" sudo -u postgres psql -t -c "SELECT extname FROM pg_extension WHERE extname='postgis';")
@@ -78,7 +78,7 @@ run_test_suite() {
     # Test 4: pgvector installation (if in full mode)
     if [[ "${TEST_MODE:-}" == "full" ]]; then
         log_test "Test 4: pgvector extension"
-        run_claudia_command "pgvector" "--install --dimensions 1536" || return 1
+        run_cli_command "pgvector" "--install --dimensions 1536" || return 1
         
         # Verify pgvector
         local pgvector=$(docker exec "$TEST_CONTAINER" sudo -u postgres psql -t -c "SELECT extname FROM pg_extension WHERE extname='vector';")
@@ -92,7 +92,7 @@ run_test_suite() {
     
     # Test 5: Performance configuration
     log_test "Test 5: Performance configuration"
-    run_claudia_command "psql" "--install -- -e vault_pg_max_connections=200 -e vault_pg_shared_buffers_mb=512" || return 1
+    run_cli_command "psql" "--install -- -e vault_pg_max_connections=200 -e vault_pg_shared_buffers_mb=512" || return 1
     
     # Verify configuration changes
     local max_conn=$(docker exec "$TEST_CONTAINER" sudo -u postgres psql -t -c "SHOW max_connections;")
@@ -104,7 +104,7 @@ run_test_suite() {
     
     # Test 6: Idempotency check
     log_test "Test 6: Idempotency check"
-    local output=$(run_claudia_command "psql" "--install --check" 2>&1)
+    local output=$(run_cli_command "psql" "--install --check" 2>&1)
     if echo "$output" | grep -q "changed=0"; then
         log_success "PostgreSQL setup is idempotent"
     else

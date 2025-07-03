@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [{
+          "type": "command",
+          "command": "echo '📋 LEVER Check: Can you extend existing code instead?'"
+        }]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [{
+          "type": "command",
+          "command": "echo '⚠️  Creating new file - Have you searched for similar patterns first?'"
+        }]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [{
+          "type": "command",
+          "command": "echo '💡 Reminder: Use Grep/Glob for searching, not find/grep commands'"
+        }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit",
+        "hooks": [{
+          "type": "command",
+          "command": "echo '✅ Edit complete - Run tests to verify changes'"
+        }]
+      }
+    ]
+  }
+}

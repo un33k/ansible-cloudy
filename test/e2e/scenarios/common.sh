@@ -31,8 +31,8 @@ log_debug() {
     fi
 }
 
-# Run Claudia command
-run_claudia_command() {
+# Run CLI command
+run_cli_command() {
     local service="$1"
     local args="$2"
     local extra_args="${3:-}"

@@ -25,9 +25,21 @@ Complete reference for the **Claudia CLI** - an intelligent command-line interfa
 
 #### Infrastructure Foundation
 ```bash
-# Security Setup (Two-phase authentication model)
+# SSH Hardening (Run FIRST on fresh servers)
+cli harden                    # Show hardening help
+cli harden --install         # Atomic SSH hardening (changes port, disables passwords)
+
+# Security Setup (Standard)
 cli security                  # Show help and configuration options
-cli security --install       # Execute security setup (SSH keys, grunt user, firewall)
+cli security --install       # Standard security setup (grunt user, firewall, fail2ban)
+
+# Security Setup (Production Hardened)
+cli security --install --production-hardening  # Enterprise-grade security with:
+                                              # - Production SSH hardening
+                                              # - Kernel security parameters
+                                              # - System auditing (auditd)
+                                              # - Automatic security updates
+                                              # - Secure file permissions
 
 # Base Configuration  
 cli base                      # Show help and available variables
@@ -398,18 +410,39 @@ cli security --install -- -e @.vault/my-dev.yml
 ### Complete Server Foundation
 Sets up secure SSH, user management, and firewall.
 
+#### Standard Security (Development/Staging)
 ```bash
-# Deploy secure foundation (two-step process)
-cli security --install    # Security setup (SSH keys, grunt user, firewall)
+# Three-step process for new servers
+cli harden --install      # SSH hardening (port change, disable passwords)
+cli security --install    # Security setup (grunt user, firewall, fail2ban)
 cli base --install        # Base configuration (hostname, git, timezone)
 ```
 
 **What it does:**
-- ✅ Creates grunt user with SSH key access
-- ✅ Configures UFW firewall 
 - ✅ Changes SSH port to 22022
-- ✅ Disables root login
+- ✅ Disables password authentication
+- ✅ Creates optional grunt user with SSH keys
+- ✅ Configures UFW firewall 
+- ✅ Installs fail2ban
 - ✅ Sets up sudo access
+
+#### Production Security (Enterprise Hardening)
+```bash
+# Three-step process with maximum security
+cli harden --install                          # SSH hardening first
+cli security --install --production-hardening # Enterprise security
+cli base --install                            # Base configuration
+```
+
+**Additional production features:**
+- ✅ Everything from standard security PLUS:
+- ✅ Production SSH hardening (modern ciphers, MACs, KEX algorithms)
+- ✅ Kernel security parameters (ASLR, SYN flood protection)
+- ✅ System auditing with auditd (comprehensive audit logging)
+- ✅ Automatic security updates (unattended upgrades)
+- ✅ Secure file permissions on sensitive files
+- ✅ Security compliance report generation
+- ✅ DDoS protection and rate limiting
 
 ### VPN Server
 Deploys OpenVPN using Docker containers.

@@ -17,7 +17,7 @@ run_test_suite() {
     
     # Test 1: Redis installation
     log_test "Test 1: Redis installation"
-    run_claudia_command "redis" "--install --port 6379 --memory 512 --password redispass123" || return 1
+    run_cli_command "redis" "--install --port 6379 --memory 512 --password redispass123" || return 1
     
     # Wait for Redis to start
     wait_for_service "$TEST_CONTAINER" "redis" 30 || return 1
@@ -83,18 +83,18 @@ run_test_suite() {
     log_test "Test 5: Redis granular operations"
     
     # Change port (config only, can't restart in test)
-    run_claudia_command "redis" "--configure-port 6380" || return 1
+    run_cli_command "redis" "--configure-port 6380" || return 1
     
     # Set new password
-    run_claudia_command "redis" "--set-password newpass123" || return 1
+    run_cli_command "redis" "--set-password newpass123" || return 1
     
     # Configure memory
-    run_claudia_command "redis" "--configure-memory 1024" || return 1
+    run_cli_command "redis" "--configure-memory 1024" || return 1
     
     # Test 6: Production mode
     if [[ "${TEST_MODE:-}" == "full" ]]; then
         log_test "Test 6: Redis production configuration"
-        run_claudia_command "redis-production" "--install" || return 1
+        run_cli_command "redis-production" "--install" || return 1
         
         # Verify production settings
         local prod_aof=$(docker exec "$TEST_CONTAINER" redis-cli -a redispass123 CONFIG GET appendonly 2>/dev/null | tail -1)
@@ -107,7 +107,7 @@ run_test_suite() {
     
     # Test 7: Idempotency check
     log_test "Test 7: Idempotency check"
-    local output=$(run_claudia_command "redis" "--install --check" 2>&1)
+    local output=$(run_cli_command "redis" "--install --check" 2>&1)
     if echo "$output" | grep -q "changed=0"; then
         log_success "Redis setup is idempotent"
     else
