@@ -11,7 +11,7 @@ This repository is optimized for development with Claude Code. This guide provid
 
 2. **Key Commands:**
    ```bash
-   # Always use Claudia CLI
+   # Always use CLI
    cli harden --install --dev
    cli security --install --production-hardening
    cli [service] --install
@@ -27,7 +27,7 @@ This repository is optimized for development with Claude Code. This guide provid
 ```
 ansible-cloudy/
 ├── cloudy/           # Ansible playbooks and roles
-├── dev/claudia/      # CLI implementation
+├── dev/cli/          # CLI implementation
 ├── docs/development/ # Development documentation
 └── .claude/          # Claude Code settings
 ```

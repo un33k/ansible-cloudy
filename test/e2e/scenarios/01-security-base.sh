@@ -16,7 +16,7 @@ run_test_suite() {
     
     # Test 1: Security installation
     log_test "Test 1: Security installation"
-    run_claudia_command "security" "--install" || return 1
+    run_cli_command "security" "--install" || return 1
     
     # Verify SSH port change
     log_test "Verifying SSH port change to 22022..."
@@ -48,7 +48,7 @@ run_test_suite() {
     log_test "Test 2: Base installation"
     # Update inventory to use secured connection
     export ANSIBLE_HOST_KEY_CHECKING=false
-    run_claudia_command "base" "--install -i ${INVENTORY_FILE/test-server-01/test-server-01-secured}" || return 1
+    run_cli_command "base" "--install -i ${INVENTORY_FILE/test-server-01/test-server-01-secured}" || return 1
     
     # Verify hostname
     log_test "Verifying hostname configuration..."
@@ -72,7 +72,7 @@ run_test_suite() {
     
     # Test 3: Idempotency check
     log_test "Test 3: Idempotency check"
-    local output=$(run_claudia_command "security" "--install --check" 2>&1)
+    local output=$(run_cli_command "security" "--install --check" 2>&1)
     if echo "$output" | grep -q "changed=0"; then
         log_success "Security setup is idempotent"
     else

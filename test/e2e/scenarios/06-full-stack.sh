@@ -19,7 +19,7 @@ run_test_suite() {
     TEST_HOST="$STANDALONE_HOST"
     TEST_CONTAINER=$(get_container_name "$TEST_HOST")
     
-    run_claudia_command "standalone" "--install --app-type django --domain test.local --with-postgresql --with-redis --with-nginx" || return 1
+    run_cli_command "standalone" "--install --app-type django --domain test.local --with-postgresql --with-redis --with-nginx" || return 1
     
     # Wait for all services
     log_test "Waiting for all services to start..."
@@ -57,8 +57,8 @@ run_test_suite() {
             TEST_CONTAINER=$(get_container_name "$TEST_HOST")
             
             log_test "Setting up web tier on $host..."
-            run_claudia_command "django" "--install" || return 1
-            run_claudia_command "pgbouncer" "--install" || return 1
+            run_cli_command "django" "--install" || return 1
+            run_cli_command "pgbouncer" "--install" || return 1
             
             check_service_status "$TEST_CONTAINER" "pgbouncer" || return 1
             check_port_listening "$TEST_CONTAINER" "6432" || return 1
@@ -69,7 +69,7 @@ run_test_suite() {
         TEST_CONTAINER=$(get_container_name "$TEST_HOST")
         
         log_test "Configuring load balancer..."
-        run_claudia_command "nginx" "--install --domain test.local --backends '172.20.0.21:80,172.20.0.22:80'" || return 1
+        run_cli_command "nginx" "--install --domain test.local --backends '172.20.0.21:80,172.20.0.22:80'" || return 1
         
         # Test load balancer
         test_http_response "$TEST_CONTAINER" "80" "502" || log_warning "Load balancer response not as expected"

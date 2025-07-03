@@ -267,13 +267,8 @@ install_deps() {
     
     # Install cli wrapper into venv
     log "Installing cli command..."
-    cp "$SCRIPT_DIR/dev/bin/claudia-venv" "$VENV_DIR/bin/claudia"
-    chmod +x "$VENV_DIR/bin/claudia"
-    
-    # Create cli alias for claudia
-    log "Creating 'cli' alias for claudia..."
-    cd "$VENV_DIR/bin"
-    ln -sf claudia cli
+    cp "$SCRIPT_DIR/dev/bin/cli-venv" "$VENV_DIR/bin/cli"
+    chmod +x "$VENV_DIR/bin/cli"
     cd "$SCRIPT_DIR"
     
     log "Ansible dependencies installed successfully"
