@@ -34,9 +34,6 @@ vault_ansible_host_key_checking: "{{ vault_ssh_host_key_checking | default(false
 vault_ansible_ssh_common_args: "{{ vault_ssh_common_args | default('-o StrictHostKeyChecking=no') }}"
 vault_admin_user: "{{ vault_grunt_user | default('') }}"
 vault_admin_password: "{{ vault_grunt_password | default('') }}"
-# Legacy port variables - map to new single port variable
-vault_ssh_port_final: "{{ vault_ssh_port | default(22) }}"
-vault_ssh_port_initial: "{{ vault_ssh_port | default(22) }}"
 
 # === SERVICE CREDENTIALS ===
 # These have no defaults and must be set in vault files

@@ -37,8 +37,7 @@ vault_admin_password: "secure_admin_password"
 
 # === CONNECTION CONFIGURATION ===
 vault_ansible_user: "root"              # User for connections
-vault_initial_ssh_port: 22              # Port before security setup
-vault_ssh_port: 22022                   # Port after security setup
+vault_ssh_port: 22                      # SSH port for server connections
 
 # === OPTIONAL GRUNT USER ===
 vault_grunt_user: ""                    # Empty = don't create user

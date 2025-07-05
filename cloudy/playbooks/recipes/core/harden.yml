@@ -9,9 +9,12 @@
   gather_facts: false
   become: true
   
+  vars_files:
+    - "../../../defaults/vault.yml"
+    
   vars:
     # These will be provided via CLI parameters
-    from_port: "{{ from_port | default(22) }}"
+    from_port: "{{ from_port | default(vault_ssh_port) }}"
     to_port: "{{ to_port | default(22022) }}"
     
   pre_tasks:

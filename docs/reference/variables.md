@@ -20,8 +20,7 @@ All variables follow a consistent naming pattern:
 | `vault_root_password` | - | Root password for initial connection | Yes (Harden only) |
 | `vault_root_ssh_private_key_file` | `~/.ssh/id_rsa` | Root user SSH private key path | No |
 | `vault_root_ssh_password_authentication` | `false` | Allow password auth for root | No |
-| `vault_ssh_port_initial` | `22` | SSH port before hardening | No |
-| `vault_ssh_port_final` | `22022` | SSH port after hardening | No |
+| `vault_ssh_port` | `22` | SSH port for server connections | No |
 | `vault_ssh_host_key_checking` | `false` | SSH host key checking | No |
 | `vault_ssh_common_args` | `-o StrictHostKeyChecking=no` | Common SSH arguments | No |
 

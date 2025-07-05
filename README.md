@@ -199,7 +199,7 @@ ansible_port: 22
 ```yaml
 # After hardening - inventory configuration
 ansible_user: "{{ vault_root_user }}"
-ansible_port: "{{ vault_ssh_port_final }}"
+ansible_port: "{{ vault_ssh_port }}"
 # Now using SSH keys only, no passwords
 ```
 

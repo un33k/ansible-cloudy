@@ -30,8 +30,7 @@ This document summarizes the complete implementation of the atomic SSH hardening
 - `vault_root_user` (was vault_ansible_user)
 - `vault_root_password` 
 - `vault_root_ssh_private_key_file` (was vault_ansible_ssh_private_key_file)
-- `vault_ssh_port_initial` (was vault_initial_ssh_port)
-- `vault_ssh_port_final` (was vault_ssh_port)
+- `vault_ssh_port` (single variable for SSH port)
 - `vault_grunt_user` (was vault_admin_user)
 - `vault_grunt_password` (was vault_admin_password)
 
@@ -51,7 +50,7 @@ This document summarizes the complete implementation of the atomic SSH hardening
 
 ### 6. Port Detection Updates
 **File**: `dev/cli/execution/ansible/vault_loader.py`
-- Updated to check for `vault_ssh_port_final` first, then fall back to `vault_ssh_port`
+- Updated to check for `vault_ssh_port` consistently
 
 ### 7. Validation Updates
 **File**: `cloudy/tasks/sys/core/ensure-secure-connection.yml`
@@ -111,7 +110,7 @@ cli redis --install
 
 ## Important Notes
 
-- Initial port (vault_ssh_port_initial) is ONLY used by harden playbook
-- All other playbooks use final port (vault_ssh_port_final)
+- SSH port (vault_ssh_port) is used consistently across all playbooks
+- The system automatically detects the correct port to use
 - The system is smart enough to handle already-hardened servers
 - Grunt user is optional - only created if vault_grunt_user is defined

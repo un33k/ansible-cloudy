@@ -4,7 +4,7 @@
 # These are overridden by vault_security_<setting> variables
 
 # === SSH DEFAULTS ===
-ssh_port_default: 22            # Standard SSH port (override with vault for security)
+# SSH port is defined in vault.yml as vault_ssh_port (default: 22)
 ssh_permit_root_login_default: "prohibit-password"
 ssh_password_authentication_default: "no"
 ssh_pubkey_authentication_default: "yes"
