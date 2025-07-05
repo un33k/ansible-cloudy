@@ -3,12 +3,14 @@
 # Copy this file to your own vault file and edit the values
 
 # === AUTHENTICATION CREDENTIALS ===
-vault_root_password: "secure_root_password_for_production"
-vault_admin_password: "secure_admin_password_for_production"
+vault_root_password: "secure_root_password_for_production"  # Required for initial hardening
+vault_grunt_password: "secure_grunt_password_for_production"  # Optional service user (only if vault_grunt_user is set)
 
 # === CONNECTION CONFIGURATION ===
-vault_admin_user: "admin"
-vault_ssh_port: 22022
+vault_root_user: "root"  # Default root user
+vault_grunt_user: ""  # Optional service user (leave empty to skip creation in production)
+vault_ssh_port_initial: 22  # SSH port before hardening
+vault_ssh_port_final: 22022  # SSH port after hardening (use unique port for production)
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Production Deploy User"
@@ -27,15 +29,38 @@ vault_postgresql_port: 6543    # Non-standard port (blocks port scanners)
 vault_pgbouncer_port: 5432     # PgBouncer listens on PostgreSQL default
 # Apps connect to localhost:5432 → PgBouncer → Network → DB:6543
 vault_redis_port: 6379         # Redis default
+vault_mysql_port: 3306         # MySQL/MariaDB port (consider non-standard for production)
 vault_nginx_http_port: 80      # HTTP
 vault_nginx_https_port: 443    # HTTPS
+
+# === SSH CONFIGURATION ===
+vault_root_ssh_private_key_file: "~/.ssh/id_rsa_prod"  # Production SSH key
+vault_grunt_ssh_private_key_file: "~/.ssh/id_rsa_prod"  # Production SSH key for grunt
+vault_root_ssh_password_authentication: false  # MUST be false in production
+vault_ssh_host_key_checking: true  # MUST be true in production
+vault_ssh_common_args: ""  # Production should verify host keys
+
+# === SERVICE CONFIGURATION ===
+vault_redis_memory_mb: 2048  # Redis memory limit (increase for production)
+vault_pgbouncer_pool_size: 50  # Connection pool size (tune for load)
+vault_pgbouncer_max_clients: 200  # Max client connections
+vault_listen_interface: "0.0.0.0"  # Service listen interface
+vault_localhost: "127.0.0.1"  # Localhost address
+
+# === DATABASE CONFIGURATION ===
+vault_db_encoding: "UTF8"  # Database encoding
+vault_db_lc_collate: "en_US.UTF-8"  # Database collation
+vault_db_lc_ctype: "en_US.UTF-8"  # Database character type
 
 # === PRODUCTION SPECIFIC ===
 # Use strong, unique passwords for production
 # Consider using a password manager for generation
 # Regularly rotate these credentials
+# Enable monitoring and security features
 
 # === USAGE INSTRUCTIONS ===
 # 1. Copy this file: cp .vault/prod.yml.example .vault/my-prod.yml
 # 2. Edit with your real credentials: vim .vault/my-prod.yml
-# 3. Use in playbooks: ansible-playbook -i inventory/prod.yml -e @.vault/my-prod.yml playbook.yml
+# 3. Encrypt for security: ansible-vault encrypt .vault/my-prod.yml
+# 4. Use in playbooks: ansible-playbook -i inventory/prod.yml -e @.vault/my-prod.yml playbook.yml --ask-vault-pass
+# 5. Or use with CLI: source .venv/bin/activate && cli harden --install --prod

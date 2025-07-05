@@ -11,7 +11,10 @@ This repository is optimized for development with Claude Code. This guide provid
 
 2. **Key Commands:**
    ```bash
-   # Always use CLI
+   # IMPORTANT: Always activate Python venv first
+   source .venv/bin/activate
+   
+   # Always use CLI (not direct python commands unless debugging)
    cli harden --install --dev
    cli security --install --production-hardening
    cli [service] --install
@@ -38,6 +41,7 @@ ansible-cloudy/
    - Files under 200 LOC (target 100 LOC)
    - Single responsibility per module
    - Auto-discovery over configuration
+   - NEVER hardcode values - always use variables from vault/config
 
 2. **Security Model:**
    - Phase 1: Harden (SSH hardening)

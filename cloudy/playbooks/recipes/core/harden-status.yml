@@ -1,0 +1,127 @@
+---
+# Recipe: Check SSH Hardening Status
+# Purpose: Check the current hardening status of a server
+# Reports: SSH port, authentication methods, key status
+
+- name: Check SSH Hardening Status
+  hosts: all
+  gather_facts: false
+  become: false
+  
+  vars_files:
+    - "../../../defaults/vault.yml"
+  
+  tasks:
+    # Try to connect on initial port with password
+    - name: Check initial port ({{ vault_ssh_port_initial }}) with password
+      wait_for:
+        port: "{{ vault_ssh_port_initial }}"
+        host: "{{ ansible_host }}"
+        timeout: 3
+      delegate_to: localhost
+      register: initial_port_open
+      ignore_errors: true
+    
+    # Try to connect on final port
+    - name: Check final port ({{ vault_ssh_port_final }}) availability
+      wait_for:
+        port: "{{ vault_ssh_port_final }}"
+        host: "{{ ansible_host }}"
+        timeout: 3
+      delegate_to: localhost
+      register: final_port_open
+      ignore_errors: true
+    
+    # Try SSH key auth on initial port
+    - name: Test SSH key auth on initial port
+      command: |
+        ssh -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=no \
+        -i {{ vault_root_ssh_private_key_file }} -p {{ vault_ssh_port_initial }} \
+        {{ vault_root_user }}@{{ ansible_host }} echo "SSH_KEY_WORKS"
+      delegate_to: localhost
+      register: initial_port_key_auth
+      ignore_errors: true
+      changed_when: false
+      when: initial_port_open is succeeded
+    
+    # Try SSH key auth on final port
+    - name: Test SSH key auth on final port
+      command: |
+        ssh -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=no \
+        -i {{ vault_root_ssh_private_key_file }} -p {{ vault_ssh_port_final }} \
+        {{ vault_root_user }}@{{ ansible_host }} echo "SSH_KEY_WORKS"
+      delegate_to: localhost
+      register: final_port_key_auth
+      ignore_errors: true
+      changed_when: false
+      when: final_port_open is succeeded
+    
+    # Display status (only show when running directly, not in summary mode)
+    - name: Display hardening status
+      when: summary_only is not defined or not summary_only
+      debug:
+        msg: |
+          🔍 SSH Hardening Status Report
+          ==============================
+          
+          📡 Port Status:
+          - Initial port ({{ vault_ssh_port_initial }}): {{ 'OPEN' if initial_port_open is succeeded else 'CLOSED' }}
+          - Final port ({{ vault_ssh_port_final }}): {{ 'OPEN' if final_port_open is succeeded else 'CLOSED' }}
+          
+          🔐 Authentication Status:
+          - SSH key on port {{ vault_ssh_port_initial }}: {{ 'WORKS' if (initial_port_key_auth is succeeded and 'SSH_KEY_WORKS' in initial_port_key_auth.stdout|default('')) else 'FAILED' }}
+          - SSH key on port {{ vault_ssh_port_final }}: {{ 'WORKS' if (final_port_key_auth is succeeded and 'SSH_KEY_WORKS' in final_port_key_auth.stdout|default('')) else 'FAILED' }}
+          
+          📊 Hardening Assessment:
+          {% if final_port_open is succeeded and final_port_key_auth is succeeded and 'SSH_KEY_WORKS' in final_port_key_auth.stdout|default('') %}
+          ✅ FULLY HARDENED - Server is accessible on port {{ vault_ssh_port_final }} with SSH keys
+          {% elif initial_port_open is succeeded and initial_port_key_auth is succeeded and 'SSH_KEY_WORKS' in initial_port_key_auth.stdout|default('') %}
+          ⚠️  PARTIALLY HARDENED - SSH keys work but still on initial port {{ vault_ssh_port_initial }}
+          {% elif initial_port_open is succeeded %}
+          ❌ NOT HARDENED - Server on initial port {{ vault_ssh_port_initial }}, likely needs password auth
+          {% else %}
+          ❓ UNKNOWN - Cannot connect to server on any configured port
+          {% endif %}
+          
+          {% if vault_ssh_port_initial == vault_ssh_port_final %}
+          ℹ️  Note: Initial and final ports are the same ({{ vault_ssh_port_initial }})
+          {% endif %}
+      run_once: true
+    
+    # Set fact for summary
+    - name: Set hardening status fact
+      set_fact:
+        hardening_status: >-
+          {%- if final_port_open is succeeded and final_port_key_auth is succeeded and 'SSH_KEY_WORKS' in final_port_key_auth.stdout|default('') -%}
+          FULLY_HARDENED
+          {%- elif initial_port_open is succeeded and initial_port_key_auth is succeeded and 'SSH_KEY_WORKS' in initial_port_key_auth.stdout|default('') -%}
+          PARTIALLY_HARDENED
+          {%- elif initial_port_open is succeeded -%}
+          NOT_HARDENED
+          {%- else -%}
+          UNREACHABLE
+          {%- endif -%}
+        accessible_port: >-
+          {%- if final_port_open is succeeded -%}
+          {{ vault_ssh_port_final }}
+          {%- elif initial_port_open is succeeded -%}
+          {{ vault_ssh_port_initial }}
+          {%- else -%}
+          none
+          {%- endif -%}
+      run_once: true
+    
+    # Simple summary
+    - name: Summary
+      debug:
+        msg: >-
+          {% if hardening_status == 'FULLY_HARDENED' %}
+          ✅ FULLY HARDENED - Server accessible on port {{ vault_ssh_port_final }} with SSH keys
+          {% elif hardening_status == 'PARTIALLY_HARDENED' %}
+          ⚠️  PARTIALLY HARDENED - SSH keys work on port {{ vault_ssh_port_initial }} (port change pending)
+          {% elif hardening_status == 'NOT_HARDENED' %}
+          ❌ NOT HARDENED - Server on port {{ vault_ssh_port_initial }} needs SSH hardening
+          {% else %}
+          ❓ UNREACHABLE - Cannot connect on ports {{ vault_ssh_port_initial }} or {{ vault_ssh_port_final }}
+          {% endif %}
+      run_once: true

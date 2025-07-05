@@ -3,12 +3,14 @@
 # Copy this file to your own vault file and edit the values
 
 # === AUTHENTICATION CREDENTIALS ===
-vault_root_password: "your_root_password_here"
-vault_admin_password: "your_admin_password_here"
+vault_root_password: "your_root_password_here"  # Required for initial hardening
+vault_grunt_password: "your_grunt_password_here"  # Optional service user (only if vault_grunt_user is set)
 
 # === CONNECTION CONFIGURATION ===
-vault_admin_user: "admin"
-vault_ssh_port: 22022
+vault_root_user: "root"  # Default root user
+vault_grunt_user: "grunt"  # Optional service user (leave empty to skip creation)
+vault_ssh_port_initial: 22  # SSH port before hardening
+vault_ssh_port_final: 22022  # SSH port after hardening
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Your Full Name"
@@ -22,13 +24,34 @@ vault_redis_password: "your_redis_password"
 vault_vpn_passphrase: "your_vpn_passphrase"
 
 # === SERVICE PORTS ===
-vault_postgresql_port: 5433    # Non-standard for security
+vault_postgresql_port: 5432    # PostgreSQL port (5433 recommended for security)
 vault_pgbouncer_port: 6432     # PgBouncer on web servers
 vault_redis_port: 6379         # Redis default
+vault_mysql_port: 3306         # MySQL/MariaDB port
 vault_nginx_http_port: 80      # HTTP
 vault_nginx_https_port: 443    # HTTPS
+
+# === SSH CONFIGURATION ===
+vault_root_ssh_private_key_file: "~/.ssh/id_rsa"  # SSH key for root
+vault_grunt_ssh_private_key_file: "~/.ssh/id_rsa"  # SSH key for grunt user
+vault_root_ssh_password_authentication: false  # Disable after key setup
+vault_ssh_host_key_checking: false  # For dev environments
+vault_ssh_common_args: "-o StrictHostKeyChecking=no"  # Dev SSH args
+
+# === SERVICE CONFIGURATION ===
+vault_redis_memory_mb: 512  # Redis memory limit
+vault_pgbouncer_pool_size: 25  # Connection pool size
+vault_pgbouncer_max_clients: 100  # Max client connections
+vault_listen_interface: "0.0.0.0"  # Service listen interface
+vault_localhost: "127.0.0.1"  # Localhost address
+
+# === DATABASE CONFIGURATION ===
+vault_db_encoding: "UTF8"  # Database encoding
+vault_db_lc_collate: "en_US.UTF-8"  # Database collation
+vault_db_lc_ctype: "en_US.UTF-8"  # Database character type
 
 # === USAGE INSTRUCTIONS ===
 # 1. Copy this file: cp .vault/dev.yml.example .vault/my-dev.yml
 # 2. Edit with your real credentials: vim .vault/my-dev.yml
 # 3. Use in playbooks: ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbook.yml
+# 4. Or use with CLI: source .venv/bin/activate && cli harden --install

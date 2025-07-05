@@ -9,6 +9,9 @@
   gather_facts: false
   become: true
   
+  vars_files:
+    - "../../../defaults/vault.yml"
+  
   vars:
     # Connection timeout for already-hardened servers
     ansible_timeout: 10
