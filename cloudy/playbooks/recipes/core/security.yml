@@ -88,10 +88,24 @@
       tags: [foundation, packages]
       
     # Phase 2: Create Optional Grunt Service User
+    # Create groups before user creation
+    - name: Create required groups for grunt user
+      group:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - www-data
+        - docker
+        - ssl-cert
+      when: vault_grunt_user is defined
+      tags: [users, grunt, groups]
+    
+    # Note: Sets EXACT group membership - user will be removed from any groups not listed
     - name: Create grunt user ({{ emergency_user }})
       include_tasks: "{{ task_paths }}/sys/user/add-user.yml"
       vars:
         username: "{{ emergency_user }}"
+        groups: "{{ vault_grunt_groups }}"  # Exact groups: sudo,adm,systemd-journal,www-data,docker,ssl-cert
       when: vault_grunt_user is defined
       tags: [users, grunt]
       

@@ -28,7 +28,7 @@ vault_locale: "en_US.UTF-8"
 # These are empty by default - grunt user is only created if defined
 vault_grunt_user: ""
 vault_grunt_password: ""
-vault_grunt_groups: "sudo,adm,systemd-journal"
+vault_grunt_groups: "sudo,adm,systemd-journal,www-data,docker,ssl-cert"
 vault_grunt_ssh_private_key_file: "~/.ssh/id_rsa"
 
 # === LEGACY COMPATIBILITY ===

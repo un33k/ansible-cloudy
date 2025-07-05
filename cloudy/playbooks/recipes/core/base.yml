@@ -79,6 +79,19 @@
       when: setup_security | default(true) | bool
       tags: [security, packages]
       
+    # Docker Installation
+    - name: Install Docker Engine
+      include_tasks: "{{ task_paths }}/sys/docker/install.yml"
+      tags: [docker, containers]
+      
+    - name: Add grunt user to docker group
+      user:
+        name: "{{ grunt_user }}"
+        groups: docker
+        append: true
+      when: vault_grunt_user is defined
+      tags: [docker, grunt]
+      
     # Service User Configuration
     - name: Configure base service directories for grunt user
       include_tasks: "{{ task_paths }}/sys/services/configure-service-user.yml"
