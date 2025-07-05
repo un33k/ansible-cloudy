@@ -15,7 +15,7 @@
   vars:
     # These will be provided via CLI parameters
     from_port: "{{ from_port | default(vault_ssh_port) }}"
-    to_port: "{{ to_port | default(22022) }}"
+    to_port: "{{ to_port | default(vault_ssh_port_hardened) }}"
     
   pre_tasks:
     - name: Validate port parameters

@@ -8,7 +8,7 @@ Ansible Cloudy is a layered infrastructure automation framework built on top of 
 
 ```
 ┌─────────────────────────────────────────┐
-│          CLI Interface          │  User Interface Layer
+│          CLI Interface                  │  User Interface Layer
 ├─────────────────────────────────────────┤
 │         Service Operations              │  Business Logic Layer
 ├─────────────────────────────────────────┤

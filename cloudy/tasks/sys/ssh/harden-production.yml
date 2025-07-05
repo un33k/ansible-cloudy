@@ -93,7 +93,7 @@
 - name: Create SSH rate limiting with UFW
   ufw:
     rule: limit
-    port: "{{ ssh_port | default(22022) }}"
+    port: "{{ ssh_port | default(vault_ssh_port) }}"
     proto: tcp
     comment: "SSH rate limiting"
   when: ssh_rate_limit | default(true)

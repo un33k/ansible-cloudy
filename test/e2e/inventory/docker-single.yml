@@ -39,7 +39,7 @@ all:
       hosts:
         test-server-01-secured:
           ansible_host: 172.20.0.10
-          ansible_port: 22022
+          ansible_port: "{{ vault_ssh_port }}"
           ansible_user: admin
           ansible_ssh_private_key_file: ~/.ssh/id_rsa
           ansible_become: true
