@@ -1,0 +1,26 @@
+# Granular Task: Set User Groups (Exact Membership)
+# Purpose: Set user to exactly the specified groups (removes from any other groups)
+# Usage: include_tasks: tasks/sys/user/set-groups.yml
+
+---
+- name: Parse groups string if provided
+  set_fact:
+    groups_list: "{{ groups_string.split(',') | map('trim') | list }}"
+  when: groups_string is defined
+
+- name: Set user groups (exact membership)
+  user:
+    name: "{{ username }}"
+    groups: "{{ groups_list }}"
+    append: false  # This removes user from any groups not in the list
+  register: groups_update_result
+  when: groups_list is defined
+
+- name: Display groups update status
+  debug:
+    msg: |
+      ✅ User groups updated
+      User: {{ username }}
+      Groups: {{ groups_list | join(', ') }}
+      Status: {{ 'Updated' if groups_update_result.changed | default(false) else 'No changes needed' }}
+  when: groups_list is defined

@@ -11,6 +11,7 @@
   
   vars_files:
     - "../../../defaults/all.yml"
+    - "../../../defaults/vault.yml"
     - "../../../defaults/security.yml"
     - "../../../defaults/system.yml"
   
@@ -100,12 +101,20 @@
       when: vault_grunt_user is defined
       tags: [users, grunt, groups]
     
-    # Note: Sets EXACT group membership - user will be removed from any groups not listed
+    # Create grunt user first
     - name: Create grunt user ({{ emergency_user }})
       include_tasks: "{{ task_paths }}/sys/user/add-user.yml"
       vars:
         username: "{{ emergency_user }}"
-        groups: "{{ vault_grunt_groups }}"  # Exact groups: sudo,adm,systemd-journal,www-data,docker,ssl-cert
+      when: vault_grunt_user is defined
+      tags: [users, grunt]
+    
+    # Then set exact group membership - user will be removed from any groups not listed
+    - name: Set grunt user groups (exact membership)
+      include_tasks: "{{ task_paths }}/sys/user/set-groups.yml"
+      vars:
+        username: "{{ emergency_user }}"
+        groups_string: "{{ vault_grunt_groups | default('sudo,adm,systemd-journal,www-data,docker,ssl-cert') }}"
       when: vault_grunt_user is defined
       tags: [users, grunt]
       

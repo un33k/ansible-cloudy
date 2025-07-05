@@ -31,11 +31,11 @@ Added group creation tasks in `cloudy/playbooks/recipes/core/security.yml` befor
 ```
 
 ### 3. Enhanced User Creation
-Modified `cloudy/tasks/sys/user/add-user.yml` to support group assignment:
-- Added `groups` parameter support
+Split user creation and group management into separate tasks:
+- `cloudy/tasks/sys/user/add-user.yml` - Creates/updates user without groups
+- `cloudy/tasks/sys/user/set-groups.yml` - Sets exact group membership
 - Uses `append: false` for exact group membership
 - Sets user to ONLY the groups specified (removes from all others)
-- Maintains idempotency based on force_recreate flag
 
 ### 4. Password Generation
 Enhanced `cloudy/tasks/sys/user/change-password.yml` to:
@@ -135,3 +135,11 @@ Services automatically detect and use grunt user when available:
 - **Group Removal**: If a user is in groups not listed (e.g., wheel), they'll be removed
 - **Primary Group**: The user's primary group is preserved (typically same as username)
 - **No admin group**: We use 'adm' not 'admin' as it's the standard Ubuntu/Debian group
+- **Separate Tasks**: User creation and group assignment are separate for better error handling
+
+## Implementation Details
+The grunt user management is implemented in two phases:
+1. **User Creation**: Creates the user account with default settings
+2. **Group Assignment**: Sets exact group membership using a separate task
+
+This approach avoids issues with variable passing through include_tasks and ensures reliable group management.
