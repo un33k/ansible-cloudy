@@ -9,8 +9,7 @@ vault_grunt_password: "your_grunt_password_here"  # Optional service user (only 
 # === CONNECTION CONFIGURATION ===
 vault_root_user: "root"  # Default root user
 vault_grunt_user: "grunt"  # Optional service user (leave empty to skip creation)
-vault_ssh_port_initial: 22  # SSH port before hardening
-vault_ssh_port_final: 22022  # SSH port after hardening
+vault_ssh_port: 22  # SSH port for server connections
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Your Full Name"
@@ -54,4 +53,4 @@ vault_db_lc_ctype: "en_US.UTF-8"  # Database character type
 # 1. Copy this file: cp .vault/dev.yml.example .vault/my-dev.yml
 # 2. Edit with your real credentials: vim .vault/my-dev.yml
 # 3. Use in playbooks: ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbook.yml
-# 4. Or use with CLI: source .venv/bin/activate && cli harden --install
+# 4. Or use with CLI: source .venv/bin/activate && cli security --install

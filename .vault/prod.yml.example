@@ -9,8 +9,7 @@ vault_grunt_password: "secure_grunt_password_for_production"  # Optional service
 # === CONNECTION CONFIGURATION ===
 vault_root_user: "root"  # Default root user
 vault_grunt_user: ""  # Optional service user (leave empty to skip creation in production)
-vault_ssh_port_initial: 22  # SSH port before hardening
-vault_ssh_port_final: 22022  # SSH port after hardening (use unique port for production)
+vault_ssh_port: 22022  # SSH port for server connections (use non-standard port for production)
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Production Deploy User"
@@ -63,4 +62,4 @@ vault_db_lc_ctype: "en_US.UTF-8"  # Database character type
 # 2. Edit with your real credentials: vim .vault/my-prod.yml
 # 3. Encrypt for security: ansible-vault encrypt .vault/my-prod.yml
 # 4. Use in playbooks: ansible-playbook -i inventory/prod.yml -e @.vault/my-prod.yml playbook.yml --ask-vault-pass
-# 5. Or use with CLI: source .venv/bin/activate && cli harden --install --prod
+# 5. Or use with CLI: source .venv/bin/activate && cli security --install --prod

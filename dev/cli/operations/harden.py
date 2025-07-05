@@ -1,6 +1,6 @@
 """
 Harden Operation Handler
-Manages atomic SSH hardening
+Manages SSH port changes
 """
 
 from typing import List, Dict, Any
@@ -9,54 +9,99 @@ from utils.colors import Colors, info, log, error, warn
 
 
 class HardenOperations(BaseServiceOperations):
-    """Handle harden-specific operations"""
+    """Handle SSH port change operations"""
     
     def __init__(self, config):
         super().__init__(config, "harden")
         self.name = "harden"
-        self.description = "Atomic SSH hardening for fresh servers"
+        self.description = "SSH port change utility"
     
     def _extract_service_args(self, ansible_args: List[str]) -> Dict[str, Any]:
-        """Extract service-specific arguments from command line"""
-        return {}  # No special args for harden
+        """Extract port change arguments from command line"""
+        harden_args = {}
+        i = 0
+        
+        while i < len(ansible_args):
+            arg = ansible_args[i]
+            
+            if arg == "--from-port":
+                if i + 1 < len(ansible_args):
+                    harden_args['from-port'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--from-port requires a value")
+            elif arg == "--to-port":
+                if i + 1 < len(ansible_args):
+                    harden_args['to-port'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--to-port requires a value")
+            else:
+                i += 1
+        
+        return harden_args
     
     def _handle_recipe_install(self, args, ansible_args: List[str], service_args: Dict[str, Any]) -> int:
-        """Handle harden recipe installation - use base implementation with limit"""
-        # Add --limit to ensure we only run on harden_targets
-        if "--limit" not in ansible_args:
-            ansible_args = ["--limit", "harden_targets"] + ansible_args
+        """Handle port change operation"""
+        # Check if port parameters are provided
+        if 'from-port' not in service_args or 'to-port' not in service_args:
+            error("Port parameters required!")
+            print(f"""
+{Colors.YELLOW}Usage:{Colors.NC}
+    cli harden --install --from-port [current] --to-port [new]
+
+{Colors.YELLOW}Example:{Colors.NC}
+    cli harden --install --from-port 22 --to-port 22022
+
+{Colors.YELLOW}Note:{Colors.NC}
+    SSH authentication hardening is now part of security setup.
+    This command only changes the SSH port.
+""")
+            return 1
         
-        # Use base implementation
+        # Use base implementation with port parameters
         return super()._handle_recipe_install(args, ansible_args, service_args)
     
     def _get_parameter_mapping(self) -> Dict[str, str]:
         """Get mapping of CLI parameters to Ansible variables"""
-        return {}  # No parameter mapping needed for harden
+        return {
+            '--from-port': 'from_port',
+            '--to-port': 'to_port'
+        }
     
     def _show_connection_info(self, args):
-        """Override to skip connection info for harden - it's misleading"""
-        # Skip showing connection info for harden since it shows template variables
+        """Override to skip connection info for harden"""
+        # Skip showing connection info
         pass
     
     def show_help(self) -> None:
         """Show harden-specific help"""
         print(f"""
-{Colors.CYAN}cli harden{Colors.NC} - Atomic SSH Hardening
+{Colors.CYAN}cli harden{Colors.NC} - SSH Port Change Utility
 
 {Colors.YELLOW}DESCRIPTION:{Colors.NC}
-    Performs atomic SSH hardening on fresh servers.
-    Installs SSH keys, disables passwords, changes port.
+    Changes SSH port from one port to another.
+    SSH authentication hardening is handled by 'cli security --install'.
 
 {Colors.YELLOW}USAGE:{Colors.NC}
-    cli harden --install          # Harden server SSH
-    cli harden --install --check  # Dry run
+    cli harden --install --from-port [current] --to-port [new]
 
-{Colors.YELLOW}CONNECTION:{Colors.NC}
-    • Initial: root@vault_ssh_port_initial (password)
-    • Final: root@vault_ssh_port_final (SSH keys)
+{Colors.YELLOW}EXAMPLES:{Colors.NC}
+    cli harden --install --from-port 22 --to-port 22022
+    cli harden --install --from-port 22 --to-port 2222 --check
+
+{Colors.YELLOW}OPTIONS:{Colors.NC}
+    --from-port    Current SSH port (required)
+    --to-port      New SSH port (required)
+    --check        Dry run (show what would change)
+
+{Colors.YELLOW}WORKFLOW:{Colors.NC}
+    1. Run 'cli security --install' first (handles SSH keys & auth)
+    2. Run 'cli harden --install' to change port (optional)
+    3. Update inventory with new port after change
 
 {Colors.YELLOW}NOTES:{Colors.NC}
-    • Idempotent - safe to run multiple times
-    • Gracefully handles already-hardened servers
-    • Run this before 'cli security --install'
+    • Connection will timeout after port change (expected)
+    • Update your inventory file after successful change
+    • Firewall rules may need adjustment
 """)

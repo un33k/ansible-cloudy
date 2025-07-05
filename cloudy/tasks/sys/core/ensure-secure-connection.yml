@@ -45,21 +45,8 @@
       3. Use SSH key authentication only
   when: ansible_ssh_pass is defined and 'harden_targets' not in group_names
 
-- name: Fail if using default SSH port (except harden_targets)
-  fail:
-    msg: |
-      ❌ PORT ERROR: Using default SSH port 22!
-      
-      This recipe should connect to the secure SSH port.
-      
-      Expected: ansible_port should be {{ vault_ssh_port_final | default(22022) }} (or custom secure port)
-      Actual: ansible_port is {{ ansible_port }}
-      
-      🔧 Fix:
-      1. Run hardening first: ./cli harden --install
-      2. Then run security setup: ./cli security --install
-      3. Ensure inventory uses the secure SSH port
-  when: ansible_port == 22 and 'harden_targets' not in group_names
+# Port check removed - now using single vault_ssh_port variable
+# Users can change ports with cli harden --from-port X --to-port Y if desired
 
 - name: Validate current user
   command: whoami

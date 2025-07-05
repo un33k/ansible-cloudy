@@ -48,7 +48,37 @@
           └── Monitoring: fail2ban for intrusion detection
           
   tasks:
-    # Phase 1: Foundation Setup
+    # Phase 1: SSH Authentication Hardening
+    - name: Install SSH public key for root
+      authorized_key:
+        user: "{{ vault_root_user }}"
+        key: "{{ lookup('file', vault_root_ssh_private_key_file + '.pub') }}"
+        state: present
+      when: vault_root_ssh_private_key_file is defined
+      tags: [ssh, keys]
+    
+    - name: Configure SSH for secure authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: true
+      loop:
+        - regexp: '^#?PasswordAuthentication'
+          line: "PasswordAuthentication no"
+        - regexp: '^#?PermitRootLogin'
+          line: 'PermitRootLogin prohibit-password'
+        - regexp: '^#?PubkeyAuthentication'
+          line: 'PubkeyAuthentication yes'
+      notify: restart ssh
+      tags: [ssh, security]
+    
+    - name: Validate SSH configuration
+      command: sshd -t
+      changed_when: false
+      tags: [ssh, validate]
+    
+    # Phase 2: Foundation Setup
     - name: Update system packages
       include_tasks: "{{ task_paths }}/sys/core/update.yml"
       tags: [foundation, update]
@@ -97,7 +127,7 @@
     - name: Allow SSH port in UFW firewall
       ufw:
         rule: allow
-        port: "{{ vault_ssh_port_final }}"
+        port: "{{ vault_ssh_port }}"
         proto: tcp
       tags: [firewall, ssh, security]
       
@@ -115,6 +145,23 @@
         state: present
       tags: [security, monitoring]
       
+    - name: Configure fail2ban SSH jail
+      blockinfile:
+        path: /etc/fail2ban/jail.local
+        create: yes
+        block: |
+          [sshd]
+          enabled = true
+          port = {{ vault_ssh_port }}
+          filter = sshd
+          logpath = /var/log/auth.log
+          maxretry = 4
+          findtime = {{ fail2ban_findtime_default }}
+          bantime = {{ fail2ban_bantime_default }}
+          ignoreip = {{ fail2ban_ignoreip_default }}
+      notify: restart fail2ban
+      tags: [security, monitoring, fail2ban]
+      
     - name: Start and enable fail2ban
       service:
         name: fail2ban
@@ -126,6 +173,11 @@
     - name: restart ssh
       service:
         name: ssh
+        state: restarted
+        
+    - name: restart fail2ban
+      service:
+        name: fail2ban
         state: restarted
       
   post_tasks:

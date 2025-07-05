@@ -15,9 +15,12 @@ This repository is optimized for development with Claude Code. This guide provid
    source .venv/bin/activate
    
    # Always use CLI (not direct python commands unless debugging)
-   cli harden --install --dev
-   cli security --install --production-hardening
-   cli [service] --install
+   cli security --install            # SSH hardening + security setup
+   cli base --install               # Base system configuration
+   cli [service] --install          # Service installation
+   
+   # Optional: Change SSH port after everything is set up
+   cli harden --install --from-port 22 --to-port 22022
    ```
 
 3. **Development Workflow:**
@@ -44,9 +47,10 @@ ansible-cloudy/
    - NEVER hardcode values - always use variables from vault/config
 
 2. **Security Model:**
-   - Phase 1: Harden (SSH hardening)
-   - Phase 2: Security (firewall, fail2ban)
-   - Phase 3: Base & Services
+   - Phase 1: Security (SSH hardening, firewall, fail2ban)
+   - Phase 2: Base (system configuration)
+   - Phase 3: Services (application deployment)
+   - Optional: Port change with harden command
 
 3. **Testing Requirements:**
    - Run `cli [command] --check` before `--install`

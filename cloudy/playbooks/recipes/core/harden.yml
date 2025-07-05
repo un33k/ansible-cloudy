@@ -1,85 +1,101 @@
 ---
-# Recipe: Atomic SSH Hardening
-# Purpose: Harden SSH access - install keys, disable passwords, change port
-# Connection: Root user with password on initial port
-# Timeout: Gracefully handle already-hardened servers
+# Recipe: SSH Port Change
+# Purpose: Change SSH port from one port to another
+# Usage: cli harden --from-port 22 --to-port 22022
+# Note: This is now a simple port change tool, SSH hardening moved to security.yml
 
-- name: Atomic SSH Hardening
-  hosts: harden_targets
+- name: SSH Port Change
+  hosts: all
   gather_facts: false
   become: true
   
-  vars_files:
-    - "../../../defaults/vault.yml"
-  
   vars:
-    # Connection timeout for already-hardened servers
-    ansible_timeout: 10
+    # These will be provided via CLI parameters
+    from_port: "{{ from_port | default(22) }}"
+    to_port: "{{ to_port | default(22022) }}"
     
   pre_tasks:
-    # Try to gather facts with timeout
-    - name: Attempt connection and gather facts
-      setup:
-      timeout: "{{ ansible_timeout }}"
-      register: facts_result
-      ignore_errors: true
+    - name: Validate port parameters
+      fail:
+        msg: |
+          ❌ ERROR: Port parameters required!
+          
+          Usage: cli harden --from-port [current] --to-port [new]
+          Example: cli harden --from-port 22 --to-port 22022
+          
+          Current values:
+          - from_port: {{ from_port }}
+          - to_port: {{ to_port }}
+      when: from_port == to_port
     
-    # Exit gracefully if can't connect (already hardened)
-    - name: Server appears to be already hardened
-      meta: end_play
-      when: facts_result is failed
+    - name: Display port change plan
+      debug:
+        msg: |
+          🔄 SSH Port Change Plan
+          =====================
+          Server: {{ inventory_hostname }} ({{ ansible_host }})
+          Current Port: {{ from_port }}
+          New Port: {{ to_port }}
+          
+          ⚠️  WARNING: After this change, you'll need to:
+          1. Update your inventory to use port {{ to_port }}
+          2. Update firewall rules if needed
+          3. Connect using: ssh -p {{ to_port }} user@host
   
   tasks:
-    # 1. Install SSH public key
-    - name: Install SSH public key for root
-      authorized_key:
-        user: "{{ vault_root_user }}"
-        key: "{{ lookup('file', vault_root_ssh_private_key_file + '.pub') }}"
-        state: present
-    
-    # 2. Configure SSH security
-    - name: Configure SSH for key-only authentication
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: "{{ item.regexp }}"
-        line: "{{ item.line }}"
-        backup: true
-      loop:
-        - regexp: '^#?PasswordAuthentication'
-          line: "PasswordAuthentication {{ 'no' if not vault_root_ssh_password_authentication else 'yes' }}"
-        - regexp: '^#?PermitRootLogin'
-          line: 'PermitRootLogin prohibit-password'
-        - regexp: '^#?PubkeyAuthentication'
-          line: 'PubkeyAuthentication yes'
-    
-    # 3. Change SSH port
-    - name: Change SSH port
+    - name: Update SSH port in config
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^#?Port\s+'
-        line: "Port {{ vault_ssh_port_final }}"
-      when: vault_ssh_port_initial != vault_ssh_port_final
+        line: "Port {{ to_port }}"
+        backup: true
+      register: port_changed
     
-    # 4. Validate configuration
     - name: Validate SSH configuration
       command: sshd -t
       changed_when: false
     
-    # 5. Restart SSH service
+    - name: Open new port in firewall (if UFW is active)
+      ufw:
+        rule: allow
+        port: "{{ to_port }}"
+        proto: tcp
+        comment: "SSH on new port"
+      when: 
+        - port_changed.changed
+        - ansible_facts.services is defined
+        - "'ufw' in ansible_facts.services"
+      ignore_errors: true
+    
     - name: Restart SSH service
       service:
         name: ssh
         state: restarted
+      when: port_changed.changed
     
-    # 6. Success message
-    - name: Display hardening status
+    # Give a moment for SSH to restart
+    - name: Wait for SSH to restart
+      pause:
+        seconds: 5
+      when: port_changed.changed
+    
+  post_tasks:
+    - name: Display completion message
       debug:
         msg: |
-          ✅ SSH Hardening Complete!
+          ✅ SSH Port Change Complete!
           
-          Server is now accessible via:
-          - User: {{ vault_root_user }}
-          - Port: {{ vault_ssh_port_final }}
-          - Auth: SSH keys only
+          The SSH service is now listening on port {{ to_port }}.
           
-          Next step: cli security --install
+          ⚠️  IMPORTANT: This connection will timeout, which is expected.
+          
+          Next steps:
+          1. Update your inventory file to use port {{ to_port }}
+          2. Test connection: ssh -p {{ to_port }} {{ ansible_user }}@{{ ansible_host }}
+          3. Close old port {{ from_port }} in firewall if desired
+      when: port_changed.changed
+    
+    - name: No changes needed
+      debug:
+        msg: "ℹ️  SSH is already configured for port {{ to_port }}. No changes made."
+      when: not port_changed.changed

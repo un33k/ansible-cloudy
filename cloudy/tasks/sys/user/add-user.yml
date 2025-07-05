@@ -8,10 +8,18 @@
     msg: "Cannot manage root user with this task"
   when: username == "root"
   
-- name: Kill existing processes for user (if exists)
+- name: Check if user exists
+  command: "id {{ username }}"
+  register: user_exists
+  failed_when: false
+  changed_when: false
+
+- name: Kill existing processes for user (if force recreate)
   shell: "pkill -KILL -u {{ username }}"
   failed_when: false
-  when: force_recreate | default(true) | bool
+  when: 
+    - force_recreate | default(false) | bool
+    - user_exists.rc == 0
   
 - name: Remove existing user (if force recreate)
   user:
@@ -19,9 +27,11 @@
     state: absent
     remove: true
     force: true
-  when: force_recreate | default(true) | bool
+  when: 
+    - force_recreate | default(false) | bool
+    - user_exists.rc == 0
   
-- name: Add user {{ username }}
+- name: Add or update user {{ username }}
   user:
     name: "{{ username }}"
     shell: "{{ user_shell | default('/bin/bash') }}"
