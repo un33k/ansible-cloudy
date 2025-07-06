@@ -38,7 +38,7 @@ class CommandRouter:
         return self.config
     
     def handle_list_services(self):
-        """Handle --list-services command"""
+        """Handle --list command"""
         config = self.initialize_config()
         scanner = ServiceScanner(config)
         scanner.list_all_services()

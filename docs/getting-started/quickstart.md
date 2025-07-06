@@ -80,8 +80,8 @@ cli nginx --install
 ## Getting Help
 
 ```bash
-# Show available services
-cli --list-services
+# Show available services and commands
+cli --list
 
 # Get help for any service
 cli psql --help

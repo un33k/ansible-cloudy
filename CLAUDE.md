@@ -6,7 +6,7 @@ This repository is optimized for development with Claude Code. This guide provid
 
 1. **Before Any Code Changes:**
    - Read `/docs/development/04-development/optimization-principles.md`
-   - Check existing patterns with `cli search [pattern]`
+   - Check existing patterns in the codebase
    - Score your approach (must be ≥ 7/10)
 
 2. **Key Commands:**

@@ -474,7 +474,7 @@ cli --help
 cli -h
 
 # Test service listing
-cli --list-services
+cli --list
 cli -l
 
 # Test version display
@@ -684,12 +684,12 @@ cli psql --help --invalid
 
 ```bash
 # Test service listing formats
-cli --list-services
+cli --list
 cli -l
 
 # Test with grep filtering
-cli --list-services | grep database
-cli --list-services | grep web
+cli --list | grep database
+cli --list | grep web
 ```
 
 ## Best Practices for Testing

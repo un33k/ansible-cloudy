@@ -93,7 +93,7 @@ cd ansible-cloudy/
 - **CLI**: `cli security --install` - Intelligent infrastructure management
 - **CLI Dev Commands**: `cli dev validate` (pre-commit suite), `cli dev syntax`, `cli dev comprehensive`, `cli dev lint`, `cli dev test`
 - **Authentication test**: `cli dev test` - Test server authentication flow
-- **Service discovery**: `cli --list-services` - Show all auto-discovered services
+- **Service discovery**: `cli --list` - Show all auto-discovered services and commands
 - **Clean output**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Spell checking**: Configured via `dev/.cspell.json` with 480+ technical terms
 - **Linting**: Configured via `dev/.ansible-lint.yml` and `dev/.yamlint.yml`
@@ -281,7 +281,7 @@ cli dev lint                      # Ansible linting
 cli dev spell                     # Spell checking
 
 # Service discovery
-cli --list-services               # Show all available services and operations
+cli --list                        # Show all available services and commands
 ```
 
 #### Recipe Categories
@@ -443,7 +443,7 @@ cd ansible-cloudy/
 - **Execute recipes with parameters**: `cli [service-name] --install [options]` (requires explicit flag for safety)
 - **Granular operations**: `cli psql --adduser foo --password 1234` (no recipe installation)
 - **Test authentication flow**: `cli dev test`
-- **Service discovery**: `cli --list-services` (show all available services and operations)
+- **Service discovery**: `cli --list` (show all available services and commands)
 - **Clean output (changes only)**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Alternative output formats**:
   - `ANSIBLE_STDOUT_CALLBACK=minimal cli ... --install` (compact format)

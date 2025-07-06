@@ -71,8 +71,8 @@ def main() -> None:
         show_version()
         return
     
-    # Handle list services command
-    if hasattr(args, 'list_services') and args.list_services:
+    # Handle list command
+    if hasattr(args, 'list') and args.list:
         router.handle_list_services()
         return
     

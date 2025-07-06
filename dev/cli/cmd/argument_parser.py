@@ -46,10 +46,10 @@ def create_parser() -> argparse.ArgumentParser:
         help="Show CLI version information",
     )
     parser.add_argument(
-        "--list-services",
+        "--list",
         "-l",
         action="store_true",
-        help="List all available services and operations",
+        help="List all available services and commands",
     )
     
     # Create subparsers for services

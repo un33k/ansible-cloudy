@@ -63,7 +63,7 @@ main() {
     
     # Test 5: Service discovery
     echo "Test 5: Service discovery"
-    if cli --list-services | grep -q "security"; then
+    if cli --list | grep -q "security"; then
         log_success "Service discovery working"
     else
         log_error "Service discovery failed"

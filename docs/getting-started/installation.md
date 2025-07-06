@@ -63,8 +63,8 @@ The bootstrap script performs the following:
 # Check CLI
 cli --version
 
-# List available services
-cli --list-services
+# List available services and commands
+cli --list
 
 # Run validation
 cli dev validate

@@ -160,7 +160,7 @@ cli dev test          # Authentication flow testing
 cli dev spell         # Spell check documentation with technical dictionary
 
 # Service discovery and help
-cli --list-services   # Show all available services and operations
+cli --list            # Show all available services and commands
 cli --help            # Complete CLI usage guide
 ```
 
@@ -219,7 +219,7 @@ cli security --install --check                 # Dry run security setup
 
 #### Discovery Commands
 ```bash
-cli --list           # Show all recipes
+cli --list           # Show all services and commands
 cli dev              # Show all dev commands  
 cli --help           # Show complete usage
 ```

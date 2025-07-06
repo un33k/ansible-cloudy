@@ -277,7 +277,7 @@ cli dev validate
 ### **CLI Development Issues**
 ```bash
 # Service not discovered
-cli --list-services
+cli --list
 
 # Parameter mapping not working
 cli [service] --help
