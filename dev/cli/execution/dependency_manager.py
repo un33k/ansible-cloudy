@@ -43,7 +43,9 @@ class DependencyManager:
         dependencies = self._get_dependency_chain(service_name)
         
         if not dependencies:
-            warn(f"⚠️ No dependencies defined for {service_name}")
+            info(f"✨ No dependencies required for {service_name}")
+            # Execute the main service directly
+            info(f"🚀 Executing service: {service_name}")
             return self._execute_service_directly(
                 service_name, environment, custom_inventory, extra_vars_file,
                 extra_args, dry_run, target_host
@@ -98,6 +100,9 @@ class DependencyManager:
             # VPN services
             "openvpn": ["security", "base"],
             "wireguard": ["security", "base"],
+            
+            # Finalization - no dependencies, run after everything else
+            "finalize": [],
         }
         
         return dependencies.get(service_name, ["security", "base"])

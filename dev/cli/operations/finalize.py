@@ -1,9 +1,12 @@
 """Finalize operation for completing server setup with upgrades and optional port change."""
 
-from .base_service import BaseService
+from typing import Dict, Any, List
+from .base_service import BaseServiceOperations
+from operations.recipes import RecipeFinder
+from utils.colors import error
 
 
-class FinalizeService(BaseService):
+class FinalizeService(BaseServiceOperations):
     """Handle server finalization - upgrades, port changes, and reboot."""
     
     def get_help_description(self) -> str:
@@ -53,33 +56,59 @@ class FinalizeService(BaseService):
         """Get the path to the finalize recipe."""
         return "playbooks/recipes/core/finalize.yml"
     
-    def handle_install(self, args, extra_ansible_args):
+    def _handle_recipe_install(self, args, ansible_args: List[str], service_args: Dict[str, Any]) -> int:
         """Handle the finalize installation."""
-        # Build extra vars
+        # Parse finalize-specific arguments from remaining args
         extra_vars = []
         
-        # Handle port change
-        if args.change_port:
-            extra_vars.append("change_ssh_port=true")
-            if args.to_port:
-                extra_vars.append(f"target_ssh_port={args.to_port}")
+        # Check for arguments in ansible_args
+        i = 0
+        while i < len(ansible_args):
+            arg = ansible_args[i]
+            if arg == '--change-port':
+                extra_vars.append("change_ssh_port=true")
+                ansible_args.pop(i)
+            elif arg == '--to-port' and i + 1 < len(ansible_args):
+                extra_vars.append("change_ssh_port=true")  # Automatically enable port change
+                extra_vars.append(f"target_ssh_port={ansible_args[i+1]}")
+                ansible_args.pop(i)  # Remove --to-port
+                ansible_args.pop(i)  # Remove the port number
+            elif arg == '--skip-upgrade':
+                extra_vars.append("perform_system_upgrade=false")
+                ansible_args.pop(i)
+            elif arg == '--force-reboot':
+                extra_vars.append("force_reboot=true")
+                ansible_args.pop(i)
+            elif arg == '--no-reboot':
+                extra_vars.append("reboot_after_upgrade=false")
+                ansible_args.pop(i)
+            else:
+                i += 1
         
-        # Handle upgrades
-        if args.skip_upgrade:
-            extra_vars.append("perform_system_upgrade=false")
+        # Find recipe
+        finder = RecipeFinder(self.config)
+        recipe_path = finder.find_recipe(self.service_name)
         
-        # Handle reboot
-        if args.force_reboot:
-            extra_vars.append("force_reboot=true")
-        elif args.no_reboot:
-            extra_vars.append("reboot_after_upgrade=false")
+        if not recipe_path:
+            error(f"{self.service_name.title()} recipe not found")
+            return 1
         
         # Add extra vars to ansible args
         if extra_vars:
-            extra_ansible_args.extend(["-e", " ".join(extra_vars)])
+            ansible_args.extend(["-e", " ".join(extra_vars)])
         
-        # Run the recipe
-        self.run_recipe(extra_ansible_args)
+        # Add verbose flag if requested
+        if hasattr(args, 'verbose') and args.verbose:
+            ansible_args.insert(0, "-v")
+        
+        # Execute recipe
+        inventory_path = self.inventory_manager.get_inventory_path(args.prod)
+        return self.runner.run_recipe(
+            recipe_path=recipe_path,
+            inventory_path=inventory_path,
+            extra_args=ansible_args,
+            dry_run=args.check,
+        )
     
     def get_example_usage(self) -> list:
         """Get example usage commands."""
@@ -106,3 +135,13 @@ class FinalizeService(BaseService):
             return False, "Cannot use --force-reboot and --no-reboot together"
         
         return True, ""
+    
+    def _extract_service_args(self, ansible_args: List[str]) -> Dict[str, Any]:
+        """Extract service-specific arguments from ansible args."""
+        # Finalize doesn't have service-specific args in ansible_args
+        return {}
+    
+    def _get_parameter_mapping(self) -> Dict[str, str]:
+        """Get parameter mapping for service."""
+        # Finalize parameters are handled in handle_install
+        return {}

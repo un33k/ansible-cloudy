@@ -18,10 +18,34 @@ from command_router import CommandRouter  # noqa: E402
 from dev_commands import DevCommandsHandler  # noqa: E402
 from help_system import show_version  # noqa: E402
 from utils.config import CliConfig  # noqa: E402
+from utils.colors import error  # noqa: E402
+import os  # noqa: E402
+
+
+def check_virtual_environment():
+    """Check if running in a virtual environment"""
+    # Check for common virtual environment indicators
+    in_venv = any([
+        os.environ.get('VIRTUAL_ENV'),  # Standard venv/virtualenv
+        os.environ.get('CONDA_DEFAULT_ENV'),  # Conda
+        hasattr(sys, 'real_prefix'),  # Old virtualenv
+        hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix  # venv
+    ])
+    
+    if not in_venv:
+        error("❌ Virtual environment not activated!")
+        print("\nPlease activate the virtual environment first:")
+        print("  source .venv/bin/activate")
+        print("\nOr if using conda:")
+        print("  conda activate your-env-name")
+        sys.exit(1)
 
 
 def main() -> None:
     """Main entry point for CLI"""
+    
+    # Check virtual environment first
+    check_virtual_environment()
     
     # Split arguments first
     cli_args, ansible_args = split_arguments()

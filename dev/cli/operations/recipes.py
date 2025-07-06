@@ -262,7 +262,7 @@ class RecipeHelpParser:
         # Add service-specific examples first
         if recipe_name == "finalize":
             print(f"  cli {recipe_name} --install --change-port      # Change SSH port to 2222")
-            print(f"  cli {recipe_name} --install --to-port 2323     # Change to custom port") 
+            print(f"  cli {recipe_name} --install --to-port 2323     # Change to custom port")
             print(f"  cli {recipe_name} --install --skip-upgrade     # Skip system updates")
             print(f"  cli {recipe_name} --install --force-reboot     # Force reboot")
             print(f"  cli {recipe_name} --install --no-reboot        # Never reboot")

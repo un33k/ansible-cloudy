@@ -94,6 +94,11 @@ class CommandRouter:
                     harden_ops = HardenOperations(config)
                     harden_ops.show_help()
                     return True
+                elif service_name == "finalize":
+                    from operations.finalize import FinalizeService
+                    finalize_ops = FinalizeService(config, "finalize")
+                    finalize_ops._show_service_help()
+                    return True
                 
                 # Handle other services with recipe help
                 finder = RecipeFinder(config)
@@ -304,6 +309,11 @@ class CommandRouter:
             from operations.harden import HardenOperations
             harden_ops = HardenOperations(config)
             exit_code = harden_ops.handle_operation(args, ansible_args)
+            sys.exit(exit_code)
+        elif service_name == "finalize":
+            from operations.finalize import FinalizeService
+            finalize_ops = FinalizeService(config, "finalize")
+            exit_code = finalize_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
         else:
             return False  # Service not handled by specific operations
