@@ -217,9 +217,16 @@ class RecipeHelpParser:
         print(f"  cli {recipe_name} --install --check  # Dry run (no changes)")
         print(f"  cli {recipe_name} --install --verbose # Verbose output")
         
-        # Add security-specific options
+        # Add service-specific options
         if recipe_name == "security":
             print(f"  cli {recipe_name} --verify           # Run security verification/check")
+        elif recipe_name == "finalize":
+            print(f"\n{Colors.BLUE}Service-Specific Options:{Colors.NC}")
+            print(f"  --change-port         # Change SSH port to hardened port (2222)")
+            print(f"  --to-port PORT        # Target SSH port (default: 2222)")
+            print(f"  --skip-upgrade        # Skip system upgrades")
+            print(f"  --force-reboot        # Force reboot even if not required")
+            print(f"  --no-reboot           # Skip reboot even if required")
 
         # Display key variables (combine inventory and recipe variables)
         all_variables = {}
@@ -251,6 +258,15 @@ class RecipeHelpParser:
 
         # Usage examples with variables and tags
         print(f"\n{Colors.YELLOW}Advanced Examples:{Colors.NC}")
+        
+        # Add service-specific examples first
+        if recipe_name == "finalize":
+            print(f"  cli {recipe_name} --install --change-port      # Change SSH port to 2222")
+            print(f"  cli {recipe_name} --install --to-port 2323     # Change to custom port") 
+            print(f"  cli {recipe_name} --install --skip-upgrade     # Skip system updates")
+            print(f"  cli {recipe_name} --install --force-reboot     # Force reboot")
+            print(f"  cli {recipe_name} --install --no-reboot        # Never reboot")
+        
         print(
             f'  cli {recipe_name} --install -- -e "admin_user=myuser"  # Override variables'
         )

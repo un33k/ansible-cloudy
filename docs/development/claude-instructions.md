@@ -196,7 +196,7 @@ cli nginx --install   # Nginx load balancer
 **Security Features**:
 - ✅ Root login disabled (`PermitRootLogin no`)
 - ✅ Grunt user with SSH key authentication
-- ✅ Custom SSH port (default: 22022)
+- ✅ Custom SSH port (default: 2222)
 - ✅ UFW firewall configured
 - ✅ Sudo access for privileged operations
 
@@ -356,7 +356,7 @@ all:
   vars:
     ansible_user: admin
     ansible_ssh_pass: secure123
-    ansible_port: 22022
+    ansible_port: 2222
     
   children:
     generic_servers:
@@ -366,7 +366,7 @@ all:
           hostname: web.example.com
           admin_user: admin
           admin_password: secure123
-          ssh_port: 22022
+          ssh_port: 2222
 ```
 
 ### Recipe Pattern
@@ -493,7 +493,7 @@ cli pgbouncer --set-pool-size 50                  # Update connection pool size
 - ✅ **Safe Authentication Flow**: UFW firewall configured before SSH port changes
 - ✅ **SSH Key Management**: Automated public key installation and validation
 - ✅ **Connection Transition**: Seamless root-to-admin user switching
-- ✅ **Firewall Integration**: Port 22022 opened before SSH service restart
+- ✅ **Firewall Integration**: Port 2222 opened before SSH service restart
 - ✅ **Sudo Configuration**: NOPASSWD sudo access for admin operations
 - ✅ **Root Login Disable**: Safely disabled after admin user verification
 - ✅ **Kernel Hardening**: Production-ready sysctl parameters, ASLR, secure shared memory
@@ -509,7 +509,7 @@ all:
   vars:
     ansible_user: admin          # Connect as admin user (after setup)
     ansible_ssh_pass: secure123  # Admin password
-    ansible_port: 22022          # Custom SSH port
+    ansible_port: 2222          # Custom SSH port
     ansible_host_key_checking: false
     
   children:
@@ -599,7 +599,7 @@ vault_admin_password: "your_admin_password_here"
 
 # === CONNECTION CONFIGURATION ===
 vault_admin_user: "admin"
-vault_ssh_port: 22022
+vault_ssh_port: 2222
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Your Full Name"
@@ -684,7 +684,7 @@ cli redis --install
 Every service recipe automatically validates:
 - ✅ Connected as root user with SSH keys
 - ✅ Using SSH keys (no passwords)
-- ✅ Secure SSH port (22022 instead of 22)
+- ✅ Secure SSH port (2222 instead of 22)
 - ✅ Full root access available
 - ❌ Fails with clear error messages if wrong connection type
 

@@ -85,7 +85,7 @@ The **CLI** is the heart of Ansible Cloudy, providing:
 - **🔑 SSH Key Authentication**: Root access via SSH keys only (no password brute force)
 - **👤 Admin Emergency Access**: Dual authentication (password + SSH keys) for manual operations
 - **🔥 Smart Firewall**: UFW automatically configured with service-specific ports
-- **🚪 Custom SSH Port**: Default port 22022 with seamless migration
+- **🚪 Custom SSH Port**: Default port 2222 with seamless migration
 - **🛡️ Enterprise Hardening**: Fail2ban, connection limits, secure SSH configuration
 - **🔒 Kernel Security**: Hardened sysctl parameters, ASLR, secure shared memory
 - **📝 Audit Logging**: Comprehensive audit trail with auditd and logrotate
@@ -154,7 +154,7 @@ Configure servers in `cloudy/inventory/dev.yml`:
 all:
   vars:
     ansible_user: admin         # Connect as admin user (after setup)
-    ansible_port: 22022         # Custom SSH port
+    ansible_port: 2222         # Custom SSH port
     ansible_host_key_checking: false
     
   children:
@@ -184,7 +184,7 @@ Example vault content:
 vault_root_password: "secure_root_password_123"
 vault_admin_password: "secure_admin_password_456"
 vault_admin_user: "admin"
-vault_ssh_port: 22022
+vault_ssh_port: 2222
 ```
 
 ### 3. Two-Phase Authentication Model
@@ -231,7 +231,7 @@ cli nginx --install --domain example.com --ssl
 
 # Step 7: Finalize with system upgrades and optional SSH port change
 cli finalize --install                    # Upgrades and reboot if needed
-# cli finalize --install --change-port    # Also change SSH to port 22022
+# cli finalize --install --change-port    # Also change SSH to port 2222
 ```
 
 ### Redis Cache Server with Custom Configuration

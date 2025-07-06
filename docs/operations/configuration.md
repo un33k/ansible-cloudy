@@ -283,7 +283,7 @@ postgresql_port_default: 5432
 
 2. **Port Management**
    - Initial connection on port 22
-   - Security setup changes to 22022
+   - Security setup changes to 2222
    - Firewall blocks port 22 after setup
 
 3. **User Management**

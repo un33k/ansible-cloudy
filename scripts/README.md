@@ -68,7 +68,7 @@ Alternative complete flow test with detailed step-by-step verification.
 ### test-docker-local.sh
 Docker-based test with local port mapping:
 - Uses Docker container on localhost
-- Maps ports (2222 → 22, 22022 → 22022)
+- Maps ports (2222 → 22, 2222 → 2222)
 - Tests port changes work correctly
 
 ### test-with-e2e.sh
@@ -217,7 +217,7 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
 Check for conflicting services:
 ```bash
 lsof -i :2222
-lsof -i :22022
+lsof -i :2222
 ```
 
 ## Contributing

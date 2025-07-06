@@ -21,7 +21,7 @@ docker run -d \
   --name ansible-harden-test \
   --privileged \
   -p 2222:22 \
-  -p 22022:22022 \
+  -p 2222:2222 \
   ubuntu:22.04 \
   /bin/bash -c "
     apt-get update && \
@@ -82,7 +82,7 @@ all:
     security_targets:
       vars:
         ansible_user: "{{ vault_root_user }}"
-        ansible_port: 22022  # After hardening
+        ansible_port: 2222  # After hardening
         ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
         ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
         ansible_ssh_common_args: "{{ vault_ssh_common_args }}"
@@ -94,7 +94,7 @@ all:
     service_targets:
       vars:
         ansible_user: "{{ vault_root_user }}"
-        ansible_port: 22022
+        ansible_port: 2222
         ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
         ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
         ansible_ssh_common_args: "{{ vault_ssh_common_args }}"
@@ -117,12 +117,12 @@ python -m dev.cli.cli.main harden --install -- \
   -i test-docker-inventory.yml \
   -e @.vault/dev.yml \
   -e vault_ssh_port_initial=2222 \
-  -e vault_ssh_port_final=22022 \
+  -e vault_ssh_port_final=2222 \
   -vv
 
 # Test SSH on new port
-echo -e "${YELLOW}5. Testing SSH connection on port 22022...${NC}"
-ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 22022 root@localhost 'echo "SSH key auth successful!"'
+echo -e "${YELLOW}5. Testing SSH connection on port 2222...${NC}"
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 2222 root@localhost 'echo "SSH key auth successful!"'
 
 # Run security playbook
 echo -e "${YELLOW}6. Running security playbook...${NC}"

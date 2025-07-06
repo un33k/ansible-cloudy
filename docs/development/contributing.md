@@ -318,7 +318,7 @@ class MySQLOperations(BaseServiceOperations):
 all:
   vars:
     ansible_user: admin
-    ansible_port: 22022
+    ansible_port: 2222
     
   children:
     web_servers:

@@ -20,13 +20,13 @@ class FinalizeService(BaseService):
         subparser.add_argument(
             '--change-port',
             action='store_true',
-            help='Change SSH port to hardened port (22022)'
+            help='Change SSH port to hardened port (2222)'
         )
         
         subparser.add_argument(
             '--to-port',
             type=int,
-            help='Target SSH port (default: 22022)'
+            help='Target SSH port (default: 2222)'
         )
         
         # Upgrade control
@@ -85,7 +85,7 @@ class FinalizeService(BaseService):
         """Get example usage commands."""
         return [
             "cli finalize --install                    # Run upgrades and reboot if needed",
-            "cli finalize --install --change-port      # Also change SSH port to 22022",
+            "cli finalize --install --change-port      # Also change SSH port to 2222",
             "cli finalize --install --to-port 2222     # Change to custom port",
             "cli finalize --install --skip-upgrade     # Skip system updates",
             "cli finalize --install --force-reboot     # Force reboot",

@@ -14,7 +14,7 @@ all:
     vault_root_password: testpass123
     vault_admin_user: admin
     vault_admin_password: adminpass123
-    vault_ssh_port: 22022
+    vault_ssh_port: 2222
     
     # System settings
     vault_timezone: UTC

@@ -58,7 +58,7 @@ def sample_inventory_file(temp_project_dir):
 all:
   vars:
     ansible_user: admin
-    ansible_port: 22022
+    ansible_port: 2222
     
   children:
     generic_servers:
@@ -83,7 +83,7 @@ def sample_vault_file(temp_project_dir):
 ---
 vault_root_password: "test_root_pass"
 vault_admin_password: "test_admin_pass"
-vault_ssh_port: 22022
+vault_ssh_port: 2222
 vault_postgres_password: "test_pg_pass"
 """
     

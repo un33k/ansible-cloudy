@@ -18,7 +18,7 @@
     "key_flows": {
       "deployment": "harden → security → base → services",
       "connection_groups": "harden_targets (password) → security_targets (SSH keys) → service_targets (SSH keys)",
-      "ports": "Initial: 22, Final: 22022 (vault-driven)"
+      "ports": "Initial: 22, Final: 2222 (vault-driven)"
     },
     "vault_variables": {
       "location": ".vault/*.yml",

@@ -12,7 +12,7 @@ vault_grunt_password: "secure_grunt_password_for_production"  # Optional - gener
 vault_grunt_groups_string: "sudo,adm,systemd-journal,www-data,docker,ssl-cert"  # Optional - has default
 
 # === SSH CONFIGURATION ===
-vault_ssh_port: 22022  # Optional - defaults to 22 (use non-standard for production)
+vault_ssh_port: 2222  # Optional - defaults to 22 (use non-standard for production)
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Production Deploy User"  # Optional - has default

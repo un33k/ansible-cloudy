@@ -2,7 +2,7 @@
 # Purpose: Final steps after all services are configured - upgrades, port changes, reboot
 # Usage Examples:
 #   cli finalize --install                    # Run upgrades and reboot if needed
-#   cli finalize --install --change-port      # Also change SSH port to 22022
+#   cli finalize --install --change-port      # Also change SSH port to 2222
 #   cli finalize --install --to-port 2222     # Change to custom port
 #   cli finalize --install --skip-upgrade     # Skip system updates
 #   cli finalize --install --force-reboot     # Force reboot

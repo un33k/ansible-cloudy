@@ -20,7 +20,7 @@ This repository is optimized for development with Claude Code. This guide provid
    cli [service] --install          # Service installation
    
    # Optional: Change SSH port after everything is set up
-   cli harden --install --from-port 22 --to-port 22022
+   cli harden --install --from-port 22 --to-port 2222
    ```
 
 3. **Development Workflow:**

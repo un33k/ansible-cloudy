@@ -69,12 +69,12 @@ cli security --install --prod
 What this does:
 - Creates SSH keys for root access
 - Configures firewall (UFW)
-- Changes SSH port to 22022
+- Changes SSH port to 2222
 - Optionally creates grunt user (if defined in vault)
 - Hardens SSH configuration
 - Disables root password authentication
 
-After this step, all connections use SSH keys on port 22022.
+After this step, all connections use SSH keys on port 2222.
 
 ## Step 3: Base System Configuration
 
@@ -108,7 +108,7 @@ cli psql --install --prod --port 5433 --version 15
 Verify installation:
 ```bash
 # Check PostgreSQL status
-ssh root@192.168.1.100 -p 22022 "systemctl status postgresql"
+ssh root@192.168.1.100 -p 2222 "systemctl status postgresql"
 ```
 
 ## Step 5: Install Redis
@@ -164,7 +164,7 @@ Use the modular tasks to build custom deployments.
 
 ```bash
 # Connect to your server
-ssh root@192.168.1.100 -p 22022
+ssh root@192.168.1.100 -p 2222
 
 # Check services
 systemctl status postgresql
@@ -202,7 +202,7 @@ curl -I http://app.example.com
 
 If you can't connect after security setup:
 
-1. **Wrong port**: Remember to use `-p 22022`
+1. **Wrong port**: Remember to use `-p 2222`
 2. **Firewall blocking**: Check cloud provider firewall rules
 3. **Key issues**: Ensure your SSH key exists at `~/.ssh/id_rsa`
 

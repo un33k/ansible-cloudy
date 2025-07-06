@@ -51,7 +51,7 @@ class HardenOperations(BaseServiceOperations):
     cli harden --install --from-port [current] --to-port [new]
 
 {Colors.YELLOW}Example:{Colors.NC}
-    cli harden --install --from-port 22 --to-port 22022
+    cli harden --install --from-port 22 --to-port 2222
 
 {Colors.YELLOW}Note:{Colors.NC}
     SSH authentication hardening is now part of security setup.
@@ -87,7 +87,7 @@ class HardenOperations(BaseServiceOperations):
     cli harden --install --from-port [current] --to-port [new]
 
 {Colors.YELLOW}EXAMPLES:{Colors.NC}
-    cli harden --install --from-port 22 --to-port 22022
+    cli harden --install --from-port 22 --to-port 2222
     cli harden --install --from-port 22 --to-port 2222 --check
 
 {Colors.YELLOW}OPTIONS:{Colors.NC}

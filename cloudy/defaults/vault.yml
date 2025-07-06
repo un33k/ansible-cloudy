@@ -17,7 +17,7 @@ vault_ssh_common_args_default: "-o StrictHostKeyChecking=no"
 # - ansible_port: Runtime variable set in inventory files as: ansible_port: "{{ vault_ssh_port }}"
 # - Only override vault_ssh_port in .vault/*.yml files, never hardcode ansible_port
 vault_ssh_port_default: 22                # SSH port for server connections (default: 22)
-vault_ssh_port_hardened_default: 22022    # Target SSH port for hardened servers (default: 22022)
+vault_ssh_port_hardened_default: 2222    # Target SSH port for hardened servers (default: 2222)
 
 # === GLOBAL CONFIGURATION DEFAULTS ===
 vault_git_user_full_name_default: "System Administrator"

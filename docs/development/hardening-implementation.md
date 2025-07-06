@@ -11,7 +11,7 @@ This document summarizes the complete implementation of the atomic SSH hardening
 - Connects via password on initial port (default 22)
 - Installs SSH keys
 - Disables password authentication
-- Changes port to final port (default 22022)
+- Changes port to final port (default 2222)
 - Gracefully handles already-hardened servers
 
 ### 2. Updated Inventory Structure
@@ -61,7 +61,7 @@ This document summarizes the complete implementation of the atomic SSH hardening
 
 ### For Fresh Servers:
 ```bash
-# 1. Harden SSH (password → SSH keys, port 22 → 22022)
+# 1. Harden SSH (password → SSH keys, port 22 → 2222)
 cli harden --install
 
 # 2. Security setup (firewall, fail2ban, grunt user)

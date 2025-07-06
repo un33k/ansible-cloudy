@@ -24,7 +24,7 @@ Run finalize:
 # Standard finalization with upgrades
 cli finalize --install
 
-# Finalize and change SSH port to hardened default (22022)
+# Finalize and change SSH port to hardened default (2222)
 cli finalize --install --change-port
 
 # Finalize with custom SSH port
@@ -56,7 +56,7 @@ cli finalize --install --no-reboot
    # inventory/prod.yml
    all:
      vars:
-       ansible_port: 22022  # Update to your new port
+       ansible_port: 2222  # Update to your new port
    ```
 
 3. **Client Configuration**: Update your SSH client config:
@@ -64,7 +64,7 @@ cli finalize --install --no-reboot
    # ~/.ssh/config
    Host myserver
      HostName server.example.com
-     Port 22022  # New port
+     Port 2222  # New port
      User grunt
    ```
 
@@ -113,7 +113,7 @@ cli finalize --install --change-port
 
 # This will:
 # 1. Apply all security updates
-# 2. Change SSH port to 22022
+# 2. Change SSH port to 2222
 # 3. Reboot the system
 # 4. Validate all services
 ```
@@ -178,7 +178,7 @@ If you lose connection after port change:
 4. **Revert if Needed**:
    ```bash
    # Via console
-   sed -i 's/Port 22022/Port 22/' /etc/ssh/sshd_config
+   sed -i 's/Port 2222/Port 22/' /etc/ssh/sshd_config
    systemctl restart ssh
    ufw allow 22/tcp
    ```

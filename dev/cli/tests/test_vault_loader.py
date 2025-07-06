@@ -53,7 +53,7 @@ class TestVaultAutoLoader:
         vault_args = ["-e", f"@{sample_vault_file}"]
         port = loader.extract_vault_ssh_port(vault_args)
         
-        assert port == 22022
+        assert port == 2222
     
     def test_extract_vault_ssh_port_default(self, temp_project_dir):
         """Test default SSH port when not in vault"""

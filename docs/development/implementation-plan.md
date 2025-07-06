@@ -209,7 +209,7 @@ ansible_port: 22
 - Install SSH keys for root and admin
 - Create grunt user with NOPASSWD sudo
 - Configure UFW firewall 
-- Change SSH port to 22022
+- Change SSH port to 2222
 - Enable fail2ban intrusion detection
 ```
 
@@ -217,7 +217,7 @@ ansible_port: 22
 ```yaml
 # Secured connection (after security setup)
 ansible_user: admin
-ansible_port: 22022
+ansible_port: 2222
 ansible_ssh_private_key_file: ~/.ssh/id_rsa
 
 # All service installations and configurations

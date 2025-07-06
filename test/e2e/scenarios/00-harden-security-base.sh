@@ -28,8 +28,8 @@ run_test_suite() {
     run_cli_command "harden" "--install -i inventory/docker-harden.yml -e @vault/test-secrets.yml" || return 1
     
     # Verify SSH port change
-    log_test "Verifying SSH port change to 22022..."
-    if docker exec ansible-cloudy-${TEST_HOST} ss -tlnp | grep -q ":22022"; then
+    log_test "Verifying SSH port change to 2222..."
+    if docker exec ansible-cloudy-${TEST_HOST} ss -tlnp | grep -q ":2222"; then
         log_success "SSH port changed successfully"
     else
         log_error "SSH port change failed"
@@ -37,8 +37,8 @@ run_test_suite() {
     fi
     
     # Test SSH key auth on new port
-    log_test "Testing SSH key auth on port 22022..."
-    if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 22022 root@172.20.0.10 'echo "Key auth works"' &>/dev/null; then
+    log_test "Testing SSH key auth on port 2222..."
+    if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 2222 root@172.20.0.10 'echo "Key auth works"' &>/dev/null; then
         log_success "SSH key authentication successful"
     else
         log_error "SSH key authentication failed"
@@ -94,7 +94,7 @@ run_test_suite() {
     log_test "Test 4: Verifying complete flow"
     
     # SSH as root on secure port
-    if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 22022 root@172.20.0.10 'echo "Root SSH works"' &>/dev/null; then
+    if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 2222 root@172.20.0.10 'echo "Root SSH works"' &>/dev/null; then
         log_success "Root SSH on secure port works"
     else
         log_error "Root SSH on secure port failed"
@@ -102,7 +102,7 @@ run_test_suite() {
     fi
     
     # SSH as grunt on secure port
-    if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 22022 grunt@172.20.0.10 'echo "Grunt SSH works"' &>/dev/null; then
+    if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 2222 grunt@172.20.0.10 'echo "Grunt SSH works"' &>/dev/null; then
         log_success "Grunt SSH on secure port works"
     else
         log_error "Grunt SSH on secure port failed"

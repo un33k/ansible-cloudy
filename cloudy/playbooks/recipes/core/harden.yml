@@ -1,7 +1,7 @@
 ---
 # Recipe: SSH Port Change
 # Purpose: Change SSH port from one port to another
-# Usage: cli harden --from-port 22 --to-port 22022
+# Usage: cli harden --from-port 22 --to-port 2222
 # Note: This is now a simple port change tool, SSH hardening moved to security.yml
 
 - name: SSH Port Change
@@ -24,7 +24,7 @@
           ❌ ERROR: Port parameters required!
           
           Usage: cli harden --from-port [current] --to-port [new]
-          Example: cli harden --from-port 22 --to-port 22022
+          Example: cli harden --from-port 22 --to-port 2222
           
           Current values:
           - from_port: {{ from_port }}

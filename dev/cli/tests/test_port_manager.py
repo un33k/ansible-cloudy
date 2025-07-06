@@ -92,7 +92,7 @@ class TestSSHPortManager:
         # Mock vault loader that returns custom port
         mock_vault_loader = Mock()
         mock_vault_loader.auto_load_vault_file.return_value = []
-        mock_vault_loader.extract_vault_ssh_port.return_value = 22022
+        mock_vault_loader.extract_vault_ssh_port.return_value = 2222
         
         # Mock successful connection on configured port
         with patch.object(manager, 'test_port_connection') as mock_test:
@@ -106,13 +106,13 @@ class TestSSHPortManager:
             )
             
             assert result['success'] is True
-            assert result['port'] == 22022
+            assert result['port'] == 2222
             assert result['user'] == 'root'
             
             # Verify it was called with configured port first
             mock_test.assert_called_once_with(
                 "/path/to/inventory.yml",
-                22022,
+                2222,
                 False,
                 None,
                 []
@@ -125,11 +125,11 @@ class TestSSHPortManager:
         # Mock vault loader that returns custom port
         mock_vault_loader = Mock()
         mock_vault_loader.auto_load_vault_file.return_value = []
-        mock_vault_loader.extract_vault_ssh_port.return_value = 22022
+        mock_vault_loader.extract_vault_ssh_port.return_value = 2222
         
-        # Mock connection: fail on 22022, succeed on 22
+        # Mock connection: fail on 2222, succeed on 22
         with patch.object(manager, 'test_port_connection') as mock_test:
-            mock_test.side_effect = [False, True]  # Fail on 22022, succeed on 22
+            mock_test.side_effect = [False, True]  # Fail on 2222, succeed on 22
             
             result = manager.smart_port_detection(
                 production=False,
@@ -153,7 +153,7 @@ class TestSSHPortManager:
         # Mock vault loader
         mock_vault_loader = Mock()
         mock_vault_loader.auto_load_vault_file.return_value = []
-        mock_vault_loader.extract_vault_ssh_port.return_value = 22022
+        mock_vault_loader.extract_vault_ssh_port.return_value = 2222
         
         # Mock all connections fail
         with patch.object(manager, 'test_port_connection') as mock_test:

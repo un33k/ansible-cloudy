@@ -57,7 +57,7 @@ vault_root_ssh_password_authentication: false
 vault_ssh_host_key_checking: false
 vault_ssh_common_args: "-o StrictHostKeyChecking=no"
 vault_ssh_port_initial: 22
-vault_ssh_port_final: 22022
+vault_ssh_port_final: 2222
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Test User"
@@ -114,7 +114,7 @@ all:
     security_targets:
       vars:
         ansible_user: "{{ vault_root_user }}"
-        ansible_port: 22022
+        ansible_port: 2222
         ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
         ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
         ansible_ssh_common_args: "{{ vault_ssh_common_args }}"
@@ -125,7 +125,7 @@ all:
     service_targets:
       vars:
         ansible_user: "{{ vault_root_user }}"
-        ansible_port: 22022
+        ansible_port: 2222
         ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
         ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
         ansible_ssh_common_args: "{{ vault_ssh_common_args }}"
@@ -172,8 +172,8 @@ ansible-playbook \
     -vv
 
 # Step 5: Test SSH on new port
-echo -e "${YELLOW}Step 5: Testing SSH on port 22022...${NC}"
-if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 22022 root@172.20.0.10 'echo "✅ SSH key auth on 22022 working"'; then
+echo -e "${YELLOW}Step 5: Testing SSH on port 2222...${NC}"
+if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 2222 root@172.20.0.10 'echo "✅ SSH key auth on 2222 working"'; then
     echo -e "${GREEN}SSH key authentication successful${NC}"
 else
     echo -e "${RED}SSH key authentication failed${NC}"
@@ -190,7 +190,7 @@ ansible-playbook \
 
 # Step 7: Test grunt user
 echo -e "${YELLOW}Step 7: Testing grunt user...${NC}"
-if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 22022 grunt@172.20.0.10 'sudo whoami' | grep -q root; then
+if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 2222 grunt@172.20.0.10 'sudo whoami' | grep -q root; then
     echo -e "${GREEN}Grunt user sudo access working${NC}"
 else
     echo -e "${RED}Grunt user setup failed${NC}"
@@ -207,7 +207,7 @@ ansible-playbook \
 
 # Step 9: Final verification
 echo -e "${YELLOW}Step 9: Final verification...${NC}"
-ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 22022 root@172.20.0.10 << 'EOF'
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p 2222 root@172.20.0.10 << 'EOF'
 echo "=== System Status ==="
 echo "Hostname: $(hostname)"
 echo "SSH Port: $(grep "^Port" /etc/ssh/sshd_config | awk '{print $2}')"

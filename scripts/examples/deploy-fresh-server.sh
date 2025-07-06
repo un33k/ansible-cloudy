@@ -32,7 +32,7 @@ echo -e "${YELLOW}Step 1: Hardening SSH...${NC}"
 echo -e "This will:"
 echo -e "  - Install SSH keys"
 echo -e "  - Disable password authentication"
-echo -e "  - Change SSH port to 22022"
+echo -e "  - Change SSH port to 2222"
 
 python -m dev.cli.cmd.main harden --install -- \
   -e ansible_host=${SERVER_IP} \
@@ -62,7 +62,7 @@ python -m dev.cli.cmd.main base --install -- \
 
 echo -e "${GREEN}=== Basic setup complete! ===${NC}"
 echo -e "Server is now:"
-echo -e "  - Accessible via SSH on port 22022 with keys only"
+echo -e "  - Accessible via SSH on port 2222 with keys only"
 echo -e "  - Secured with firewall and fail2ban"
 echo -e "  - Configured with base system settings"
 

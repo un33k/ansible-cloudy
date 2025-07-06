@@ -139,7 +139,7 @@ class CommandRouter:
 
     {Colors.GREEN}Connection Settings:{Colors.NC}
     • vault_root_password="newpass"     Root password for initial connection
-    • vault_ssh_port=22                 SSH port (default: 22022)
+    • vault_ssh_port=22                 SSH port (default: 2222)
     • ansible_host="10.10.10.199"       Target server IP address
 
     {Colors.GREEN}Admin User Configuration:{Colors.NC}

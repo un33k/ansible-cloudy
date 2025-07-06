@@ -290,7 +290,7 @@ chmod 644 ~/.ssh/id_rsa.pub
 - **Root access** with password for initial setup
 - **Network connectivity** to server from your machine
 - **Minimum resources**: 1GB RAM, 10GB disk space
-- **Open ports**: 22 (SSH) initially, 22022 (custom SSH) after setup
+- **Open ports**: 22 (SSH) initially, 2222 (custom SSH) after setup
 
 ## Configuration Guide
 
@@ -338,7 +338,7 @@ all:
   vars:
     # Phase 2: Secured server configuration (admin + SSH keys)
     ansible_user: admin
-    ansible_port: 22022
+    ansible_port: 2222
     ansible_ssh_private_key_file: ~/.ssh/id_rsa
     ansible_host_key_checking: false
     
@@ -371,7 +371,7 @@ vault_root_password: "secure_root_password_123"
 # Grunt user configuration
 vault_grunt_user: "admin"
 vault_grunt_password: "secure_grunt_password_456"
-vault_ssh_port: 22022
+vault_ssh_port: 2222
 
 # Global server configuration
 vault_git_user_full_name: "Your Full Name"
@@ -389,7 +389,7 @@ all:
   vars:
     ansible_user: "{{ vault_grunt_user | default('admin') }}"
     ansible_ssh_pass: "{{ vault_grunt_password }}"
-    ansible_port: "{{ vault_ssh_port | default(22022) }}"
+    ansible_port: "{{ vault_ssh_port | default(2222) }}"
 ```
 
 ### 4. Connection Testing
@@ -419,7 +419,7 @@ cli base --install        # Base configuration (hostname, git, timezone)
 ```
 
 **What it does:**
-- ✅ Changes SSH port to 22022
+- ✅ Changes SSH port to 2222
 - ✅ Disables password authentication
 - ✅ Creates optional grunt user with SSH keys
 - ✅ Configures UFW firewall 
@@ -557,8 +557,8 @@ cli security --install -vvv
 cli security --install   # Create grunt user, SSH keys, firewall
 cli base --install       # Base configuration
 
-# 2. Update inventory to use grunt user on port 22022
-# Edit inventory: ansible_user: admin, ansible_port: 22022
+# 2. Update inventory to use grunt user on port 2222
+# Edit inventory: ansible_user: admin, ansible_port: 2222
 
 # 3. Deploy database layer
 cli psql --install --pgis
@@ -599,7 +599,7 @@ all:
   vars:
     ansible_user: admin
     ansible_ssh_pass: grunt_password
-    ansible_port: 22022
+    ansible_port: 2222
     
   children:
     web_servers:
@@ -616,7 +616,7 @@ all:
   vars:
     ansible_user: admin
     ansible_ssh_pass: grunt_password
-    ansible_port: 22022
+    ansible_port: 2222
     
   children:
     database_servers:
@@ -642,10 +642,10 @@ cli psql --install --prod --pgis
 
 **Solutions:**
 1. Check server is running: `ping server_ip`
-2. Verify SSH port: `nmap -p 22,22022 server_ip`
+2. Verify SSH port: `nmap -p 22,2222 server_ip`
 3. Check inventory configuration matches server state
 4. For fresh servers, use `ansible_user: root` and `ansible_port: 22`
-5. After setup, use `ansible_user: admin` and `ansible_port: 22022`
+5. After setup, use `ansible_user: admin` and `ansible_port: 2222`
 
 ### Authentication Issues
 
@@ -663,7 +663,7 @@ cli psql --install --prod --pgis
 
 **Solutions:**
 1. The recipes automatically configure UFW firewall
-2. Port 22022 is opened before SSH port change
+2. Port 2222 is opened before SSH port change
 3. If locked out, reset server to fresh state and retry
 
 ### Task Failures
