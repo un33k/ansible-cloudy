@@ -30,6 +30,9 @@ class PostgreSQLArgumentParser:
             elif arg == "--pgis":
                 psql_args['setup_postgis'] = True
                 i += 1
+            elif arg == "--pgvector":
+                psql_args['setup_pgvector'] = True
+                i += 1
             
             # Granular operation arguments
             elif arg == "--adduser":
@@ -150,6 +153,28 @@ class PostgreSQLArgumentParser:
             elif arg == "--install-repo":
                 psql_args['operation'] = 'install-repo'
                 i += 1
+            
+            # Extension management operations
+            elif arg == "--enable-extension":
+                psql_args['operation'] = 'enable-extension'
+                if i + 1 < len(ansible_args):
+                    psql_args['extension_name'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--enable-extension requires an extension name")
+            elif arg == "--disable-extension":
+                psql_args['operation'] = 'disable-extension'
+                if i + 1 < len(ansible_args):
+                    psql_args['extension_name'] = ansible_args[i + 1]
+                    i += 2
+                else:
+                    error("--disable-extension requires an extension name")
+            elif arg == "--list-extensions":
+                psql_args['operation'] = 'list-extensions'
+                i += 1
+            elif arg == "--verify-extensions":
+                psql_args['operation'] = 'verify-extensions'
+                i += 1
             else:
                 i += 1
         
@@ -162,7 +187,8 @@ class PostgreSQLArgumentParser:
             '--adduser', '--delete-user', '--list-users', '--list-databases', '--adddb',
             '--delete-db', '--dump-database', '--change-password', '--grant-privileges',
             '--install-postgis', '--get-version', '--get-latest-version', '--install-client',
-            '--configure-port', '--create-cluster', '--remove-cluster', '--install-repo'
+            '--configure-port', '--create-cluster', '--remove-cluster', '--install-repo',
+            '--enable-extension', '--disable-extension', '--list-extensions', '--verify-extensions'
         ]
         
         for arg in ansible_args:

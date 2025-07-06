@@ -1,0 +1,54 @@
+# Granular Task: Enable PostgreSQL Extension
+# Purpose: Enable a specific extension in a PostgreSQL database
+# Usage: ansible-playbook tasks/db/postgresql/enable-extension.yml -e "extension_name=vector database=mydb"
+
+---
+- name: Enable PostgreSQL Extension
+  hosts: "{{ target_hosts | default('all') }}"
+  gather_facts: false
+  become: true
+  
+  vars:
+    ext_name: "{{ extension_name }}"
+    target_database: "{{ database | default('postgres') }}"
+    
+  tasks:
+    - name: Validate required parameters
+      fail:
+        msg: "Extension name is required. Use -e extension_name=<name>"
+      when: ext_name is not defined or ext_name == ''
+      
+    - name: Check if extension is available
+      postgresql_query:
+        db: "{{ target_database }}"
+        query: "SELECT * FROM pg_available_extensions WHERE name = '{{ ext_name }}';"
+      become_user: postgres
+      register: extension_available
+      
+    - name: Display extension availability
+      fail:
+        msg: "Extension '{{ ext_name }}' is not available. You may need to install it first."
+      when: extension_available.query_result | length == 0
+      
+    - name: Enable {{ ext_name }} extension in {{ target_database }}
+      postgresql_ext:
+        name: "{{ ext_name }}"
+        db: "{{ target_database }}"
+        state: present
+      become_user: postgres
+      register: enable_result
+      
+    - name: Verify extension is enabled
+      postgresql_query:
+        db: "{{ target_database }}"
+        query: "SELECT extname, extversion FROM pg_extension WHERE extname = '{{ ext_name }}';"
+      become_user: postgres
+      register: extension_check
+      
+    - name: Display result
+      debug:
+        msg: |
+          ✅ Extension '{{ ext_name }}' {{ 'enabled' if enable_result.changed else 'already enabled' }} in database '{{ target_database }}'
+          {% if extension_check.query_result | length > 0 %}
+          Version: {{ extension_check.query_result[0].extversion }}
+          {% endif %}

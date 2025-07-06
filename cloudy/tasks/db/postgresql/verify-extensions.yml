@@ -1,0 +1,123 @@
+# Granular Task: Verify PostgreSQL Extensions
+# Purpose: Verify if pgvector and PostGIS extensions are properly installed
+# Usage: ansible-playbook tasks/db/postgresql/verify-extensions.yml
+
+---
+- name: Verify PostgreSQL Extensions
+  hosts: "{{ target_hosts | default('all') }}"
+  gather_facts: false
+  become: true
+  
+  tasks:
+    - name: Install Python PostgreSQL library
+      apt:
+        name: python3-psycopg2
+        state: present
+      become: true
+      
+    - name: Check PostgreSQL version
+      postgresql_query:
+        db: postgres
+        query: "SELECT version();"
+      become_user: postgres
+      register: pg_version_info
+      
+    - name: Extract PostgreSQL version number
+      set_fact:
+        pg_major_version: "{{ pg_version_info.query_result[0].version | regex_search('PostgreSQL (\\d+)', '\\1') | first }}"
+        
+    - name: Check if pgvector is available system-wide
+      shell: |
+        dpkg -l | grep -E "postgresql-{{ pg_major_version }}-pgvector" || true
+      register: pgvector_package
+      changed_when: false
+      
+    - name: Check if PostGIS is available system-wide
+      shell: |
+        dpkg -l | grep -E "postgresql-{{ pg_major_version }}-postgis" || true
+      register: postgis_package
+      changed_when: false
+      
+    - name: Check pgvector extension in PostgreSQL
+      postgresql_query:
+        db: postgres
+        query: |
+          SELECT 
+            (SELECT COUNT(*) FROM pg_available_extensions WHERE name = 'vector') as available,
+            (SELECT COUNT(*) FROM pg_extension WHERE extname = 'vector') as installed,
+            (SELECT extversion FROM pg_extension WHERE extname = 'vector') as version;
+      become_user: postgres
+      register: pgvector_status
+      
+    - name: Check PostGIS extension in PostgreSQL
+      postgresql_query:
+        db: postgres
+        query: |
+          SELECT 
+            (SELECT COUNT(*) FROM pg_available_extensions WHERE name = 'postgis') as available,
+            (SELECT COUNT(*) FROM pg_extension WHERE extname = 'postgis') as installed,
+            (SELECT extversion FROM pg_extension WHERE extname = 'postgis') as version;
+      become_user: postgres
+      register: postgis_status
+      
+    - name: Test pgvector functionality
+      postgresql_query:
+        db: postgres
+        query: |
+          CREATE TABLE IF NOT EXISTS vector_test (id serial PRIMARY KEY, embedding vector(3));
+          INSERT INTO vector_test (embedding) VALUES ('[1,2,3]') ON CONFLICT DO NOTHING;
+          SELECT COUNT(*) as test_count FROM vector_test;
+      become_user: postgres
+      register: pgvector_test
+      when: pgvector_status.query_result[0].installed == 1
+      ignore_errors: true
+      
+    - name: Test PostGIS functionality
+      postgresql_query:
+        db: postgres
+        query: "SELECT PostGIS_version() as postgis_full_version;"
+      become_user: postgres
+      register: postgis_test
+      when: postgis_status.query_result[0].installed == 1
+      ignore_errors: true
+      
+    - name: Display verification results
+      debug:
+        msg: |
+          🔍 PostgreSQL Extensions Verification Report
+          ============================================
+          PostgreSQL Version: {{ pg_major_version }}
+          
+          📦 pgvector Status:
+          - System Package: {{ 'Installed' if pgvector_package.stdout else 'Not installed' }}
+          - Available in PostgreSQL: {{ 'Yes' if pgvector_status.query_result[0].available == 1 else 'No' }}
+          - Enabled in postgres DB: {{ 'Yes (v' + pgvector_status.query_result[0].version|string + ')' if pgvector_status.query_result[0].installed == 1 else 'No' }}
+          - Functionality Test: {{ 'Passed' if pgvector_test is defined and pgvector_test.failed == false else 'Failed or not tested' }}
+          
+          📦 PostGIS Status:
+          - System Package: {{ 'Installed' if postgis_package.stdout else 'Not installed' }}
+          - Available in PostgreSQL: {{ 'Yes' if postgis_status.query_result[0].available == 1 else 'No' }}
+          - Enabled in postgres DB: {{ 'Yes (v' + postgis_status.query_result[0].version|string + ')' if postgis_status.query_result[0].installed == 1 else 'No' }}
+          - Functionality Test: {{ 'Passed (' + postgis_test.query_result[0].postgis_full_version + ')' if postgis_test is defined and postgis_test.failed == false else 'Failed or not tested' }}
+          
+          💡 Recommendations:
+          {% if pgvector_status.query_result[0].available == 0 %}
+          - Install pgvector: sudo apt install postgresql-{{ pg_major_version }}-pgvector
+          {% endif %}
+          {% if postgis_status.query_result[0].available == 0 %}
+          - Install PostGIS: sudo apt install postgresql-{{ pg_major_version }}-postgis-3
+          {% endif %}
+          {% if pgvector_status.query_result[0].available == 1 and pgvector_status.query_result[0].installed == 0 %}
+          - Enable pgvector: cli psql --enable-extension vector
+          {% endif %}
+          {% if postgis_status.query_result[0].available == 1 and postgis_status.query_result[0].installed == 0 %}
+          - Enable PostGIS: cli psql --enable-extension postgis
+          {% endif %}
+          
+    - name: Cleanup test table
+      postgresql_query:
+        db: postgres
+        query: "DROP TABLE IF EXISTS vector_test;"
+      become_user: postgres
+      when: pgvector_test is defined
+      changed_when: false

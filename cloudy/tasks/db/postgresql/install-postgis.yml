@@ -13,11 +13,25 @@
     postgis_version: "{{ postgis_version_override | default('3') }}"
     
   tasks:
-    - name: Install PostGIS packages for PostgreSQL {{ pg_version }}
+    - name: Detect PostgreSQL version
+      shell: |
+        psql --version | grep -oP 'PostgreSQL \K\d+' || echo "{{ pg_version }}"
+      register: detected_pg_version
+      changed_when: false
+      
+    - name: Set PostgreSQL version
+      set_fact:
+        actual_pg_version: "{{ detected_pg_version.stdout | default(pg_version) }}"
+        
+    - name: Display detected version
+      debug:
+        msg: "Detected PostgreSQL version: {{ actual_pg_version }}"
+    
+    - name: Install PostGIS packages for PostgreSQL {{ actual_pg_version }}
       apt:
         name:
-          - "postgresql-{{ pg_version }}-postgis-{{ postgis_version }}"
-          - "postgresql-{{ pg_version }}-postgis-{{ postgis_version }}-scripts"
+          - "postgresql-{{ actual_pg_version }}-postgis-{{ postgis_version }}"
+          - "postgresql-{{ actual_pg_version }}-postgis-{{ postgis_version }}-scripts"
           - postgis
         state: present
         update_cache: true
@@ -25,7 +39,7 @@
 
     - name: Display PostGIS installation result
       debug:
-        msg: "✅ PostGIS {{ postgis_version }} extension installed for PostgreSQL {{ pg_version }}"
+        msg: "✅ PostGIS {{ postgis_version }} extension installed for PostgreSQL {{ actual_pg_version }}"
       when: postgis_install_result.changed
 
     - name: Create PostGIS extension in template1 database

@@ -29,7 +29,8 @@ class PostgreSQLHelpDisplay:
         print(f"  {Colors.GREEN}cli psql --install{Colors.NC}                    Install PostgreSQL server")
         print(f"  {Colors.GREEN}cli psql --install --port 5544{Colors.NC}       Install on custom port")
         print(f"  {Colors.GREEN}cli psql --install --pgis{Colors.NC}            Install with PostGIS extension")
-        print(f"  {Colors.GREEN}cli psql --install --port 5544 --pgis{Colors.NC} Install with custom port and PostGIS")
+        print(f"  {Colors.GREEN}cli psql --install --pgvector{Colors.NC}        Install with pgvector extension")
+        print(f"  {Colors.GREEN}cli psql --install --pgis --pgvector{Colors.NC} Install with PostGIS and pgvector")
         print()
         
         print(f"{Colors.BLUE}User Management:{Colors.NC}")
@@ -44,6 +45,15 @@ class PostgreSQLHelpDisplay:
         print(f"  {Colors.GREEN}cli psql --delete-db oldapp{Colors.NC}                   Delete database")
         print(f"  {Colors.GREEN}cli psql --list-databases{Colors.NC}                     List all databases")
         print(f"  {Colors.GREEN}cli psql --dump-database myapp{Colors.NC}               Dump database to file")
+        print()
+        
+        print(f"{Colors.BLUE}Extension Management:{Colors.NC}")
+        print(f"  {Colors.GREEN}cli psql --enable-extension vector{Colors.NC}            Enable extension (default: postgres DB)")
+        print(f"  {Colors.GREEN}cli psql --enable-extension postgis --database mydb{Colors.NC}  Enable in specific DB")
+        print(f"  {Colors.GREEN}cli psql --disable-extension vector --database mydb{Colors.NC}  Disable extension")
+        print(f"  {Colors.GREEN}cli psql --list-extensions{Colors.NC}                    List all extensions")
+        print(f"  {Colors.GREEN}cli psql --list-extensions --database mydb{Colors.NC}    List extensions in specific DB")
+        print(f"  {Colors.GREEN}cli psql --verify-extensions{Colors.NC}                  Verify pgvector/PostGIS status")
         print()
         
         print(f"{Colors.BLUE}Advanced Operations:{Colors.NC}")
@@ -61,6 +71,7 @@ class PostgreSQLHelpDisplay:
         print(f"  {Colors.CYAN}postgis_version{Colors.NC}        PostGIS version (default: 3)")
         print(f"  {Colors.CYAN}database_port{Colors.NC}          PostgreSQL port (default: 5432)")
         print(f"  {Colors.CYAN}setup_postgis{Colors.NC}          Enable PostGIS extension")
+        print(f"  {Colors.CYAN}setup_pgvector{Colors.NC}         Enable pgvector extension")
         print(f"  {Colors.CYAN}pg_databases{Colors.NC}           List of databases to create")
         print(f"  {Colors.CYAN}pg_users{Colors.NC}               List of users to create")
         print()

@@ -1,0 +1,72 @@
+# Granular Task: List PostgreSQL Extensions
+# Purpose: List all installed extensions in a PostgreSQL database
+# Usage: ansible-playbook tasks/db/postgresql/list-extensions.yml -e "database=mydb"
+
+---
+- name: List PostgreSQL Extensions
+  hosts: "{{ target_hosts | default('all') }}"
+  gather_facts: false
+  become: true
+  
+  vars:
+    target_database: "{{ database | default('postgres') }}"
+    
+  tasks:
+    - name: List all installed extensions in {{ target_database }}
+      postgresql_query:
+        db: "{{ target_database }}"
+        query: |
+          SELECT 
+            e.extname AS name,
+            e.extversion AS version,
+            n.nspname AS schema,
+            c.description AS description
+          FROM pg_extension e
+          LEFT JOIN pg_namespace n ON n.oid = e.extnamespace
+          LEFT JOIN pg_description c ON c.objoid = e.oid
+          ORDER BY e.extname;
+      become_user: postgres
+      register: extensions_list
+      
+    - name: List available but not installed extensions
+      postgresql_query:
+        db: "{{ target_database }}"
+        query: |
+          SELECT 
+            name,
+            default_version,
+            comment AS description
+          FROM pg_available_extensions
+          WHERE name NOT IN (SELECT extname FROM pg_extension)
+          ORDER BY name;
+      become_user: postgres
+      register: available_extensions
+      
+    - name: Display installed extensions
+      debug:
+        msg: |
+          📋 Installed Extensions in database '{{ target_database }}':
+          {% if extensions_list.query_result | length > 0 %}
+          {% for ext in extensions_list.query_result %}
+          {{ loop.index }}. {{ ext.name }} (v{{ ext.version }})
+             Schema: {{ ext.schema }}
+             {% if ext.description %}Description: {{ ext.description }}{% endif %}
+          {% endfor %}
+          {% else %}
+          No extensions installed (only default plpgsql)
+          {% endif %}
+          
+    - name: Display available extensions summary
+      debug:
+        msg: |
+          📦 Available Extensions (not installed):
+          Total: {{ available_extensions.query_result | length }} extensions available
+          
+          Notable extensions:
+          {% for ext in available_extensions.query_result %}
+          {% if ext.name in ['vector', 'postgis', 'uuid-ossp', 'hstore', 'pg_trgm', 'btree_gin', 'btree_gist'] %}
+          - {{ ext.name }} (v{{ ext.default_version }}): {{ ext.description | default('') | truncate(60) }}
+          {% endif %}
+          {% endfor %}
+          
+          Use 'cli psql --enable-extension <name> --database {{ target_database }}' to install
