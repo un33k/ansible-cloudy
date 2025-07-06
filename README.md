@@ -182,8 +182,8 @@ vim .vault/my-dev.yml
 Example vault content:
 ```yaml
 vault_root_password: "secure_root_password_123"
-vault_admin_password: "secure_admin_password_456"
-vault_admin_user: "admin"
+vault_grunt_password: "secure_grunt_password_456"
+vault_grunt_user: "grunt"
 vault_ssh_port: 2222
 ```
 

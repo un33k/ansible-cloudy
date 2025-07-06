@@ -61,11 +61,11 @@ This document summarizes the complete implementation of the atomic SSH hardening
 
 ### For Fresh Servers:
 ```bash
-# 1. Harden SSH (password → SSH keys, port 22 → 2222)
-cli harden --install
-
-# 2. Security setup (firewall, fail2ban, grunt user)
+# 1. Security setup (firewall, fail2ban, grunt user)
 cli security --install
+
+# 2. Optional: Change SSH port
+cli ssh --new-port 2222
 
 # 3. Base configuration
 cli base --install
@@ -77,7 +77,7 @@ cli redis --install
 ```
 
 ### For Already Hardened Servers:
-- `cli harden --install` will gracefully timeout and skip
+- SSH operations will gracefully timeout and skip
 - Continue with security/base/services as normal
 
 ## Testing

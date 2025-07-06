@@ -30,7 +30,7 @@ cli finalize --install --reboot
 cli finalize --install --skip-upgrade
 
 # Force reboot even if not required
-cli finalize --install --force-reboot
+cli finalize --install --reboot --force
 ```
 
 ## SSH Port Management
@@ -87,7 +87,7 @@ Run 'cli finalize --install --reboot' to perform the reboot.
 
 - **No flag**: Skip reboot (default)
 - `--reboot`: Allow reboot if required
-- `--force-reboot`: Always reboot
+- `--reboot --force`: Always reboot
 
 ## Examples by Scenario
 
@@ -120,7 +120,7 @@ cli finalize --install --reboot --prod
 
 ```bash
 # Force reboot during scheduled maintenance
-cli finalize --install --force-reboot
+cli finalize --install --reboot --force
 ```
 
 ## SSH Port Management

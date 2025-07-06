@@ -4,7 +4,7 @@
 #   cli finalize --install                    # Run upgrades (skip reboot even if needed)
 #   cli finalize --install --reboot           # Run upgrades and reboot if needed
 #   cli finalize --install --skip-upgrade     # Skip system updates
-#   cli finalize --install --force-reboot     # Force reboot even if not required
+#   cli finalize --install --reboot --force   # Force reboot even if not required
 
 ---
 - name: Finalize Server Configuration
@@ -84,11 +84,11 @@
     # Reboot if needed
     - name: Reboot system if required
       reboot:
-        msg: "Rebooting after finalization (upgrades/port change)"
+        msg: "Rebooting after finalization (system upgrades)"
         reboot_timeout: 300
         connect_timeout: 10
         test_command: whoami
-        # If SSH port changed, tell Ansible about it for reconnection
+        # Wait for system to come back up
         post_reboot_delay: 30
       when: should_reboot | default(false)
       register: reboot_result

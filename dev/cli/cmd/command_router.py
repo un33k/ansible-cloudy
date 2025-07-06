@@ -79,19 +79,6 @@ class CommandRouter:
             ssh_ops = SSHOperations(config)
             exit_code = ssh_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
-        elif service_name == "harden":
-            # Deprecated - redirect to ssh
-            from utils.colors import warning
-            warning("⚠️  'cli harden' is deprecated. Use 'cli ssh' instead.")
-            from operations.ssh import SSHOperations
-            ssh_ops = SSHOperations(config)
-            # Map harden args to ssh args
-            if hasattr(args, 'from_port'):
-                args.old_port = args.from_port
-            if hasattr(args, 'to_port'):
-                args.new_port = args.to_port
-            exit_code = ssh_ops.handle_operation(args, ansible_args)
-            sys.exit(exit_code)
         elif service_name == "finalize":
             from operations.finalize import FinalizeService
             finalize_ops = FinalizeService(config, "finalize")

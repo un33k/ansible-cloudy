@@ -225,7 +225,7 @@ class RecipeHelpParser:
             print(f"  --change-port         # Change SSH port to hardened port (2222)")
             print(f"  --to-port PORT        # Target SSH port (default: 2222)")
             print(f"  --skip-upgrade        # Skip system upgrades")
-            print(f"  --force-reboot        # Force reboot even if not required")
+            print(f"  --force               # Force reboot even if not required (use with --reboot)")
             print(f"  --no-reboot           # Skip reboot even if required")
 
         # Display key variables (combine inventory and recipe variables)
@@ -264,7 +264,7 @@ class RecipeHelpParser:
             print(f"  cli {recipe_name} --install --change-port      # Change SSH port to 2222")
             print(f"  cli {recipe_name} --install --to-port 2323     # Change to custom port")
             print(f"  cli {recipe_name} --install --skip-upgrade     # Skip system updates")
-            print(f"  cli {recipe_name} --install --force-reboot     # Force reboot")
+            print(f"  cli {recipe_name} --install --reboot --force   # Force reboot")
             print(f"  cli {recipe_name} --install --no-reboot        # Never reboot")
         
         print(

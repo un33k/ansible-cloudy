@@ -595,10 +595,10 @@ ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbooks/recipes/db
 ---
 # === AUTHENTICATION CREDENTIALS ===
 vault_root_password: "your_root_password_here"
-vault_admin_password: "your_admin_password_here"
+vault_grunt_password: "your_grunt_password_here"
 
 # === CONNECTION CONFIGURATION ===
-vault_admin_user: "admin"
+vault_grunt_user: "grunt"
 vault_ssh_port: 2222
 
 # === GLOBAL SERVER CONFIGURATION ===
@@ -702,8 +702,8 @@ The admin user is **completely optional** and only created if you define it in v
 
 ```yaml
 # .vault/dev.yml
-vault_admin_user: "myservice"    # Uncomment to enable admin user creation
-vault_admin_password: "secret"
+vault_grunt_user: "myservice"    # Uncomment to enable grunt user creation
+vault_grunt_password: "secret"
 ```
 
 **When to use admin user:**

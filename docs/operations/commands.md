@@ -25,9 +25,9 @@ Complete reference for the **CLI** - an intelligent command-line interface with 
 
 #### Infrastructure Foundation
 ```bash
-# SSH Hardening (Run FIRST on fresh servers)
-cli harden                    # Show hardening help
-cli harden --install         # Atomic SSH hardening (changes port, disables passwords)
+# SSH Port Management
+cli ssh                      # Show SSH port change help
+cli ssh --new-port 2222     # Change SSH port to 2222
 
 # Security Setup (Standard)
 cli security                  # Show help and configuration options
@@ -412,10 +412,12 @@ Sets up secure SSH, user management, and firewall.
 
 #### Standard Security (Development/Staging)
 ```bash
-# Three-step process for new servers
-cli harden --install      # SSH hardening (port change, disable passwords)
+# Two-step process for new servers
 cli security --install    # Security setup (grunt user, firewall, fail2ban)
 cli base --install        # Base configuration (hostname, git, timezone)
+
+# Optional: Change SSH port after setup
+cli ssh --new-port 2222   # Change SSH port from 22 to 2222
 ```
 
 **What it does:**
@@ -428,10 +430,12 @@ cli base --install        # Base configuration (hostname, git, timezone)
 
 #### Production Security (Enterprise Hardening)
 ```bash
-# Three-step process with maximum security
-cli harden --install                          # SSH hardening first
+# Two-step process with maximum security
 cli security --install --production-hardening # Enterprise security
 cli base --install                            # Base configuration
+
+# Optional: Change SSH port after setup
+cli ssh --new-port 2222                       # Change SSH port for additional security
 ```
 
 **Additional production features:**
