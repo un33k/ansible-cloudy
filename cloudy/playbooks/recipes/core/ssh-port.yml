@@ -1,0 +1,139 @@
+# Recipe: SSH Port Change
+# Purpose: Atomic SSH port change with UFW update
+# Usage Examples:
+#   cli ssh --new-port 3333                   # Change from vault_ssh_port to 3333
+#   cli ssh --old-port 22 --new-port 3333    # Explicitly specify old and new ports
+# Note: Connection will drop after SSH restart - this is expected behavior
+
+---
+- name: SSH Port Change
+  hosts: service_targets
+  gather_facts: false
+  become: true
+  
+  vars_files:
+    - "../../../defaults/vault.yml"
+    
+  vars:
+    task_paths: "../../../tasks"
+    # Determine old port (from CLI or vault)
+    old_ssh_port: "{{ old_port | default(vault_ssh_port | default(vault_ssh_port_default)) }}"
+    new_ssh_port: "{{ new_port }}"  # Must be provided
+    
+  pre_tasks:
+    - name: Validate port parameters
+      fail:
+        msg: |
+          ❌ ERROR: New port must be specified!
+          
+          Usage: 
+            cli ssh --new-port 3333
+            cli ssh --old-port 22 --new-port 3333
+          
+          Current values:
+          - old_port: {{ old_ssh_port }}
+          - new_port: {{ new_ssh_port | default('NOT PROVIDED') }}
+      when: new_ssh_port is not defined or new_ssh_port == ""
+    
+    - name: Validate ports are different
+      fail:
+        msg: |
+          ❌ ERROR: Old and new ports are the same!
+          
+          Current port: {{ old_ssh_port }}
+          New port: {{ new_ssh_port }}
+      when: old_ssh_port | string == new_ssh_port | string
+    
+    - name: Display port change plan
+      debug:
+        msg: |
+          🔄 SSH Port Change Plan
+          =====================
+          Server: {{ inventory_hostname }} ({{ ansible_host }})
+          Current Port: {{ old_ssh_port }}
+          New Port: {{ new_ssh_port }}
+          
+          This will:
+          1. Add port {{ new_ssh_port }} to UFW firewall
+          2. Update SSH to listen on port {{ new_ssh_port }}
+          3. Remove port {{ old_ssh_port }} from UFW firewall
+          4. Restart SSH service (connection will drop)
+          
+          ⚠️  IMPORTANT: After this change:
+          1. Update vault_ssh_port in your .vault/*.yml file to {{ new_ssh_port }}
+          2. Update ansible_port in your inventory if hardcoded
+          3. Connect using: ssh -p {{ new_ssh_port }} {{ ansible_user }}@{{ ansible_host }}
+  
+  tasks:
+    # First, add new port to firewall
+    - name: Check if UFW is installed and active
+      shell: |
+        which ufw > /dev/null 2>&1 && ufw status | grep -q "Status: active" && echo "active" || echo "inactive"
+      register: ufw_status
+      changed_when: false
+      failed_when: false
+    
+    - name: Add new SSH port to UFW firewall
+      ufw:
+        rule: allow
+        port: "{{ new_ssh_port }}"
+        proto: tcp
+        comment: "SSH on port {{ new_ssh_port }}"
+      when: ufw_status.stdout == "active"
+    
+    # Update SSH configuration
+    - name: Update SSH port in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Port\s+'
+        line: "Port {{ new_ssh_port }}"
+        backup: true
+      register: ssh_config_changed
+    
+    - name: Validate SSH configuration
+      command: sshd -t
+      changed_when: false
+    
+    # Remove old port from UFW BEFORE restart
+    - name: Remove old SSH port from UFW firewall
+      ufw:
+        rule: allow
+        port: "{{ old_ssh_port }}"
+        proto: tcp
+        delete: true
+      when: 
+        - ufw_status.stdout == "active"
+        - old_ssh_port != new_ssh_port
+    
+    # Show final warning before restart
+    - name: Display restart warning
+      debug:
+        msg: |
+          ⚠️  SSH SERVICE WILL NOW RESTART!
+          
+          The connection will drop - this is expected.
+          The playbook will appear to fail with a timeout.
+          
+          This is NORMAL behavior during SSH port change.
+          
+          After this message, SSH will restart on port {{ new_ssh_port }}
+          
+          ✅ UFW has been updated:
+          - Added port {{ new_ssh_port }}
+          - Removed port {{ old_ssh_port }}
+      when: ssh_config_changed.changed
+    
+    # Restart SSH - this will cause connection to drop
+    - name: Restart SSH service
+      service:
+        name: ssh
+        state: restarted
+      when: ssh_config_changed.changed
+      async: 1
+      poll: 0
+    
+    # This will never execute due to connection drop, but shows intent
+    - name: Success message (will not display)
+      debug:
+        msg: "✅ SSH port changed successfully!"
+      when: ssh_config_changed.changed

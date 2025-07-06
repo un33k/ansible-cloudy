@@ -161,19 +161,19 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
         'finalize',
         parents=[install_parser],
         formatter_class=ColoredHelpFormatter,
-        help='Finalize server with upgrades and optional port change',
-        description=f"{Colors.CYAN}Finalize Service - Complete server setup{Colors.NC}"
-    )
-    finalize_parser.add_argument(
-        '--change-port',
-        action='store_true',
-        help='Change SSH port (requires --to-port)'
-    )
-    finalize_parser.add_argument(
-        '--to-port',
-        type=int,
-        metavar='PORT',
-        help='Target SSH port (required with --change-port)'
+        help='Finalize server with upgrades and optional reboot',
+        description=f"{Colors.CYAN}Finalize Service - System upgrades and reboot management{Colors.NC}",
+        epilog=f"""
+{Colors.YELLOW}Reboot Behavior:{Colors.NC}
+  • {Colors.GREEN}No --reboot{Colors.NC}: Never reboot (default)
+  • {Colors.GREEN}--reboot{Colors.NC}: Reboot only if system requires it
+  • {Colors.GREEN}--reboot --force{Colors.NC}: Always reboot regardless
+
+{Colors.YELLOW}Examples:{Colors.NC}
+  {Colors.GREEN}cli finalize --install{Colors.NC}                      Run upgrades (no reboot)
+  {Colors.GREEN}cli finalize --install --reboot{Colors.NC}             Reboot if system needs it
+  {Colors.GREEN}cli finalize --install --reboot --force{Colors.NC}     Force reboot after upgrades
+        """
     )
     finalize_parser.add_argument(
         '--skip-upgrade',
@@ -181,14 +181,14 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
         help='Skip system upgrades'
     )
     finalize_parser.add_argument(
-        '--force-reboot',
+        '--reboot',
         action='store_true',
-        help='Force reboot even if not required'
+        help='Reboot if system requires it (default: no reboot)'
     )
     finalize_parser.add_argument(
-        '--no-reboot',
+        '--force',
         action='store_true',
-        help='Skip reboot even if required'
+        help='Force reboot even if not required (use with --reboot)'
     )
     
     # PostgreSQL service
@@ -292,13 +292,45 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
         description=f"{Colors.CYAN}OpenVPN Service - Virtual private network server{Colors.NC}"
     )
     
-    # Harden service (special case - port change only)
+    # SSH service - port management
+    ssh_parser = subparsers.add_parser(
+        'ssh',
+        parents=[common_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='SSH port management',
+        description=f"{Colors.CYAN}SSH Service - Change SSH port{Colors.NC}",
+        epilog=f"""
+{Colors.YELLOW}Examples:{Colors.NC}
+  {Colors.GREEN}cli ssh --new-port 3333{Colors.NC}                    Change to port 3333 (reads current from vault)
+  {Colors.GREEN}cli ssh --old-port 22 --new-port 3333{Colors.NC}     Explicitly specify old and new ports
+
+{Colors.YELLOW}Important:{Colors.NC}
+  • Connection will drop when SSH restarts - this is normal
+  • UFW is automatically updated (old port removed, new port added)
+  • Update vault_ssh_port in your .vault/*.yml file after the change
+        """
+    )
+    ssh_parser.add_argument(
+        '--old-port',
+        type=int,
+        metavar='PORT',
+        help='Current SSH port (default: read from vault)'
+    )
+    ssh_parser.add_argument(
+        '--new-port',
+        type=int,
+        metavar='PORT',
+        required=True,
+        help='New SSH port'
+    )
+    
+    # Keep harden for backward compatibility but mark as deprecated
     harden_parser = subparsers.add_parser(
         'harden',
         parents=[common_parser],
         formatter_class=ColoredHelpFormatter,
-        help='SSH port hardening tool',
-        description=f"{Colors.CYAN}Harden Service - Change SSH port for security{Colors.NC}"
+        help='[DEPRECATED] Use "cli ssh" instead',
+        description=f"{Colors.YELLOW}[DEPRECATED]{Colors.NC} {Colors.CYAN}This command is deprecated. Use 'cli ssh' for port changes.{Colors.NC}"
     )
     harden_parser.add_argument(
         '--from-port',

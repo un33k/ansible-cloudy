@@ -11,11 +11,11 @@ class FinalizeService(BaseServiceOperations):
     
     def get_help_description(self) -> str:
         """Get service description for help display."""
-        return "Finalize server setup with upgrades and optional SSH port change"
+        return "Finalize server with upgrades and optional reboot"
     
     def get_recipe_description(self) -> str:
         """Get the recipe description."""
-        return "Complete server configuration with system updates, optional port change, and reboot if needed"
+        return "Complete server configuration with system updates and optional reboot"
     
     def get_recipe_path(self) -> str:
         """Get the path to the finalize recipe."""
@@ -26,22 +26,16 @@ class FinalizeService(BaseServiceOperations):
         # Build extra vars from properly parsed arguments
         extra_vars = []
         
-        # Handle port change
-        if hasattr(args, 'change_port') and args.change_port:
-            # Validation already done by validate_operation
-            extra_vars.append("change_ssh_port=true")
-            if hasattr(args, 'to_port') and args.to_port:
-                extra_vars.append(f"target_ssh_port={args.to_port}")
-        
         # Handle upgrades
         if hasattr(args, 'skip_upgrade') and args.skip_upgrade:
             extra_vars.append("perform_system_upgrade=false")
         
-        # Handle reboot
-        if hasattr(args, 'force_reboot') and args.force_reboot:
-            extra_vars.append("force_reboot=true")
-        elif hasattr(args, 'no_reboot') and args.no_reboot:
-            extra_vars.append("reboot_after_upgrade=false")
+        # Handle reboot logic
+        if hasattr(args, 'reboot') and args.reboot:
+            extra_vars.append("reboot=true")
+            if hasattr(args, 'force') and args.force:
+                extra_vars.append("force=true")
+        # Default: reboot=false (no reboot)
         
         # Find recipe
         finder = RecipeFinder(self.config)
@@ -71,33 +65,17 @@ class FinalizeService(BaseServiceOperations):
     def get_example_usage(self) -> list:
         """Get example usage commands."""
         return [
-            "cli finalize --install                    # Run upgrades and reboot if needed",
-            "cli finalize --install --change-port --to-port 2222  # Change SSH port",
-            "cli finalize --install --skip-upgrade     # Skip system updates",
-            "cli finalize --install --force-reboot     # Force reboot",
-            "cli finalize --install --no-reboot        # Never reboot",
+            "cli finalize --install                      # Run upgrades (no reboot)",
+            "cli finalize --install --reboot             # Run upgrades and reboot if needed",
+            "cli finalize --install --reboot --force     # Force reboot after upgrades",
+            "cli finalize --install --skip-upgrade       # Skip system updates",
         ]
     
     def validate_operation(self, args) -> tuple[bool, str]:
         """Validate the operation arguments."""
-        # Check if --change-port requires --to-port
-        if hasattr(args, 'change_port') and args.change_port and not args.to_port:
-            return False, "--change-port requires --to-port to specify the target port"
-            
-        # Check if --to-port is used without --change-port
-        if hasattr(args, 'to_port') and args.to_port and not args.change_port:
-            return False, "--to-port requires --change-port flag"
-        
-        # Validate port number if provided
-        if hasattr(args, 'to_port') and args.to_port:
-            if args.to_port < 1 or args.to_port > 65535:
-                return False, "Port must be between 1 and 65535"
-            if args.to_port == 22:
-                return False, "Cannot change to port 22 (use default SSH setup instead)"
-        
-        # Can't force and skip reboot
-        if args.force_reboot and args.no_reboot:
-            return False, "Cannot use --force-reboot and --no-reboot together"
+        # Force requires reboot flag
+        if hasattr(args, 'force') and args.force and (not hasattr(args, 'reboot') or not args.reboot):
+            return False, "--force requires --reboot flag"
         
         return True, ""
     

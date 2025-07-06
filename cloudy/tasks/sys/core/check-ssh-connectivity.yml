@@ -19,20 +19,21 @@
 - name: Display connection failure message
   fail:
     msg: |
-      ❌ Unable to communicate with target server!
+      ❌ Unable to connect to {{ ansible_user }}@{{ ansible_host }}:{{ vault_ssh_port | default(vault_ssh_port_default) }}
       
-      Server: {{ ansible_host }}
-      Port: {{ vault_ssh_port | default(vault_ssh_port_default) }}
+      This could mean:
+      1. SSH port has changed - check your .vault/*.yml files
+      2. Server is unreachable or down
+      3. Firewall is blocking the connection
       
-      Please check:
-      1. Server is running and accessible
-      2. SSH service is running on the server
-      3. Port {{ vault_ssh_port | default(vault_ssh_port_default) }} is correct in your .vault/*.yml file
-      4. Firewall allows connections on port {{ vault_ssh_port | default(vault_ssh_port_default) }}
-      5. Network connectivity to {{ ansible_host }}
+      Current vault_ssh_port: {{ vault_ssh_port | default(vault_ssh_port_default) }}
       
-      To test manually:
-      ssh {{ ansible_user }}@{{ ansible_host }} -p {{ vault_ssh_port | default(vault_ssh_port_default) }}
+      If you recently changed the SSH port:
+      1. Update vault_ssh_port in your .vault/*.yml file
+      2. Or update ansible_port in your inventory file
+      
+      To test connection manually:
+      ssh -p {{ vault_ssh_port | default(vault_ssh_port_default) }} {{ ansible_user }}@{{ ansible_host }}
   when: ssh_check.failed | default(false)
 
 - name: Confirm SSH connectivity
