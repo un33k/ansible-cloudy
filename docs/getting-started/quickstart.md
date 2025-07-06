@@ -89,5 +89,7 @@ cli redis --help
 cli security --help
 
 # Run validation checks
-cli dev precommit
+cli dev validate  # Comprehensive validation
+cli dev syntax    # Quick syntax check
+cli dev test      # Test authentication
 ```

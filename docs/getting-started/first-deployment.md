@@ -33,11 +33,12 @@ vim .vault/production.yml
 Essential vault variables:
 ```yaml
 # Authentication
+vault_root_user: "root"
 vault_root_password: "your_root_password"
-vault_admin_password: "secure_admin_password"
 
 # Optional: Create a service user (leave empty to skip)
-vault_grunt_user: ""  # or "deploy" to create user
+vault_grunt_user: "grunt"  # or leave empty to skip creation
+vault_grunt_password: ""   # empty = auto-generate
 
 # Service passwords
 vault_postgres_password: "secure_db_password"
