@@ -92,13 +92,13 @@
           - System Package: {{ 'Installed' if pgvector_package.stdout else 'Not installed' }}
           - Available in PostgreSQL: {{ 'Yes' if pgvector_status.query_result[0].available == 1 else 'No' }}
           - Enabled in postgres DB: {{ 'Yes (v' + pgvector_status.query_result[0].version|string + ')' if pgvector_status.query_result[0].installed == 1 else 'No' }}
-          - Functionality Test: {{ 'Passed' if pgvector_test is defined and pgvector_test.failed == false else 'Failed or not tested' }}
+          - Functionality Test: {{ 'Passed' if pgvector_test is defined and pgvector_test is not skipped and pgvector_test.failed == false else 'Not tested' }}
           
           📦 PostGIS Status:
           - System Package: {{ 'Installed' if postgis_package.stdout else 'Not installed' }}
           - Available in PostgreSQL: {{ 'Yes' if postgis_status.query_result[0].available == 1 else 'No' }}
           - Enabled in postgres DB: {{ 'Yes (v' + postgis_status.query_result[0].version|string + ')' if postgis_status.query_result[0].installed == 1 else 'No' }}
-          - Functionality Test: {{ 'Passed (' + postgis_test.query_result[0].postgis_full_version + ')' if postgis_test is defined and postgis_test.failed == false else 'Failed or not tested' }}
+          - Functionality Test: {{ 'Passed (' + postgis_test.query_result[0].postgis_full_version + ')' if postgis_test is defined and postgis_test is not skipped and postgis_test.failed == false else 'Not tested' }}
           
           💡 Recommendations:
           {% if pgvector_status.query_result[0].available == 0 %}
