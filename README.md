@@ -36,7 +36,7 @@ cli redis       # View Redis setup help and all parameters
 
 # Execute recipes with universal parameter support
 cli security --install                           # Security setup (admin user, SSH keys, firewall)
-cli base --install                               # Base configuration (hostname, git, timezone, swap)
+cli base --install                               # Base configuration (hostname, git, timezone, updates, docker)
 cli psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
 cli redis --install --port 6380 --memory 512    # Redis with custom port and memory
 cli nginx --install --domain example.com --ssl  # Nginx with SSL domain
@@ -216,8 +216,11 @@ cli security --install
 # Or for production environments with maximum security:
 # cli security --install --production-hardening
 
-# Step 3: Base server configuration (hostname, git, timezone, swap)
+# Step 3: Base server configuration (hostname, git, timezone, swap, system updates)
 cli base --install
+
+# Optional: Skip system updates if needed
+# cli base --install -- -e "perform_system_upgrade=false"
 
 # Step 4: Database layer with custom parameters
 cli psql --install --port 5544 --pgis

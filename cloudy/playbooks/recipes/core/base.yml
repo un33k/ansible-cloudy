@@ -17,6 +17,7 @@
     task_paths: "../../../tasks"
     # Base system configuration (configurable via inventory)
     setup_swap: false
+    perform_system_upgrade: true  # Set to false to skip system updates
           
   pre_tasks:
     # Ensure proper secure connection
@@ -28,6 +29,14 @@
     - name: Initialize system
       include_tasks: "{{ task_paths }}/sys/core/init.yml"
       tags: [system, init]
+      
+    # System Updates
+    - name: Perform safe system upgrade
+      include_tasks: "{{ task_paths }}/sys/core/safe-upgrade.yml"
+      vars:
+        reboot_after_upgrade: false  # Don't reboot during base setup
+      when: perform_system_upgrade | default(true) | bool
+      tags: [system, update, upgrade]
       
     # Hostname Configuration
     - name: Configure hostname
@@ -121,10 +130,12 @@
           📋 Configuration Summary:
              ├── Hostname: {{ hostname }}
              ├── Timezone: {{ timezone }}
+             ├── System Updates: Applied (safe-upgrade)
              ├── Grunt User: {{ grunt_user if vault_grunt_user is defined else 'Not configured' }}
              ├── SSH Port: {{ ansible_port }}
              ├── Firewall: UFW enabled
              ├── Git: Configured
+             ├── Docker: Installed and configured
              └── Service Directories: {{ 'Created for grunt user' if vault_grunt_user is defined else 'Standard root-based' }}
           
           🚀 Core server foundation ready for service deployments!
