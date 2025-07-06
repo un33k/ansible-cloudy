@@ -1,0 +1,210 @@
+# Recipe: Finalize Server Configuration
+# Purpose: Final steps after all services are configured - upgrades, port changes, reboot
+# Usage Examples:
+#   cli finalize --install                    # Run upgrades and reboot if needed
+#   cli finalize --install --change-port      # Also change SSH port to 22022
+#   cli finalize --install --to-port 2222     # Change to custom port
+#   cli finalize --install --skip-upgrade     # Skip system updates
+#   cli finalize --install --force-reboot     # Force reboot
+
+---
+- name: Finalize Server Configuration
+  hosts: service_targets
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/vault.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    # Configuration options
+    perform_system_upgrade: true
+    change_ssh_port: false
+    target_ssh_port: "{{ vault_ssh_port_hardened | default(vault_ssh_port_hardened_default) }}"
+    current_ssh_port: "{{ ansible_port | default(22) }}"
+    force_reboot: false
+    
+  pre_tasks:
+    - name: Display finalization start
+      debug:
+        msg: |
+          🔧 Starting Server Finalization
+          ├── System Upgrades: {{ perform_system_upgrade | ternary('Enabled', 'Disabled') }}
+          ├── SSH Port Change: {{ change_ssh_port | ternary('Yes (to port ' + target_ssh_port|string + ')', 'No') }}
+          └── Current SSH Port: {{ current_ssh_port }}
+          
+  tasks:
+    # System Updates
+    - name: Perform system upgrades
+      include_tasks: "{{ task_paths }}/sys/core/safe-upgrade.yml"
+      vars:
+        reboot_after_upgrade: false  # We'll handle reboot at the end
+      when: perform_system_upgrade | bool
+      tags: [upgrade, update]
+      
+    - name: Check if reboot is required after upgrades
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_upgrade
+      
+    # SSH Port Change (optional)
+    - name: Change SSH port if requested
+      block:
+        - name: Configure new SSH port
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?Port'
+            line: "Port {{ target_ssh_port }}"
+            backup: true
+          register: ssh_port_changed
+          
+        - name: Allow new SSH port in firewall
+          ufw:
+            rule: allow
+            port: "{{ target_ssh_port }}"
+            proto: tcp
+            comment: "SSH on custom port"
+          when: ssh_port_changed.changed
+          
+        - name: Validate SSH configuration
+          command: sshd -t
+          changed_when: false
+          
+      when: 
+        - change_ssh_port | bool
+        - current_ssh_port != target_ssh_port
+      tags: [ssh, port]
+      
+    # Determine if reboot is needed
+    - name: Set reboot requirement
+      set_fact:
+        needs_reboot: "{{ reboot_required_upgrade.stat.exists or ssh_port_changed.changed | default(false) or force_reboot }}"
+        
+    # Pre-reboot notification
+    - name: Display pre-reboot status
+      debug:
+        msg: |
+          📊 Finalization Status:
+          ├── Upgrades Applied: {{ apt_upgrade_result.changed | default(false) | ternary('Yes', 'No') }}
+          ├── SSH Port Changed: {{ ssh_port_changed.changed | default(false) | ternary('Yes', 'No') }}
+          ├── Reboot Required: {{ needs_reboot | ternary('Yes', 'No') }}
+          {% if needs_reboot %}
+          └── Rebooting in 10 seconds...
+          {% else %}
+          └── No reboot needed
+          {% endif %}
+      when: needs_reboot is defined
+      
+    # Reboot if needed
+    - name: Reboot system if required
+      reboot:
+        msg: "Rebooting after finalization (upgrades/port change)"
+        reboot_timeout: 300
+        connect_timeout: 10
+        test_command: whoami
+        # If SSH port changed, tell Ansible about it for reconnection
+        post_reboot_delay: 30
+      when: needs_reboot | default(false)
+      register: reboot_result
+      
+    # Handle port change after reboot
+    - name: Handle SSH port change
+      block:
+        # Wait for system to come back on NEW port
+        - name: Wait for system on new port
+          wait_for:
+            port: "{{ target_ssh_port }}"
+            host: "{{ ansible_host }}"
+            delay: 10
+            timeout: 300
+          delegate_to: localhost
+          when: reboot_result.changed | default(false)
+          
+        # Update ansible connection to use new port
+        - name: Update ansible connection port
+          set_fact:
+            ansible_port: "{{ target_ssh_port }}"
+          
+        # Remove old SSH port from firewall
+        - name: Remove old SSH port from firewall
+          ufw:
+            rule: allow
+            port: "{{ current_ssh_port }}"
+            proto: tcp
+            delete: true
+          when: current_ssh_port != target_ssh_port
+          
+      when: 
+        - change_ssh_port | bool
+        - ssh_port_changed.changed | default(false)
+      
+    # Final validation (use updated port if changed)
+    - name: Validate system status
+      block:
+        - name: Reconnect with new port if changed
+          meta: clear_host_errors
+          when: 
+            - change_ssh_port | bool
+            - ssh_port_changed.changed | default(false)
+            
+        - name: Reset connection to use new port
+          meta: reset_connection
+          when: 
+            - change_ssh_port | bool
+            - ssh_port_changed.changed | default(false)
+            
+        - name: Check system is responsive
+          ping:
+          
+        - name: Check SSH service
+          systemd:
+            name: ssh
+            state: started
+          check_mode: true
+          
+        - name: Check current SSH port
+          shell: ss -tlnp | grep sshd | awk '{print $4}' | cut -d: -f2 | head -1
+          register: actual_ssh_port
+          changed_when: false
+          
+        - name: Verify SSH port is correct
+          assert:
+            that:
+              - actual_ssh_port.stdout == (target_ssh_port if (change_ssh_port and ssh_port_changed.changed | default(false)) else current_ssh_port) | string
+            fail_msg: "SSH port mismatch! Expected {{ target_ssh_port if change_ssh_port else current_ssh_port }}, got {{ actual_ssh_port.stdout }}"
+            
+        - name: Check if any services need restart
+          command: needrestart -b
+          register: needrestart_check
+          changed_when: false
+          failed_when: false
+          
+      tags: [validation]
+      
+  post_tasks:
+    - name: Display completion summary
+      debug:
+        msg: |
+          🎉 ✅ SERVER FINALIZATION COMPLETED!
+          
+          📋 Final Configuration:
+          ├── System: Fully updated
+          ├── SSH Port: {{ ansible_port }}
+          ├── Reboot: {{ reboot_result.changed | default(false) | ternary('Completed', 'Not required') }}
+          ├── Services: All running
+          └── Security: Hardened
+          
+          🔒 Connection Information:
+          {% if change_ssh_port and ssh_port_changed.changed | default(false) %}
+          ⚠️  SSH PORT HAS CHANGED!
+          New connection: ssh -p {{ target_ssh_port }} {{ ansible_user }}@{{ ansible_host }}
+          
+          Update your inventory files:
+            ansible_port: {{ target_ssh_port }}
+          {% else %}
+          SSH Port: {{ ansible_port }} (unchanged)
+          {% endif %}
+          
+          ✨ Server is ready for production use!
