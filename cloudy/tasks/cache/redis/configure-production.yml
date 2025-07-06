@@ -181,7 +181,7 @@
     echo "Redis Version: $(redis-cli --version)" >> /root/redis-report.txt
     echo "" >> /root/redis-report.txt
     echo "Memory Settings:" >> /root/redis-report.txt
-    echo "  Max Memory: {{ redis_maxmemory | default(vault_redis_memory_mb_default | string + 'mb') }}" >> /root/redis-report.txt
+    echo "  Max Memory: {{ redis_maxmemory | default(vault_redis_memory_mb_default) | string + 'mb' }}" >> /root/redis-report.txt
     echo "  Eviction Policy: {{ redis_maxmemory_policy | default(redis_maxmemory_policy_default) }}" >> /root/redis-report.txt
     echo "" >> /root/redis-report.txt
     echo "Persistence:" >> /root/redis-report.txt

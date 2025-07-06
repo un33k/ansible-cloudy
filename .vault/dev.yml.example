@@ -3,52 +3,52 @@
 # Copy this file to your own vault file and edit the values
 
 # === SUPERUSER CREDENTIALS ===
-vault_root_user: "root"  # Default root user
-vault_root_password: "pass4now"  # Required for initial hardening
+vault_root_user: "root"  # Required - no default
+vault_root_password: "pass4now"  # Required - no default
 
 # === GRUNT USER CREDENTIALS ===
-vault_grunt_user: "grunt"  # Optional service user (leave empty to skip creation)
-vault_grunt_groups_string: "sudo,adm,systemd-journal,www-data,docker,ssl-cert"
-# vault_grunt_password: "pass5now"  # Optional service user (only if vault_grunt_user is set)
+vault_grunt_user: "grunt"  # Optional - leave empty to skip creation
+vault_grunt_groups_string: "sudo,adm,systemd-journal,www-data,docker,ssl-cert"  # Optional - defaults to this value
+# vault_grunt_password: "pass5now"  # Optional - generated if not set
 
 # === GLOBAL SERVER CONFIGURATION ===
-vault_git_user_full_name: "Your Full Name"
-vault_git_user_email: "your.email@example.com"
-vault_timezone: "America/New_York"
-vault_locale: "en_US.UTF-8"
+vault_git_user_full_name: "Your Full Name"  # Optional - has default
+vault_git_user_email: "your.email@example.com"  # Optional - has default
+vault_timezone: "America/New_York"  # Optional - has default
+vault_locale: "en_US.UTF-8"  # Optional - has default
 
 # === SERVICE CREDENTIALS ===
-vault_postgres_password: "your_postgres_password"
-vault_redis_password: "your_redis_password"
-vault_vpn_passphrase: "your_vpn_passphrase"
+vault_postgres_password: "your_postgres_password"  # Required when using PostgreSQL
+vault_redis_password: "your_redis_password"  # Required when using Redis with auth
+vault_vpn_passphrase: "your_vpn_passphrase"  # Required when using VPN
 
 # === SERVICE PORTS ===
-vault_postgresql_port: 5432    # PostgreSQL port (5433 recommended for security)
-vault_pgbouncer_port: 6432     # PgBouncer on web servers
-vault_redis_port: 6379         # Redis default
-vault_mysql_port: 3306         # MySQL/MariaDB port
-vault_nginx_http_port: 80      # HTTP
-vault_nginx_https_port: 443    # HTTPS
+vault_postgresql_port: 5432    # Optional - defaults to 5432
+vault_pgbouncer_port: 6432     # Optional - defaults to 6432
+vault_redis_port: 6379         # Optional - defaults to 6379
+vault_mysql_port: 3306         # Optional - defaults to 3306
+vault_nginx_http_port: 80      # Optional - defaults to 80
+vault_nginx_https_port: 443    # Optional - defaults to 443
 
 # === SSH CONFIGURATION ===
-vault_root_ssh_private_key_file: "~/.ssh/id_rsa"  # SSH key for root
-vault_grunt_ssh_private_key_file: "~/.ssh/id_rsa"  # SSH key for grunt user
-vault_root_ssh_password_authentication: false  # Disable after key setup
-vault_ssh_host_key_checking: false  # For dev environments
-vault_ssh_common_args: "-o StrictHostKeyChecking=no"  # Dev SSH args
-vault_ssh_port: 22  # SSH port for server connections
+vault_root_ssh_private_key_file: "~/.ssh/id_rsa"  # Optional - has default
+vault_grunt_ssh_private_key_file: "~/.ssh/id_rsa"  # Optional - has default
+vault_root_ssh_password_authentication: false  # Optional - has default
+vault_ssh_host_key_checking: false  # Optional - has default
+vault_ssh_common_args: "-o StrictHostKeyChecking=no"  # Optional - has default
+vault_ssh_port: 22  # Optional - defaults to 22
 
 # === SERVICE CONFIGURATION ===
-vault_redis_memory_mb: 512  # Redis memory limit
-vault_pgbouncer_pool_size: 25  # Connection pool size
-vault_pgbouncer_max_clients: 100  # Max client connections
-vault_listen_interface: "0.0.0.0"  # Service listen interface
-vault_localhost: "127.0.0.1"  # Localhost address
+vault_redis_memory_mb: 512  # Optional - defaults to 512
+vault_pgbouncer_pool_size: 25  # Optional - defaults to 25
+vault_pgbouncer_max_clients: 100  # Optional - defaults to 100
+vault_listen_interface: "0.0.0.0"  # Optional - has default
+vault_localhost: "127.0.0.1"  # Optional - has default
 
 # === DATABASE CONFIGURATION ===
-vault_db_encoding: "UTF8"  # Database encoding
-vault_db_lc_collate: "en_US.UTF-8"  # Database collation
-vault_db_lc_ctype: "en_US.UTF-8"  # Database character type
+vault_db_encoding: "UTF8"  # Optional - has default
+vault_db_lc_collate: "en_US.UTF-8"  # Optional - has default
+vault_db_lc_ctype: "en_US.UTF-8"  # Optional - has default
 
 # === USAGE INSTRUCTIONS ===
 # 1. Copy this file: cp .vault/dev.yml.example .vault/my-dev.yml

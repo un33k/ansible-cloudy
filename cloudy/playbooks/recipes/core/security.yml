@@ -114,7 +114,7 @@
       include_tasks: "{{ task_paths }}/sys/user/set-groups.yml"
       vars:
         username: "{{ emergency_user }}"
-        groups_string: "{{ vault_grunt_groups | grunt_groups_string_default }}"
+        groups_string: "{{ vault_grunt_groups | default(grunt_groups_string_default) }}"
       when: vault_grunt_user is defined
       tags: [users, grunt]
       

@@ -9,7 +9,7 @@ pg_postgis_version_default: "3.4"
 pgvector_version_default: "v0.5.1"  # Current stable pgvector
 
 # === CONNECTION DEFAULTS ===
-pg_port_default: 5432           # PostgreSQL standard port
+# NOTE: Port is defined in vault.yml as vault_postgresql_port_default
 pg_listen_addresses_default: "localhost"
 pg_unix_socket_dir_default: "/var/run/postgresql"
 

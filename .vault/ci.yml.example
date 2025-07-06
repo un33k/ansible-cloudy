@@ -3,36 +3,41 @@
 # Copy this file to your own vault file and edit the values
 
 # === AUTHENTICATION CREDENTIALS ===
-vault_root_password: "ci_root_password"
-vault_admin_password: "ci_admin_password"
+vault_root_user: "root"  # Required - no default
+vault_root_password: "ci_root_password"  # Required - no default
 
-# === CONNECTION CONFIGURATION ===
-vault_admin_user: "admin"
-vault_ssh_port: 22
+# === OPTIONAL GRUNT USER ===
+vault_grunt_user: "admin"  # Optional - leave empty to skip creation
+vault_grunt_password: "ci_admin_password"  # Optional - generated if not set
+vault_grunt_groups_string: "sudo,adm,systemd-journal,www-data,docker,ssl-cert"  # Optional - has default
+
+# === SSH CONFIGURATION ===
+vault_ssh_port: 22  # Optional - defaults to 22
 
 # === GLOBAL SERVER CONFIGURATION ===
-vault_git_user_full_name: "CI/CD Bot"
-vault_git_user_email: "ci@yourcompany.com"
-vault_timezone: "UTC"
-vault_locale: "en_US.UTF-8"
+vault_git_user_full_name: "CI/CD Bot"  # Optional - has default
+vault_git_user_email: "ci@yourcompany.com"  # Optional - has default
+vault_timezone: "UTC"  # Optional - has default
+vault_locale: "en_US.UTF-8"  # Optional - has default
 
 # === SERVICE CREDENTIALS ===
-vault_postgres_password: "ci_postgres_password"
-vault_redis_password: "ci_redis_password"
-vault_vpn_passphrase: "ci_vpn_passphrase"
+vault_postgres_password: "ci_postgres_password"  # Required when using PostgreSQL
+vault_redis_password: "ci_redis_password"  # Required when using Redis with auth
+vault_vpn_passphrase: "ci_vpn_passphrase"  # Required when using VPN
 
 # === SERVICE PORTS ===
-# Default ports used when not specified (standard service ports)
-# Uncomment and modify for security through obscurity in production
-# vault_postgresql_port: 5432    # PostgreSQL standard port (default)
-# vault_pgbouncer_port: 6432     # PgBouncer standard port (default)
+# Default ports are defined in defaults/vault.yml
+# Override here for custom ports (security through obscurity)
+# vault_postgresql_port: 5432    # Optional - defaults to 5432
+# vault_pgbouncer_port: 6432     # Optional - defaults to 6432
+# vault_redis_port: 6379         # Optional - defaults to 6379
+# vault_nginx_http_port: 80      # Optional - defaults to 80
+# vault_nginx_https_port: 443    # Optional - defaults to 443
 
 # Example: Security-hardened configuration (uncomment for production)
 # vault_postgresql_port: 6543    # Obscure port for PostgreSQL
 # vault_pgbouncer_port: 5432     # PgBouncer masquerades as PostgreSQL
-vault_redis_port: 6379         # Redis default
-vault_nginx_http_port: 80      # HTTP
-vault_nginx_https_port: 443    # HTTPS
+# vault_redis_port: 16379        # Obscure port for Redis
 
 # === CI/CD SPECIFIC ===
 # These credentials are for automated testing

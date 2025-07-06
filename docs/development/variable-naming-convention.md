@@ -94,22 +94,45 @@ worker_count_default: "auto"
     workers: "{{ worker_count | default(worker_count_default) }}"
 ```
 
-## Variable Precedence
+## Variable Precedence for Service Ports
 
-When using variables in tasks and templates:
+Service ports follow a special pattern to allow vault overrides:
 
-1. **Check vault variable first**: `vault_variable_name`
-2. **Fall back to default**: `variable_name_default`
-3. **Use Jinja2 default filter only for mapping**: `{{ vault_var | default(var_default) }}`
+1. **User sets in vault**: `vault_redis_port: 6380` in .vault/*.yml
+2. **Playbook uses**: `{{ vault_redis_port | default(vault_redis_port_default) }}`
+3. **Default comes from**: `vault_redis_port_default: 6379` in defaults/vault.yml
+
+### Important: Port variables are centralized in vault.yml
+
+All service port defaults MUST be defined in `defaults/vault.yml` with the pattern `vault_<service>_port_default`. Do NOT duplicate port definitions in service-specific default files.
 
 Example:
 ```yaml
-# Correct usage
-ssh_port: "{{ vault_ssh_port | default(vault_ssh_port_default) }}"
+# In defaults/vault.yml
+vault_postgresql_port_default: 5432
+vault_redis_port_default: 6379
+vault_nginx_http_port_default: 80
 
-# Also acceptable for simple cases
-ssh_port: "{{ vault_ssh_port | default(ssh_port_default) }}"
+# In playbooks/recipes/cache/redis.yml
+vars:
+  redis_port: "{{ vault_redis_port | default(vault_redis_port_default) }}"
+
+# In .vault/prod.yml (user override)
+vault_redis_port: 6380  # This overrides the default
 ```
+
+This ensures:
+1. All port defaults are in one place (vault.yml)
+2. Users can override by setting `vault_<service>_port` in their vault files
+3. No duplicate definitions across different default files
+
+## Important Note on default() Filter
+
+The `default()` filter MUST be used for variable fallbacks:
+- **Correct**: `{{ variable | default(variable_default) }}`
+- **Incorrect**: `{{ variable | variable_default }}` (This will cause runtime errors)
+
+While the simpler syntax might look cleaner, Jinja2 requires the explicit `default()` filter to handle undefined variables properly.
 
 ## Migration Checklist
 
