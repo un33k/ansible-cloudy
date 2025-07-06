@@ -1,18 +1,18 @@
 # Ansible Cloudy - Complete Usage Guide
 
-Comprehensive guide for using **Ansible Cloudy** with the **Claudia CLI** for infrastructure automation and server management.
+Comprehensive guide for using **Ansible Cloudy** with the **CLI** for infrastructure automation and server management.
 
 ## Table of Contents
-- [Claudia CLI Command Reference](#claudia-cli-command-reference)
+- [CLI Command Reference](#cli-cli-command-reference)
 - [Prerequisites & Setup](#prerequisites--setup)
 - [Configuration Guide](#configuration-guide)
 - [Server Deployment Workflows](#server-deployment-workflows)
 - [Advanced Usage Patterns](#advanced-usage-patterns)
 - [Troubleshooting & Support](#troubleshooting--support)
 
-## Claudia CLI Command Reference
+## CLI Command Reference
 
-Complete reference for the **Claudia CLI** - an intelligent command-line interface with auto-discovery and universal parameter support.
+Complete reference for the **CLI** - an intelligent command-line interface with auto-discovery and universal parameter support.
 
 ### 🧠 Intelligent CLI Features
 - **Auto-Discovery**: Services automatically discovered from filesystem
@@ -25,9 +25,9 @@ Complete reference for the **Claudia CLI** - an intelligent command-line interfa
 
 #### Infrastructure Foundation
 ```bash
-# SSH Hardening (Run FIRST on fresh servers)
-cli harden                    # Show hardening help
-cli harden --install         # Atomic SSH hardening (changes port, disables passwords)
+# SSH Port Management
+cli ssh                      # Show SSH port change help
+cli ssh --new-port 2222     # Change SSH port to 2222
 
 # Security Setup (Standard)
 cli security                  # Show help and configuration options
@@ -145,7 +145,7 @@ cp .vault/dev.yml.example .vault/my-dev.yml
 # Edit with your real credentials
 vim .vault/my-dev.yml
 
-# Use with Claudia commands
+# Use with CLI commands
 cli psql --install -- -e @.vault/my-dev.yml
 ```
 
@@ -160,7 +160,7 @@ cli dev test          # Authentication flow testing
 cli dev spell         # Spell check documentation with technical dictionary
 
 # Service discovery and help
-cli --list-services   # Show all available services and operations
+cli --list            # Show all available services and commands
 cli --help            # Complete CLI usage guide
 ```
 
@@ -219,7 +219,7 @@ cli security --install --check                 # Dry run security setup
 
 #### Discovery Commands
 ```bash
-cli --list           # Show all recipes
+cli --list           # Show all services and commands
 cli dev              # Show all dev commands  
 cli --help           # Show complete usage
 ```
@@ -290,7 +290,7 @@ chmod 644 ~/.ssh/id_rsa.pub
 - **Root access** with password for initial setup
 - **Network connectivity** to server from your machine
 - **Minimum resources**: 1GB RAM, 10GB disk space
-- **Open ports**: 22 (SSH) initially, 22022 (custom SSH) after setup
+- **Open ports**: 22 (SSH) initially, 2222 (custom SSH) after setup
 
 ## Configuration Guide
 
@@ -338,7 +338,7 @@ all:
   vars:
     # Phase 2: Secured server configuration (admin + SSH keys)
     ansible_user: admin
-    ansible_port: 22022
+    ansible_port: 2222
     ansible_ssh_private_key_file: ~/.ssh/id_rsa
     ansible_host_key_checking: false
     
@@ -371,7 +371,7 @@ vault_root_password: "secure_root_password_123"
 # Grunt user configuration
 vault_grunt_user: "admin"
 vault_grunt_password: "secure_grunt_password_456"
-vault_ssh_port: 22022
+vault_ssh_port: 2222
 
 # Global server configuration
 vault_git_user_full_name: "Your Full Name"
@@ -389,7 +389,7 @@ all:
   vars:
     ansible_user: "{{ vault_grunt_user | default('admin') }}"
     ansible_ssh_pass: "{{ vault_grunt_password }}"
-    ansible_port: "{{ vault_ssh_port | default(22022) }}"
+    ansible_port: "{{ vault_ssh_port | default(2222) }}"
 ```
 
 ### 4. Connection Testing
@@ -412,14 +412,16 @@ Sets up secure SSH, user management, and firewall.
 
 #### Standard Security (Development/Staging)
 ```bash
-# Three-step process for new servers
-cli harden --install      # SSH hardening (port change, disable passwords)
+# Two-step process for new servers
 cli security --install    # Security setup (grunt user, firewall, fail2ban)
 cli base --install        # Base configuration (hostname, git, timezone)
+
+# Optional: Change SSH port after setup
+cli ssh --new-port 2222   # Change SSH port from 22 to 2222
 ```
 
 **What it does:**
-- ✅ Changes SSH port to 22022
+- ✅ Changes SSH port to 2222
 - ✅ Disables password authentication
 - ✅ Creates optional grunt user with SSH keys
 - ✅ Configures UFW firewall 
@@ -428,10 +430,12 @@ cli base --install        # Base configuration (hostname, git, timezone)
 
 #### Production Security (Enterprise Hardening)
 ```bash
-# Three-step process with maximum security
-cli harden --install                          # SSH hardening first
+# Two-step process with maximum security
 cli security --install --production-hardening # Enterprise security
 cli base --install                            # Base configuration
+
+# Optional: Change SSH port after setup
+cli ssh --new-port 2222                       # Change SSH port for additional security
 ```
 
 **Additional production features:**
@@ -557,8 +561,8 @@ cli security --install -vvv
 cli security --install   # Create grunt user, SSH keys, firewall
 cli base --install       # Base configuration
 
-# 2. Update inventory to use grunt user on port 22022
-# Edit inventory: ansible_user: admin, ansible_port: 22022
+# 2. Update inventory to use grunt user on port 2222
+# Edit inventory: ansible_user: admin, ansible_port: 2222
 
 # 3. Deploy database layer
 cli psql --install --pgis
@@ -599,7 +603,7 @@ all:
   vars:
     ansible_user: admin
     ansible_ssh_pass: grunt_password
-    ansible_port: 22022
+    ansible_port: 2222
     
   children:
     web_servers:
@@ -616,7 +620,7 @@ all:
   vars:
     ansible_user: admin
     ansible_ssh_pass: grunt_password
-    ansible_port: 22022
+    ansible_port: 2222
     
   children:
     database_servers:
@@ -642,10 +646,10 @@ cli psql --install --prod --pgis
 
 **Solutions:**
 1. Check server is running: `ping server_ip`
-2. Verify SSH port: `nmap -p 22,22022 server_ip`
+2. Verify SSH port: `nmap -p 22,2222 server_ip`
 3. Check inventory configuration matches server state
 4. For fresh servers, use `ansible_user: root` and `ansible_port: 22`
-5. After setup, use `ansible_user: admin` and `ansible_port: 22022`
+5. After setup, use `ansible_user: admin` and `ansible_port: 2222`
 
 ### Authentication Issues
 
@@ -663,7 +667,7 @@ cli psql --install --prod --pgis
 
 **Solutions:**
 1. The recipes automatically configure UFW firewall
-2. Port 22022 is opened before SSH port change
+2. Port 2222 is opened before SSH port change
 3. If locked out, reset server to fresh state and retry
 
 ### Task Failures
@@ -687,7 +691,7 @@ cli psql --install --prod --pgis
 
 ### Re-running Commands
 
-**Best Practice:** Claudia commands are idempotent - safe to re-run.
+**Best Practice:** CLI commands are idempotent - safe to re-run.
 
 ```bash
 # Re-run safely - only changes will be applied

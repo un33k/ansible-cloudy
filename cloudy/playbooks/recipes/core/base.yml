@@ -19,6 +19,11 @@
     setup_swap: false
           
   pre_tasks:
+    # Check SSH connectivity first
+    - name: Verify SSH connectivity
+      include_tasks: "{{ task_paths }}/sys/core/check-ssh-connectivity.yml"
+      tags: [always]
+      
     # Ensure proper secure connection
     - name: Validate secure connection
       include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
@@ -28,6 +33,13 @@
     - name: Initialize system
       include_tasks: "{{ task_paths }}/sys/core/init.yml"
       tags: [system, init]
+      
+    # System Update (package list only, not upgrade)
+    - name: Update package cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: [system, update]
       
     # Hostname Configuration
     - name: Configure hostname
@@ -79,6 +91,19 @@
       when: setup_security | default(true) | bool
       tags: [security, packages]
       
+    # Docker Installation
+    - name: Install Docker Engine
+      include_tasks: "{{ task_paths }}/sys/docker/install.yml"
+      tags: [docker, containers]
+      
+    - name: Add grunt user to docker group
+      user:
+        name: "{{ grunt_user }}"
+        groups: docker
+        append: true
+      when: vault_grunt_user is defined
+      tags: [docker, grunt]
+      
     # Service User Configuration
     - name: Configure base service directories for grunt user
       include_tasks: "{{ task_paths }}/sys/services/configure-service-user.yml"
@@ -112,6 +137,7 @@
              ├── SSH Port: {{ ansible_port }}
              ├── Firewall: UFW enabled
              ├── Git: Configured
+             ├── Docker: Installed and configured
              └── Service Directories: {{ 'Created for grunt user' if vault_grunt_user is defined else 'Standard root-based' }}
           
           🚀 Core server foundation ready for service deployments!

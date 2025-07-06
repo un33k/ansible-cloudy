@@ -21,7 +21,7 @@
     
     # Apply defaults with vault override pattern
     pg_version: "{{ vault_pg_version | default(pg_version_default) }}"
-    pg_port: "{{ vault_pg_port | default(pg_port_default) }}"
+    pg_port: "{{ vault_postgresql_port | default(vault_postgresql_port_default) }}"
     pg_databases: "{{ vault_pg_databases | default([]) }}"
     pg_users: "{{ vault_pg_users | default([]) }}"
     pg_postgis_version: "{{ vault_pg_postgis_version | default(pg_postgis_version_default) }}"

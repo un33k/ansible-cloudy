@@ -5,12 +5,12 @@
     "type": "infrastructure-automation",
     "languages": ["python", "yaml", "bash"],
     "cli_command": "cli",
-    "python_module": "dev.claudia.cli.main"
+    "python_module": "dev.cli.main"
   },
   
   "context": {
     "architecture": {
-      "cli": "dev/claudia - Python CLI with modular operations",
+      "cli": "dev/cli - Python CLI with modular operations",
       "playbooks": "cloudy/playbooks - Ansible recipes organized by category",
       "inventory": "cloudy/inventory - Environment-specific configurations",
       "tasks": "cloudy/tasks - Reusable Ansible task modules"
@@ -18,7 +18,7 @@
     "key_flows": {
       "deployment": "harden → security → base → services",
       "connection_groups": "harden_targets (password) → security_targets (SSH keys) → service_targets (SSH keys)",
-      "ports": "Initial: 22, Final: 22022 (vault-driven)"
+      "ports": "Initial: 22, Final: 2222 (vault-driven)"
     },
     "vault_variables": {
       "location": ".vault/*.yml",
@@ -59,19 +59,19 @@
       "Bash(grep:*)",
       "Bash(echo $VIRTUAL_ENV)",
       "Bash(/dev/null)",
-      "Bash(./claudia --help)",
+      "Bash(cli --help)",
       "Bash(find:*)",
-      "Bash(./claudia dev:*)",
+      "Bash(cli dev:*)",
       "Bash(python3:*)",
       "Bash(chmod:*)",
       "Bash(act:*)",
-      "Bash(./claudia security:*)",
+      "Bash(cli security:*)",
       "Bash(ansible-playbook:*)",
       "Bash(python:*)",
       "Bash(timeout:*)",
       "Bash(ansible-lint:*)",
       "Bash(touch:*)",
-      "Bash(./claudia:*)",
+      "Bash(cli:*)",
       "Bash(mv:*)",
       "Bash(pip install:*)",
       "Bash(flake8:*)",
@@ -81,17 +81,17 @@
       "Bash(rm:*)",
       "Bash(mkdir:*)",
       "Bash(cp:*)",
-      "Bash(./claudia --version)",
-      "Bash(./claudia --help)",
-      "Bash(./claudia --list-services)",
-      "Bash(./claudia psql:*)",
-      "Bash(./claudia badarg)",
-      "Bash(./claudia redis:*)",
+      "Bash(cli --version)",
+      "Bash(cli --help)",
+      "Bash(cli --list-services)",
+      "Bash(cli psql:*)",
+      "Bash(cli badarg)",
+      "Bash(cli redis:*)",
       "Bash(ping:*)",
-      "Bash(./test-claudia-connection.sh:*)",
+      "Bash(./test-cli-connection.sh:*)",
       "Bash(./test-fresh-server.sh:*)",
       "Bash(cat:*)",
-      "Bash(./claudia:*)",
+      "Bash(cli:*)",
       "Bash(git push:*)",
       "Bash(bash -n:*)",
       "Bash(export ANSIBLE_VAULT_PASSWORD_FILE=.vault_pass)",
@@ -109,7 +109,7 @@
       "Bash(git check-ignore:*)",
       "Bash(rg:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(claudia:*)",
+      "Bash(cli:*)",
       "Bash(cli dev yaml)",
       "Bash(cli security:*)",
       "Bash(cli:*)",
@@ -121,7 +121,7 @@
       "Bash(sed:*)",
       "Bash(awk:*)",
       "Bash(./scripts/*)",
-      "Bash(python -m dev.claudia.cli.main:*)"
+      "Bash(python -m dev.cli.main:*)"
     ],
     "deny": []
   }

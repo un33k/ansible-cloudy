@@ -7,8 +7,7 @@
 nginx_version_default: "stable"  # stable or mainline
 
 # === CONNECTION DEFAULTS ===
-nginx_http_port_default: 80
-nginx_https_port_default: 443
+# NOTE: HTTP/HTTPS ports are defined in vault.yml as vault_nginx_http_port_default and vault_nginx_https_port_default
 nginx_status_port_default: 8080
 
 # === WORKER DEFAULTS ===

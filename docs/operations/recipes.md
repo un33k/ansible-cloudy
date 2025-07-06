@@ -19,7 +19,7 @@ cli security --install
 Features:
 - SSH key installation
 - Firewall configuration (UFW)
-- SSH port change (22 → 22022)
+- SSH port change (22 → 2222)
 - Optional grunt user creation
 - Root password authentication disabled
 - Security hardening

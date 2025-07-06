@@ -1,0 +1,135 @@
+# Recipe: Finalize Server Configuration
+# Purpose: Final steps after all services are configured - upgrades and optional reboot
+# Usage Examples:
+#   cli finalize --install                    # Run upgrades (skip reboot even if needed)
+#   cli finalize --install --reboot           # Run upgrades and reboot if needed
+#   cli finalize --install --skip-upgrade     # Skip system updates
+#   cli finalize --install --reboot --force   # Force reboot even if not required
+
+---
+- name: Finalize Server Configuration
+  hosts: service_targets
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/vault.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    # Configuration options
+    perform_system_upgrade: true
+    # Reboot logic:
+    # - No --reboot flag: Never reboot (default)
+    # - --reboot flag: Reboot only if system requires it
+    # - --reboot --force flag: Always reboot
+    user_wants_reboot: "{{ reboot | default(false) }}"
+    force_reboot: "{{ force | default(false) }}"
+    
+  pre_tasks:
+    # Check SSH connectivity first
+    - name: Verify SSH connectivity
+      include_tasks: "{{ task_paths }}/sys/core/check-ssh-connectivity.yml"
+      tags: [always]
+    
+    - name: Display finalization start
+      debug:
+        msg: |
+          🔧 Starting Server Finalization
+          ├── System Upgrades: {{ perform_system_upgrade | ternary('Enabled', 'Disabled') }}
+          └── Reboot Mode: {% if not user_wants_reboot %}Never (default){% elif force_reboot %}Force{% else %}If Required{% endif %}
+          
+  tasks:
+    # System Updates
+    - name: Perform system upgrades
+      include_tasks: "{{ task_paths }}/sys/core/safe-upgrade.yml"
+      vars:
+        reboot_after_upgrade: false  # We'll handle reboot at the end
+      when: perform_system_upgrade | bool
+      tags: [upgrade, update]
+      
+    - name: Check if reboot is required after upgrades
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_upgrade
+      
+      
+    # Determine if reboot is needed
+    - name: Set reboot requirement
+      set_fact:
+        system_needs_reboot: "{{ reboot_required_upgrade.stat.exists }}"
+        should_reboot: "{{ (user_wants_reboot and reboot_required_upgrade.stat.exists) or (user_wants_reboot and force_reboot) }}"
+        
+    # Pre-reboot notification
+    - name: Display pre-reboot status
+      debug:
+        msg: |
+          📊 Finalization Status:
+          ├── Upgrades Applied: {{ apt_upgrade_result.changed | default(false) | ternary('Yes', 'No') }}
+          ├── System Needs Reboot: {{ system_needs_reboot | ternary('Yes', 'No') }}
+          ├── Will Reboot: {{ should_reboot | ternary('Yes', 'No') }}
+          {% if should_reboot and force_reboot %}
+          └── Force rebooting in 10 seconds...
+          {% elif should_reboot %}
+          └── Rebooting in 10 seconds (system requires it)...
+          {% elif system_needs_reboot and not user_wants_reboot %}
+          └── Reboot required but skipped (use --reboot flag)
+          {% elif not system_needs_reboot and user_wants_reboot and not force_reboot %}
+          └── No reboot needed (system is up to date)
+          {% else %}
+          └── No reboot needed
+          {% endif %}
+      
+    # Reboot if needed
+    - name: Reboot system if required
+      reboot:
+        msg: "Rebooting after finalization (system upgrades)"
+        reboot_timeout: 300
+        connect_timeout: 10
+        test_command: whoami
+        # Wait for system to come back up
+        post_reboot_delay: 30
+      when: should_reboot | default(false)
+      register: reboot_result
+      
+    # Final validation
+    - name: Validate system status
+      block:
+        - name: Check system is responsive
+          ping:
+          
+        - name: Check SSH service
+          systemd:
+            name: ssh
+            state: started
+          check_mode: true
+          
+        
+        - name: Check if any services need restart
+          command: needrestart -b
+          register: needrestart_check
+          changed_when: false
+          failed_when: false
+          
+      tags: [validation]
+      
+  post_tasks:
+    - name: Display completion summary
+      debug:
+        msg: |
+          🎉 ✅ SERVER FINALIZATION COMPLETED!
+          
+          📋 Final Configuration:
+          ├── System: Fully updated
+          ├── Reboot: {{ reboot_result.changed | default(false) | ternary('Completed', should_reboot | ternary('Skipped', 'Not required')) }}
+          └── Services: All running
+          
+          {% if system_needs_reboot and not user_wants_reboot %}
+          ⚠️  IMPORTANT: System requires a reboot but was skipped.
+          Run 'cli finalize --install --reboot' to perform the reboot.
+          {% elif user_wants_reboot and not system_needs_reboot and not force_reboot %}
+          ℹ️  Note: No reboot was needed (system is up to date).
+          {% endif %}
+          
+          ✨ Server is ready for use!

@@ -43,7 +43,9 @@ class DependencyManager:
         dependencies = self._get_dependency_chain(service_name)
         
         if not dependencies:
-            warn(f"⚠️ No dependencies defined for {service_name}")
+            info(f"✨ No dependencies required for {service_name}")
+            # Execute the main service directly
+            info(f"🚀 Executing service: {service_name}")
             return self._execute_service_directly(
                 service_name, environment, custom_inventory, extra_vars_file,
                 extra_args, dry_run, target_host
@@ -74,30 +76,33 @@ class DependencyManager:
         # Define dependency mappings
         dependencies = {
             # Core services
-            "harden": [],  # No dependencies - initial SSH hardening
-            "security": ["harden"],  # Security depends on hardening
-            "base": ["harden", "security"],
+            "harden": [],  # No dependencies - port change tool
+            "security": [],  # No dependencies - handles initial setup
+            "base": ["security"],  # Base depends on security
             
             # Database services
-            "psql": ["harden", "security", "base"],
-            "postgis": ["harden", "security", "base"],
-            "mongodb": ["harden", "security", "base"],
+            "psql": ["security", "base"],
+            "postgis": ["security", "base"],
+            "mongodb": ["security", "base"],
             
             # Cache services
-            "redis": ["harden", "security", "base"],
+            "redis": ["security", "base"],
             
             # Connection pooling
             "pgbouncer": [],  # No dependencies - installed on existing web servers
             
             # Web services
-            "nginx": ["harden", "security", "base"],
-            "apache": ["harden", "security", "base"],
-            "django": ["harden", "security", "base"],
-            "nodejs": ["harden", "security", "base"],
+            "nginx": ["security", "base"],
+            "apache": ["security", "base"],
+            "django": ["security", "base"],
+            "nodejs": ["security", "base"],
             
             # VPN services
-            "openvpn": ["harden", "security", "base"],
-            "wireguard": ["harden", "security", "base"],
+            "openvpn": ["security", "base"],
+            "wireguard": ["security", "base"],
+            
+            # Finalization - no dependencies, run after everything else
+            "finalize": [],
         }
         
         return dependencies.get(service_name, ["security", "base"])
@@ -121,12 +126,7 @@ class DependencyManager:
 
         info(f"🔧 Installing dependency: {dependency}")
         
-        if dependency == "harden":
-            return self._execute_harden(
-                environment, custom_inventory, extra_vars_file,
-                extra_args, dry_run, target_host
-            )
-        elif dependency == "security":
+        if dependency == "security":
             return self._execute_security(
                 environment, custom_inventory, extra_vars_file,
                 extra_args, dry_run, target_host
@@ -141,30 +141,6 @@ class DependencyManager:
                 dependency, environment, custom_inventory, extra_vars_file,
                 extra_args, dry_run, target_host
             )
-
-    def _execute_harden(
-        self,
-        environment: str,
-        custom_inventory: str,
-        extra_vars_file: str,
-        extra_args: List[str],
-        dry_run: bool,
-        target_host: str = None
-    ) -> int:
-        """Execute SSH hardening"""
-        inventory_path = self.inventory_manager.get_inventory_path(
-            environment=environment,
-            custom_path=custom_inventory
-        )
-        
-        return self.ansible_runner.run_recipe(
-            recipe_path="core/harden.yml",
-            inventory_path=inventory_path,
-            extra_args=extra_args,
-            dry_run=dry_run,
-            target_host=target_host,
-            extra_vars_file=extra_vars_file,
-        )
 
     def _execute_security(
         self,
@@ -253,62 +229,6 @@ class DependencyManager:
     ) -> bool:
         """Check if a dependency is already satisfied"""
         
-        # For dry runs, always assume dependencies need to be checked
-        if dependency == "harden":
-            return self._is_hardened(environment, custom_inventory, target_host)
-        elif dependency == "security":
-            return self._is_security_configured(environment, custom_inventory, target_host)
-        elif dependency == "base":
-            return self._is_base_configured(environment, custom_inventory, target_host)
-        else:
-            # For other services, we could add more sophisticated checking
-            return False
-
-    def _is_hardened(
-        self,
-        environment: str,
-        custom_inventory: str,
-        target_host: str = None
-    ) -> bool:
-        """Check if SSH hardening is already done"""
-        # Convert environment to production bool for backward compatibility
-        production = (environment == 'prod')
-        
-        # Use smart security detection
-        connection_info = self.smart_security.smart_port_detection(production, target_host)
-        
-        # If we can connect on a non-22 port with SSH keys, hardening is likely done
-        if connection_info['success'] and connection_info['port'] != 22:
-            return True
-        
+        # For now, always run dependencies to ensure proper setup
+        # In the future, we could implement more sophisticated checking
         return False
-
-    def _is_security_configured(
-        self,
-        environment: str,
-        custom_inventory: str,
-        target_host: str = None
-    ) -> bool:
-        """Check if security is already configured"""
-        # Convert environment to production bool for backward compatibility
-        production = (environment == 'prod')
-        
-        # Use smart security detection
-        connection_info = self.smart_security.smart_port_detection(production, target_host)
-        
-        # If we can connect on a non-22 port with SSH keys, security is likely configured
-        if connection_info['success'] and connection_info['port'] != 22:
-            return True
-        
-        return False
-
-    def _is_base_configured(
-        self,
-        environment: str,
-        custom_inventory: str,
-        target_host: str = None
-    ) -> bool:
-        """Check if base configuration is installed"""
-        # Simple check: if security is configured and we can connect, base is likely done
-        # In a more sophisticated implementation, we could check for specific markers
-        return self._is_security_configured(environment, custom_inventory, target_host)

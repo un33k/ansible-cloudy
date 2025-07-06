@@ -1,43 +1,46 @@
 # Granular Task: Safe System Upgrade
 # Equivalent to: cloudy-old/sys/core.py::sys_safe_upgrade()
-# Usage: ansible-playbook tasks/sys/core/safe-upgrade.yml
+# Usage: include_tasks: tasks/sys/core/safe-upgrade.yml
 
 ---
-- name: Safe system upgrade
-  hosts: "{{ target_hosts | default('all') }}"
-  gather_facts: false
-  become: true
-  
-  vars:
-    reboot_after_upgrade: "{{ reboot_after_upgrade | default(true) }}"
+- name: Install aptitude package manager
+  apt:
+    name: aptitude
+    state: present
     
-  tasks:
-    - name: Install aptitude package manager
-      apt:
-        name: aptitude
-        state: present
-        
-    - name: Update package cache
-      apt:
-        update_cache: true
-        
-    - name: Perform standard apt upgrade first
-      apt:
-        upgrade: true
-      register: apt_upgrade_result
-        
-    - name: Perform safe upgrade with aptitude
-      shell: DEBIAN_FRONTEND=noninteractive aptitude -y safe-upgrade
-      register: safe_upgrade_result
+- name: Update package cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+    
+- name: Perform standard apt upgrade
+  apt:
+    upgrade: "yes"
+    update_cache: false  # Already updated above
+  register: apt_upgrade_result
+    
+- name: Perform safe upgrade with aptitude
+  shell: DEBIAN_FRONTEND=noninteractive aptitude -y safe-upgrade
+  register: safe_upgrade_result
+  changed_when: safe_upgrade_result.stdout != ""
+  
+- name: Check if reboot is required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+  
+- name: Display upgrade results
+  debug:
+    msg: |
+      ✅ Safe system upgrade completed
+      Standard upgrade: {{ apt_upgrade_result.changed | ternary('Updates applied', 'System up to date') }}
+      Safe upgrade: {{ safe_upgrade_result.changed | ternary('Additional updates applied', 'No additional updates') }}
+      Reboot required: {{ reboot_required.stat.exists | ternary('Yes', 'No') }}
       
-
-      
-    - name: Display upgrade completion
-      debug:
-        msg: "✅ Safe system upgrade completed. Reboot {{ 'will be performed' if reboot_after_upgrade else 'skipped' }}"
-        
-    - name: Reboot system after upgrade
-      reboot:
-        msg: "Rebooting after safe system upgrade"
-        reboot_timeout: 300
-      when: reboot_after_upgrade | bool
+- name: Reboot system if required and allowed
+  reboot:
+    msg: "Rebooting after safe system upgrade"
+    reboot_timeout: 300
+  when: 
+    - reboot_after_upgrade | default(false) | bool
+    - reboot_required.stat.exists

@@ -48,14 +48,14 @@ hosts:
 ### 3. Deploy your first server
 
 ```bash
-# Step 1: Harden SSH access (uses root password initially)
-cli harden --install
-
-# Step 2: Security setup (uses SSH keys on new port)
+# Step 1: Security setup (uses root password initially)
 cli security --install
 
-# Step 3: Base configuration
+# Step 2: Base configuration
 cli base --install
+
+# Optional: Change SSH port for additional security
+cli ssh --new-port 2222
 ```
 
 ### 4. Deploy services
@@ -80,8 +80,8 @@ cli nginx --install
 ## Getting Help
 
 ```bash
-# Show available services
-cli --list-services
+# Show available services and commands
+cli --list
 
 # Get help for any service
 cli psql --help
@@ -89,5 +89,7 @@ cli redis --help
 cli security --help
 
 # Run validation checks
-cli dev precommit
+cli dev validate  # Comprehensive validation
+cli dev syntax    # Quick syntax check
+cli dev test      # Test authentication
 ```

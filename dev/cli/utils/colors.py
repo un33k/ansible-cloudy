@@ -35,3 +35,8 @@ def error(message: str) -> None:
 def info(message: str) -> None:
     """Print info message"""
     print(f"\n{Colors.BLUE}ℹ{Colors.NC} {message}\n")
+
+
+def warning(message: str) -> None:
+    """Print warning message (non-fatal)"""
+    print(f"\n{Colors.YELLOW}⚠{Colors.NC}  {message}\n")

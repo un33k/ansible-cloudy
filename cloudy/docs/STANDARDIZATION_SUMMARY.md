@@ -80,7 +80,7 @@ This ensures existing configurations continue to work while allowing migration t
 ## Next Steps
 
 1. Test all playbooks with both old and new variable names
-2. Update Claudia CLI to use new variable names in generated commands
+2. Update CLI to use new variable names in generated commands
 3. Add deprecation warnings for old variable names (future)
 4. Eventually remove backward compatibility mappings (much later)
 

@@ -8,11 +8,26 @@ The CLI is built with modularity and extensibility in mind:
 
 ```
 User Input → Argument Parser → Command Router → Service Handler → Ansible Execution
-                                                       ↓
-                                              Operation Parameters
+                 (argparse)                             ↓
+              with subparsers                  Operation Parameters
                                                        ↓
                                               Recipe/Task Selection
 ```
+
+### Help System
+
+The CLI uses Python's argparse with subparsers to provide hierarchical help:
+
+- `cli --help` - Main help showing all services
+- `cli <service> --help` - Service-specific help with all options
+- `cli dev --help` - Development commands overview
+- `cli dev <command> --help` - Specific dev command help
+
+Each service automatically gets properly formatted help with:
+- Service description
+- Common options (environments, inventory, etc.)
+- Service-specific options
+- Colored output for better readability
 
 ## Directory Structure
 
@@ -46,7 +61,39 @@ dev/cli/
 
 ## Adding a New Service
 
-### Step 1: Create the Operation Handler
+### Step 1: Register the Service in Argument Parser
+
+Edit `cmd/argument_parser.py` to add your service to the subparsers:
+
+```python
+# In register_service_subparsers function:
+
+# MyService
+myservice_parser = subparsers.add_parser(
+    'myservice',
+    parents=[install_parser],  # Inherits common install options
+    formatter_class=ColoredHelpFormatter,
+    help='MyService description',
+    description=f"{Colors.CYAN}MyService - Extended service description{Colors.NC}"
+)
+myservice_parser.add_argument(
+    '--port',
+    type=int,
+    metavar='PORT',
+    help='Service port (default: 8080)'
+)
+myservice_parser.add_argument(
+    '--enable-ssl',
+    action='store_true',
+    help='Enable SSL/TLS'
+)
+# Add service-specific operations
+myservice_parser.add_argument('--add-user', metavar='USERNAME', help='Add a new user')
+myservice_parser.add_argument('--password', metavar='PASSWORD', help='User password')
+myservice_parser.add_argument('--list-users', action='store_true', help='List all users')
+```
+
+### Step 2: Create the Operation Handler
 
 Create `operations/myservice.py`:
 
@@ -76,11 +123,6 @@ class MyServiceOperations(BaseOperation):
     def handle_operation(self, args, ansible_args: List[str]) -> int:
         """Handle MyService operations"""
         
-        # Handle help
-        if hasattr(args, 'help') and args.help:
-            self._show_service_help()
-            return 0
-        
         # Handle granular operations
         if hasattr(args, 'add_user') and args.add_user:
             return self._handle_add_user(args, ansible_args)
@@ -89,15 +131,14 @@ class MyServiceOperations(BaseOperation):
         if hasattr(args, 'install') and args.install:
             return self._handle_install(args, ansible_args)
         
-        # Default: show help
-        self._show_service_help()
+        # Without --install, help will be shown by argparse
         return 0
     
     def _handle_install(self, args, ansible_args: List[str]) -> int:
         """Handle service installation"""
         info("Installing MyService...")
         
-        # Build parameters
+        # Build parameters from parsed args
         extra_vars = {}
         
         # Add service-specific parameters
@@ -197,65 +238,26 @@ elif service_name == "myservice":
     sys.exit(exit_code)
 ```
 
-### Step 3: Add Argument Parsing
+### Step 3: Wire up the Service Handler
 
-Edit `operations/myservice.py` to add argument parsing:
+Edit `cmd/command_router.py` to add your service to the routing:
 
 ```python
-@staticmethod
-def add_arguments(parser):
-    """Add MyService-specific arguments"""
-    
-    # Installation
-    parser.add_argument(
-        "--install", "--run",
-        action="store_true",
-        help="Install MyService"
-    )
-    
-    # Service options
-    parser.add_argument(
-        "--port",
-        type=int,
-        help="Service port (default: 8080)"
-    )
-    
-    parser.add_argument(
-        "--memory",
-        type=int,
-        help="Memory limit in MB (default: 512)"
-    )
-    
-    parser.add_argument(
-        "--enable-ssl",
-        action="store_true",
-        help="Enable SSL/TLS"
-    )
-    
-    # Operations
-    parser.add_argument(
-        "--add-user",
-        metavar="USERNAME",
-        help="Add a new user"
-    )
-    
-    parser.add_argument(
-        "--password",
-        help="Password for user operations"
-    )
-    
-    parser.add_argument(
-        "--remove-user",
-        metavar="USERNAME",
-        help="Remove a user"
-    )
-    
-    parser.add_argument(
-        "--list-users",
-        action="store_true",
-        help="List all users"
-    )
+# In handle_service_operation method:
+
+elif service_name == "myservice":
+    from operations.myservice import MyServiceOperations
+    myservice_ops = MyServiceOperations(config)
+    exit_code = myservice_ops.handle_operation(args, ansible_args)
+    sys.exit(exit_code)
 ```
+
+The arguments are automatically parsed by argparse, so you can access them directly:
+- `args.port` - The port number if provided
+- `args.enable_ssl` - Boolean for SSL option
+- `args.add_user` - Username to add
+- `args.password` - Password for operations
+- etc.
 
 ### Step 4: Create Ansible Components
 

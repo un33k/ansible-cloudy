@@ -102,7 +102,7 @@ postgresql_port: 5432
 redis_password: "secret123"
 ```
 
-### 3. Update Claudia Commands
+### 3. Update CLI Commands
 
 **Before:**
 ```bash

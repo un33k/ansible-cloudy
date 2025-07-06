@@ -7,14 +7,14 @@
 pgbouncer_version_default: "1.21"  # Current stable version
 
 # === CONNECTION DEFAULTS ===
-pgbouncer_port_default: 6432       # PgBouncer standard port
+# NOTE: Port is defined in vault.yml as vault_pgbouncer_port_default
 pgbouncer_listen_addr_default: "127.0.0.1"
 pgbouncer_unix_socket_dir_default: "/var/run/postgresql"
 pgbouncer_unix_socket_mode_default: "0777"
 
 # === BACKEND CONNECTION DEFAULTS ===
 pgbouncer_backend_host_default: "localhost"
-pgbouncer_backend_port_default: 5432  # PostgreSQL standard port
+# NOTE: Backend port uses vault_postgresql_port_default from vault.yml
 pgbouncer_backend_database_default: "postgres"
 
 # === AUTHENTICATION DEFAULTS ===

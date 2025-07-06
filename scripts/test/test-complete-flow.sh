@@ -17,7 +17,7 @@ echo -e "${GREEN}╚════════════════════
 # Configuration
 CONTAINER_NAME="ansible-test-complete"
 INITIAL_PORT=2222
-FINAL_PORT=22022
+FINAL_PORT=2222
 
 # Cleanup function
 cleanup() {
@@ -43,7 +43,7 @@ docker run -d \
   --privileged \
   -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
   -p ${INITIAL_PORT}:22 \
-  -p ${FINAL_PORT}:22022 \
+  -p ${FINAL_PORT}:2222 \
   ubuntu:22.04 \
   /bin/bash -c "
     apt-get update && \

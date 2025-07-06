@@ -11,7 +11,7 @@ This document summarizes the complete implementation of the atomic SSH hardening
 - Connects via password on initial port (default 22)
 - Installs SSH keys
 - Disables password authentication
-- Changes port to final port (default 22022)
+- Changes port to final port (default 2222)
 - Gracefully handles already-hardened servers
 
 ### 2. Updated Inventory Structure
@@ -30,8 +30,7 @@ This document summarizes the complete implementation of the atomic SSH hardening
 - `vault_root_user` (was vault_ansible_user)
 - `vault_root_password` 
 - `vault_root_ssh_private_key_file` (was vault_ansible_ssh_private_key_file)
-- `vault_ssh_port_initial` (was vault_initial_ssh_port)
-- `vault_ssh_port_final` (was vault_ssh_port)
+- `vault_ssh_port` (single variable for SSH port)
 - `vault_grunt_user` (was vault_admin_user)
 - `vault_grunt_password` (was vault_admin_password)
 
@@ -43,15 +42,15 @@ This document summarizes the complete implementation of the atomic SSH hardening
 
 ### 5. CLI Integration
 **New Files**:
-- `dev/claudia/operations/harden.py` - Harden operation handler
-- Updated `dev/claudia/cli/command_router.py` - Added harden routing
-- Updated `dev/claudia/execution/dependency_manager.py` - Added harden to dependency chain
+- `dev/cli/operations/harden.py` - Harden operation handler
+- Updated `dev/cli/cli/command_router.py` - Added harden routing
+- Updated `dev/cli/execution/dependency_manager.py` - Added harden to dependency chain
 
 **Dependency Chain**: `harden → security → base → service`
 
 ### 6. Port Detection Updates
-**File**: `dev/claudia/execution/ansible/vault_loader.py`
-- Updated to check for `vault_ssh_port_final` first, then fall back to `vault_ssh_port`
+**File**: `dev/cli/execution/ansible/vault_loader.py`
+- Updated to check for `vault_ssh_port` consistently
 
 ### 7. Validation Updates
 **File**: `cloudy/tasks/sys/core/ensure-secure-connection.yml`
@@ -62,11 +61,11 @@ This document summarizes the complete implementation of the atomic SSH hardening
 
 ### For Fresh Servers:
 ```bash
-# 1. Harden SSH (password → SSH keys, port 22 → 22022)
-cli harden --install
-
-# 2. Security setup (firewall, fail2ban, grunt user)
+# 1. Security setup (firewall, fail2ban, grunt user)
 cli security --install
+
+# 2. Optional: Change SSH port
+cli ssh --new-port 2222
 
 # 3. Base configuration
 cli base --install
@@ -78,7 +77,7 @@ cli redis --install
 ```
 
 ### For Already Hardened Servers:
-- `cli harden --install` will gracefully timeout and skip
+- SSH operations will gracefully timeout and skip
 - Continue with security/base/services as normal
 
 ## Testing
@@ -111,7 +110,7 @@ cli redis --install
 
 ## Important Notes
 
-- Initial port (vault_ssh_port_initial) is ONLY used by harden playbook
-- All other playbooks use final port (vault_ssh_port_final)
+- SSH port (vault_ssh_port) is used consistently across all playbooks
+- The system automatically detects the correct port to use
 - The system is smart enough to handle already-hardened servers
 - Grunt user is optional - only created if vault_grunt_user is defined

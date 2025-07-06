@@ -9,7 +9,7 @@ Common issues and solutions for Ansible Cloudy deployments.
 **Symptom**: Cannot connect to server after security setup
 
 **Common Causes**:
-1. Wrong SSH port (changed from 22 to 22022)
+1. Wrong SSH port (changed from 22 to 2222)
 2. Firewall blocking connection
 3. SSH key not installed
 4. Wrong user or authentication method
@@ -18,13 +18,13 @@ Common issues and solutions for Ansible Cloudy deployments.
 
 ```bash
 # Check if using correct port
-ssh root@server -p 22022
+ssh root@server -p 2222
 
 # Verify SSH key exists
 ls -la ~/.ssh/id_rsa
 
 # Test with verbose output
-ssh -vvv root@server -p 22022
+ssh -vvv root@server -p 2222
 
 # Check from different port if locked out
 ssh root@server -p 22
@@ -44,7 +44,7 @@ grep vault_root_password .vault/dev.yml
 sshpass -p 'your_password' ssh root@server
 
 # Check if key-based auth is required
-ssh -o PreferredAuthentications=publickey root@server -p 22022
+ssh -o PreferredAuthentications=publickey root@server -p 2222
 ```
 
 ### Unreachable Host
@@ -58,7 +58,7 @@ ssh -o PreferredAuthentications=publickey root@server -p 22022
 ping server_ip
 
 # Check if port is open
-nc -zv server_ip 22022
+nc -zv server_ip 2222
 
 # Verify firewall rules on server
 # (May need console access)
@@ -220,7 +220,7 @@ sudo ufw status verbose
 # Allow required ports
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
-sudo ufw allow 22022/tcp
+sudo ufw allow 2222/tcp
 
 # Check iptables (if not using UFW)
 sudo iptables -L -n -v
@@ -305,7 +305,7 @@ cli service --install -- -e ansible_command_timeout=300
 ```bash
 # Python module missing
 # Solution: Install on target
-ssh root@server -p 22022 "apt install python3-psycopg2"
+ssh root@server -p 2222 "apt install python3-psycopg2"
 
 # Permission denied
 # Solution: Check become privileges

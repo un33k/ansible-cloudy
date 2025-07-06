@@ -168,9 +168,9 @@ check_prerequisites() {
     # Activate virtual environment
     source "$PROJECT_ROOT/.venv/bin/activate"
     
-    # Verify Claudia CLI
+    # Verify CLI
     if ! command -v cli &> /dev/null; then
-        log_error "Claudia CLI not found in virtual environment"
+        log_error "CLI not found in virtual environment"
         exit 1
     fi
     

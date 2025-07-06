@@ -37,7 +37,7 @@ All vault variables use the `vault_*` prefix for clear organization:
 
 ## Usage Patterns
 
-### With Claudia CLI
+### With CLI
 ```bash
 ./cli psql --install -- -e @.vault/my-dev.yml
 ```

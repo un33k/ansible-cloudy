@@ -6,15 +6,21 @@ This repository is optimized for development with Claude Code. This guide provid
 
 1. **Before Any Code Changes:**
    - Read `/docs/development/04-development/optimization-principles.md`
-   - Check existing patterns with `cli search [pattern]`
+   - Check existing patterns in the codebase
    - Score your approach (must be ≥ 7/10)
 
 2. **Key Commands:**
    ```bash
-   # Always use CLI
-   cli harden --install --dev
-   cli security --install --production-hardening
-   cli [service] --install
+   # IMPORTANT: Always activate Python venv first
+   source .venv/bin/activate
+   
+   # Always use CLI (not direct python commands unless debugging)
+   cli security --install            # SSH hardening + security setup
+   cli base --install               # Base system configuration
+   cli [service] --install          # Service installation
+   
+   # Optional: Change SSH port after everything is set up
+   cli ssh --new-port 2222
    ```
 
 3. **Development Workflow:**
@@ -38,11 +44,13 @@ ansible-cloudy/
    - Files under 200 LOC (target 100 LOC)
    - Single responsibility per module
    - Auto-discovery over configuration
+   - NEVER hardcode values - always use variables from vault/config
 
 2. **Security Model:**
-   - Phase 1: Harden (SSH hardening)
-   - Phase 2: Security (firewall, fail2ban)
-   - Phase 3: Base & Services
+   - Phase 1: Security (SSH hardening, firewall, fail2ban)
+   - Phase 2: Base (system configuration)
+   - Phase 3: Services (application deployment)
+   - Optional: Port change with harden command
 
 3. **Testing Requirements:**
    - Run `cli [command] --check` before `--install`

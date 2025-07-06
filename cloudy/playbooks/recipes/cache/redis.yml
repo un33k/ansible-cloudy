@@ -15,10 +15,10 @@
     task_paths: "../../../tasks"
     
     # Apply defaults with vault override pattern
-    redis_port: "{{ vault_redis_port | default(redis_port_default) }}"
+    redis_port: "{{ vault_redis_port | default(vault_redis_port_default) }}"
     redis_bind: "{{ vault_redis_bind | default(redis_bind_default) }}"
-    redis_maxmemory_mb: "{{ vault_redis_maxmemory_mb | default(redis_maxmemory_mb_default) }}"
-    redis_requirepass: "{{ vault_redis_password | default(redis_requirepass_default) }}"
+    redis_maxmemory_mb: "{{ vault_redis_memory_mb | default(vault_redis_memory_mb_default) }}"
+    redis_requirepass: "{{ vault_redis_password }}"
     redis_loglevel: "{{ vault_redis_loglevel | default(redis_loglevel_default) }}"
     redis_logfile: "{{ vault_redis_logfile | default(redis_logfile_default) }}"
     redis_dir: "{{ vault_redis_dir | default(redis_dir_default) }}"

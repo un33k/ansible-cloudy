@@ -58,6 +58,8 @@ class ServiceScanner:
                 # Normalize special cases
                 if service_name == "all-in-one" and category == "standalone":
                     service_name = "standalone"
+                elif service_name == "ssh-port" and category == "core":
+                    service_name = "ssh"
                 elif service_name.endswith("-production"):
                     # Keep production recipes with their full name
                     pass
@@ -168,28 +170,81 @@ class ServiceScanner:
         """Display all discovered services and operations"""
         services = self.discover_services()
         
-        print(f"{Colors.CYAN}CLI{Colors.NC} (Infrastructure Management Tool)")
-        print(f"{Colors.YELLOW}Intelligent Infrastructure Management Made Intuitive{Colors.NC}\n")
+        print(f"{Colors.CYAN}Ansible Cloudy CLI{Colors.NC}")
+        print(f"{Colors.YELLOW}Available Services and Commands{Colors.NC}\n")
         
-        print(f"{Colors.BLUE}Available Services:{Colors.NC}")
+        # Separate services into categories
+        core_services = []
+        database_services = []
+        web_services = []
+        other_services = []
+        dev_commands = []
         
+        # Only show services with recipes (actual services users should use)
         for service_name, service_info in sorted(services.items()):
-            recipe_status = "✅" if service_info['recipe'] else "⚪"
-            ops_count = len(service_info['operations'])
+            if service_info['recipe']:  # Only show services with recipes
+                service_entry = {
+                    'name': service_name,
+                    'description': service_info['description'],
+                    'ops_count': len(service_info['operations'])
+                }
+                
+                # Categorize services
+                if service_name in ['security', 'base', 'finalize', 'ssh']:
+                    core_services.append(service_entry)
+                elif service_name in ['psql', 'postgis', 'pgvector', 'pgbouncer']:
+                    database_services.append(service_entry)
+                elif service_name in ['nginx', 'django', 'nodejs', 'redis']:
+                    web_services.append(service_entry)
+                else:
+                    other_services.append(service_entry)
+        
+        # Add dev commands
+        dev_commands = [
+            {'name': 'dev validate', 'description': 'Run full validation suite'},
+            {'name': 'dev syntax', 'description': 'Quick syntax check'},
+            {'name': 'dev lint', 'description': 'Run Ansible linting'},
+            {'name': 'dev test', 'description': 'Test authentication flow'},
+            {'name': 'dev precommit', 'description': 'Run all pre-commit checks'}
+        ]
+        
+        # Display categorized services
+        if core_services:
+            print(f"{Colors.BLUE}Core Services:{Colors.NC}")
+            for service in core_services:
+                print(f"  {Colors.GREEN}{service['name']:<15}{Colors.NC} {service['description']}")
+            print()
+        
+        if database_services:
+            print(f"{Colors.BLUE}Database Services:{Colors.NC}")
+            for service in database_services:
+                print(f"  {Colors.GREEN}{service['name']:<15}{Colors.NC} {service['description']}")
+            print()
+        
+        if web_services:
+            print(f"{Colors.BLUE}Web & Cache Services:{Colors.NC}")
+            for service in web_services:
+                print(f"  {Colors.GREEN}{service['name']:<15}{Colors.NC} {service['description']}")
+            print()
+        
+        if other_services:
+            print(f"{Colors.BLUE}Other Services:{Colors.NC}")
+            for service in other_services:
+                if service['name'] not in ['security-production', 'security-verify', 'psql-production', 
+                                           'redis-production', 'nginx-production', 'ssh-port']:
+                    print(f"  {Colors.GREEN}{service['name']:<15}{Colors.NC} {service['description']}")
+            print()
+        
+        print(f"{Colors.BLUE}Development Commands:{Colors.NC}")
+        for cmd in dev_commands:
+            print(f"  {Colors.GREEN}{cmd['name']:<15}{Colors.NC} {cmd['description']}")
             
-            print(f"  {Colors.GREEN}{service_name:<12}{Colors.NC} {recipe_status} {service_info['description']}")
-            
-            if ops_count > 0:
-                operations = list(service_info['operations'].keys())[:3]  # Show first 3 operations
-                ops_display = ", ".join(operations)
-                if ops_count > 3:
-                    ops_display += f", +{ops_count-3} more"
-                print(f"    {Colors.CYAN}Operations:{Colors.NC} {ops_display}")
-            
-        print(f"\n{Colors.YELLOW}Usage:{Colors.NC}")
-        print(f"  {Colors.GREEN}cli <service> --help{Colors.NC}     Show service operations")
-        print(f"  {Colors.GREEN}cli <service> --install{Colors.NC}  Install/setup service")
-        print(f"  {Colors.GREEN}cli psql --adduser foo{Colors.NC}   Create PostgreSQL user")
+        print(f"\n{Colors.YELLOW}Usage Examples:{Colors.NC}")
+        print(f"  {Colors.GREEN}cli --help{Colors.NC}               Show this help")
+        print(f"  {Colors.GREEN}cli <service> --help{Colors.NC}     Show service-specific help")
+        print(f"  {Colors.GREEN}cli security --install{Colors.NC}   Install security setup")
+        print(f"  {Colors.GREEN}cli psql --adduser foo{Colors.NC}   Create PostgreSQL user (granular operation)")
+        print(f"  {Colors.GREEN}cli dev validate{Colors.NC}         Run validation suite")
 
     def get_service_operations(self, service_name: str) -> Dict[str, str]:
         """Get operations for a specific service"""

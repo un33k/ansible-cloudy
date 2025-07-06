@@ -138,7 +138,7 @@ All services support custom port configuration via vault files (`./vault/*.yml`)
 
 ```yaml
 # Example vault configuration
-vault_ssh_port: 22022
+vault_ssh_port: 2222
 vault_postgres_port: 5432
 vault_redis_port: 6379
 vault_redis_password: "secure_redis_password"

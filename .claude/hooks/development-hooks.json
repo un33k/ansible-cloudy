@@ -5,30 +5,30 @@
         "matcher": "Write|Edit|MultiEdit",
         "hooks": [{
           "type": "command",
-          "command": "echo '📋 LEVER Check: Can you extend existing code instead?'"
+          "command": "echo '📋 LEVER Check: Can you extend existing code instead? Review optimization-principles.md'"
         }]
       },
       {
         "matcher": "Write",
         "hooks": [{
           "type": "command",
-          "command": "echo '⚠️  Creating new file - Have you searched for similar patterns first?'"
+          "command": "echo '⚠️  Creating new file - Search for similar patterns first with: cli search [pattern]'"
         }]
       },
       {
         "matcher": "Bash",
         "hooks": [{
           "type": "command",
-          "command": "echo '💡 Reminder: Use Grep/Glob for searching, not find/grep commands'"
+          "command": "echo '💡 Reminder: Use Grep/Glob tools instead of find/grep. For lint/test: npm run lint, npm run typecheck'"
         }]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|MultiEdit",
+        "matcher": "Edit|MultiEdit|Write",
         "hooks": [{
           "type": "command",
-          "command": "echo '✅ Edit complete - Run tests to verify changes'"
+          "command": "echo '✅ Changes complete - Run: cli [command] --check, npm run lint, npm run typecheck'"
         }]
       }
     ]

@@ -13,7 +13,6 @@ sys.path.insert(0, str(cli_dir))
 sys.path.insert(0, str(cmd_dir))
 
 from utils.colors import error  # noqa: E402
-from help_system import show_dev_commands_help  # noqa: E402
 
 
 class DevCommandsHandler:
@@ -25,7 +24,7 @@ class DevCommandsHandler:
     def handle_dev_commands(self, args, ansible_args):
         """Handle all development commands"""
         if not args.subcommand:
-            show_dev_commands_help()
+            # Help is handled by argparse
             return
         
         # Import dev tools

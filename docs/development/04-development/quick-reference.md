@@ -5,8 +5,8 @@
 ### CLI Operations
 ```bash
 # Development workflow
-cli harden --check --dev          # Dry run SSH hardening
-cli harden --install --dev        # Apply SSH hardening
+cli ssh --new-port 2222 --check   # Dry run SSH port change
+cli ssh --new-port 2222           # Change SSH port
 cli security --check --dev        # Dry run security
 cli security --install --dev      # Apply security
 cli base --install --dev          # Install base packages

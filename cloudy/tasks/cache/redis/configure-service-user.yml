@@ -12,7 +12,7 @@
     service_directories:
       - "/var/lib/redis"
       - "/var/log/redis"
-  when: use_grunt_for_redis | default(false)
+  when: use_grunt_for_redis | use_grunt_for_redis_default
 
 - name: Update Redis systemd service to use grunt user
   lineinfile:
@@ -20,7 +20,7 @@
     regexp: '^User='
     line: "User={{ effective_service_user }}"
     backup: true
-  when: use_grunt_for_redis | default(false) and vault_grunt_user is defined
+  when: use_grunt_for_redis | use_grunt_for_redis_default and vault_grunt_user is defined
   notify: 
     - reload systemd
     - restart redis
@@ -31,7 +31,7 @@
     regexp: '^Group='
     line: "Group={{ effective_service_user }}"
     backup: true
-  when: use_grunt_for_redis | default(false) and vault_grunt_user is defined
+  when: use_grunt_for_redis | use_grunt_for_redis_default and vault_grunt_user is defined
   notify: 
     - reload systemd  
     - restart redis
@@ -46,13 +46,13 @@
   loop:
     - "/var/lib/redis"
     - "/var/log/redis"
-  when: use_grunt_for_redis | default(false) and vault_grunt_user is defined
+  when: use_grunt_for_redis | use_grunt_for_redis_default and vault_grunt_user is defined
 
 - name: Display Redis service user configuration
   debug:
     msg: |
       📦 Redis Service User Configuration:
-      ├── Service User: {{ effective_service_user if use_grunt_for_redis | default(false) and vault_grunt_user is defined else 'redis (default)' }}
-      ├── Grunt User Override: {{ 'Enabled' if use_grunt_for_redis | default(false) and vault_grunt_user is defined else 'Disabled' }}
+      ├── Service User: {{ effective_service_user if use_grunt_for_redis | use_grunt_for_redis_default and vault_grunt_user is defined else 'redis (default)' }}
+      ├── Grunt User Override: {{ 'Enabled' if use_grunt_for_redis | use_grunt_for_redis_default and vault_grunt_user is defined else 'Disabled' }}
       ├── Data Directory: /var/lib/redis
       └── Log Directory: /var/log/redis

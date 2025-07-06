@@ -1,6 +1,6 @@
 # Contributing to Ansible Cloudy
 
-Welcome to **Ansible Cloudy**! This guide will help you contribute effectively to our intelligent infrastructure automation project featuring the **Claudia CLI**.
+Welcome to **Ansible Cloudy**! This guide will help you contribute effectively to our intelligent infrastructure automation project featuring the **CLI**.
 
 ## 🚀 Quick Start for Contributors
 
@@ -27,7 +27,7 @@ cli dev syntax
 
 ### Development Workflow
 
-1. **Understand the Architecture**: Familiarize yourself with the Claudia CLI system
+1. **Understand the Architecture**: Familiarize yourself with the CLI system
    ```bash
    cli --help                    # View all available services
    cli security                  # View service-specific help
@@ -43,7 +43,7 @@ cli dev syntax
 
 3. **Make Changes**: Follow project architecture and conventions
    - **Ansible Tasks**: Add to `cloudy/tasks/` with single responsibility
-   - **Service Operations**: Add to `dev/claudia/operations/` for CLI functionality
+   - **Service Operations**: Add to `dev/cli/operations/` for CLI functionality
    - **Recipes**: Add to `cloudy/playbooks/recipes/` for high-level workflows
    - **Documentation**: Update relevant .md files
 
@@ -147,7 +147,7 @@ ansible-cloudy/
 │   ├── inventory/            # Server inventory configurations
 │   └── ansible.cfg           # Ansible configuration
 ├── dev/                      # Development tools and CLI implementation
-│   ├── claudia/             # Python CLI implementation
+│   ├── cli/             # Python CLI implementation
 │   │   ├── cli/             # Command parsing and routing
 │   │   ├── operations/      # Service-specific operations
 │   │   ├── discovery/       # Auto-discovery system
@@ -205,9 +205,9 @@ Create recipe in `cloudy/playbooks/recipes/`:
 ```
 
 #### 3. CLI Operations (Frontend Interface)
-Create operations class in `dev/claudia/operations/`:
+Create operations class in `dev/cli/operations/`:
 ```python
-# dev/claudia/operations/mysql.py
+# dev/cli/operations/mysql.py
 class MySQLOperations(BaseServiceOperations):
     def __init__(self):
         super().__init__("mysql", "db")
@@ -230,15 +230,15 @@ class MySQLOperations(BaseServiceOperations):
 - Descriptive task names explaining purpose
 - Proper error handling with `register` and `when`
 - Use variables instead of hardcoded values
-- Include Claudia-Operation headers for auto-discovery
+- Include CLI-Operation headers for auto-discovery
 - Keep files under 200 LOC
 
-**Example Task with Claudia Integration:**
+**Example Task with CLI Integration:**
 ```yaml
 ---
-# Claudia-Operation: configure-port
-# Claudia-Description: Change MySQL port configuration
-# Claudia-Parameters: --port (required)
+# CLI-Operation: configure-port
+# CLI-Description: Change MySQL port configuration
+# CLI-Parameters: --port (required)
 
 - name: Update MySQL port configuration
   lineinfile:
@@ -318,7 +318,7 @@ class MySQLOperations(BaseServiceOperations):
 all:
   vars:
     ansible_user: admin
-    ansible_port: 22022
+    ansible_port: 2222
     
   children:
     web_servers:
@@ -333,7 +333,7 @@ all:
 ### Running Tests
 
 ```bash
-# Full test suite via Claudia CLI
+# Full test suite via CLI
 cli dev validate
 
 # Individual validations

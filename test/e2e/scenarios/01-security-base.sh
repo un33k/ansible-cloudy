@@ -19,8 +19,8 @@ run_test_suite() {
     run_cli_command "security" "--install" || return 1
     
     # Verify SSH port change
-    log_test "Verifying SSH port change to 22022..."
-    if docker exec ansible-cloudy-${TEST_HOST} ss -tlnp | grep -q ":22022"; then
+    log_test "Verifying SSH port change to 2222..."
+    if docker exec ansible-cloudy-${TEST_HOST} ss -tlnp | grep -q ":2222"; then
         log_success "SSH port changed successfully"
     else
         log_error "SSH port change failed"

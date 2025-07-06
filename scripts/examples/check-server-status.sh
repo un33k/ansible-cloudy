@@ -55,19 +55,19 @@ else
     NEEDS_HARDEN=false
 fi
 
-# Check port 22022 with SSH key
-echo -e "${YELLOW}Testing port 22022 with SSH key...${NC}"
-if [ "$(test_ssh 22022 key)" = "OK" ]; then
-    echo -e "${GREEN}✓ SSH key auth works on port 22022${NC}"
+# Check port 2222 with SSH key
+echo -e "${YELLOW}Testing port 2222 with SSH key...${NC}"
+if [ "$(test_ssh 2222 key)" = "OK" ]; then
+    echo -e "${GREEN}✓ SSH key auth works on port 2222${NC}"
     HARDENED=true
 else
-    echo -e "${RED}✗ Cannot connect on port 22022${NC}"
+    echo -e "${RED}✗ Cannot connect on port 2222${NC}"
     HARDENED=false
 fi
 
 # Check for grunt user
 echo -e "${YELLOW}Testing grunt user access...${NC}"
-if [ "$(test_ssh 22022 key grunt)" = "OK" ]; then
+if [ "$(test_ssh 2222 key grunt)" = "OK" ]; then
     echo -e "${GREEN}✓ Grunt user exists and has SSH access${NC}"
     SECURITY_DONE=true
 else

@@ -1,6 +1,6 @@
 # Ansible Cloudy - Infrastructure Automation
 
-**Ansible Cloudy** is a comprehensive infrastructure automation toolkit featuring the **Claudia CLI** - an intelligent command-line interface that simplifies server deployment and management through Ansible playbooks.
+**Ansible Cloudy** is a comprehensive infrastructure automation toolkit featuring the **CLI** - an intelligent command-line interface that simplifies server deployment and management through Ansible playbooks.
 
 ## 🚀 Key Features
 
@@ -36,7 +36,8 @@ cli redis       # View Redis setup help and all parameters
 
 # Execute recipes with universal parameter support
 cli security --install                           # Security setup (admin user, SSH keys, firewall)
-cli base --install                               # Base configuration (hostname, git, timezone, swap)
+cli base --install                               # Base configuration (hostname, git, timezone, docker)
+cli finalize --install                           # System upgrades, optional port change, reboot
 cli psql --install --port 5544 --pgis           # PostgreSQL with PostGIS on custom port
 cli redis --install --port 6380 --memory 512    # Redis with custom port and memory
 cli nginx --install --domain example.com --ssl  # Nginx with SSL domain
@@ -61,8 +62,8 @@ cli pgbouncer --configure-port 6433            # Configure connection pooler
 
 ## 🏗️ Architecture Overview
 
-### Claudia CLI - Intelligent Command Interface
-The **Claudia CLI** is the heart of Ansible Cloudy, providing:
+### CLI - Intelligent Command Interface
+The **CLI** is the heart of Ansible Cloudy, providing:
 
 - **🔍 Auto-Discovery**: Services and operations automatically discovered from filesystem
 - **📋 Universal Parameters**: Intuitive CLI with `--port`, `--domain`, `--ssl` instead of complex Ansible variables
@@ -84,7 +85,7 @@ The **Claudia CLI** is the heart of Ansible Cloudy, providing:
 - **🔑 SSH Key Authentication**: Root access via SSH keys only (no password brute force)
 - **👤 Admin Emergency Access**: Dual authentication (password + SSH keys) for manual operations
 - **🔥 Smart Firewall**: UFW automatically configured with service-specific ports
-- **🚪 Custom SSH Port**: Default port 22022 with seamless migration
+- **🚪 Custom SSH Port**: Default port 2222 with seamless migration
 - **🛡️ Enterprise Hardening**: Fail2ban, connection limits, secure SSH configuration
 - **🔒 Kernel Security**: Hardened sysctl parameters, ASLR, secure shared memory
 - **📝 Audit Logging**: Comprehensive audit trail with auditd and logrotate
@@ -153,7 +154,7 @@ Configure servers in `cloudy/inventory/dev.yml`:
 all:
   vars:
     ansible_user: admin         # Connect as admin user (after setup)
-    ansible_port: 22022         # Custom SSH port
+    ansible_port: 2222         # Custom SSH port
     ansible_host_key_checking: false
     
   children:
@@ -181,9 +182,9 @@ vim .vault/my-dev.yml
 Example vault content:
 ```yaml
 vault_root_password: "secure_root_password_123"
-vault_admin_password: "secure_admin_password_456"
-vault_admin_user: "admin"
-vault_ssh_port: 22022
+vault_grunt_password: "secure_grunt_password_456"
+vault_grunt_user: "grunt"
+vault_ssh_port: 2222
 ```
 
 ### 3. Two-Phase Authentication Model
@@ -199,7 +200,7 @@ ansible_port: 22
 ```yaml
 # After hardening - inventory configuration
 ansible_user: "{{ vault_root_user }}"
-ansible_port: "{{ vault_ssh_port_final }}"
+ansible_port: "{{ vault_ssh_port }}"
 # Now using SSH keys only, no passwords
 ```
 
@@ -216,7 +217,7 @@ cli security --install
 # Or for production environments with maximum security:
 # cli security --install --production-hardening
 
-# Step 3: Base server configuration (hostname, git, timezone, swap)
+# Step 3: Base server configuration (hostname, git, timezone, docker)
 cli base --install
 
 # Step 4: Database layer with custom parameters
@@ -225,8 +226,12 @@ cli psql --install --port 5544 --pgis
 # Step 5: Web application layer
 cli django --install
 
-# Step 5: Load balancer with SSL domain
+# Step 6: Load balancer with SSL domain
 cli nginx --install --domain example.com --ssl
+
+# Step 7: Finalize with system upgrades and optional SSH port change
+cli finalize --install                    # Upgrades and reboot if needed
+# cli finalize --install --change-port    # Also change SSH to port 2222
 ```
 
 ### Redis Cache Server with Custom Configuration
@@ -321,7 +326,7 @@ Ansible Cloudy includes comprehensive development tools:
 ./bootstrap.sh                    # Setup Python virtual environment with all tools
 source .venv/bin/activate         # Activate development environment
 
-# Validation commands via Claudia CLI
+# Validation commands via CLI
 cli dev syntax              # Quick syntax check
 cli dev validate            # Comprehensive validation suite
 cli dev lint                # Ansible linting with rules

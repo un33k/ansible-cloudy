@@ -32,7 +32,7 @@ vault_root_ssh_password_authentication: false
 vault_ssh_host_key_checking: false
 vault_ssh_common_args: "-o StrictHostKeyChecking=no"
 vault_ssh_port_initial: 22
-vault_ssh_port_final: 22022
+vault_ssh_port_final: 2222
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Test User"
@@ -100,7 +100,7 @@ all:
     security_targets:
       vars:
         ansible_user: "{{ vault_root_user }}"
-        ansible_port: 22022
+        ansible_port: 2222
         ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
         ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
         ansible_ssh_common_args: "{{ vault_ssh_common_args }}"
@@ -111,7 +111,7 @@ all:
     service_targets:
       vars:
         ansible_user: "{{ vault_root_user }}"
-        ansible_port: 22022
+        ansible_port: 2222
         ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file }}"
         ansible_host_key_checking: "{{ vault_ssh_host_key_checking }}"
         ansible_ssh_common_args: "{{ vault_ssh_common_args }}"

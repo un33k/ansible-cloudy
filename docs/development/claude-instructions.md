@@ -10,15 +10,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **NO enthusiastic confirmations**: Avoid phrases like "You're absolutely right!" or "Excellent point!" unless answering a specific question
 - **Be direct and concise**: Get straight to implementation without excessive commentary
 
-### Claudia CLI Mandatory Usage
-- **ALWAYS use `cli` or `cli` for operations**: Unless debugging internal mechanisms, use Claudia CLI for all testing and execution (requires activated venv)
+### CLI Mandatory Usage
+- **ALWAYS use `cli` or `cli` for operations**: Unless debugging internal mechanisms, use CLI for all testing and execution (requires activated venv)
 - **NO direct ansible-playbook calls**: Use `cli [service] --install` instead of direct Ansible commands
 - **Testing**: Use `cli [service] --install --check` for dry runs
 - **Granular operations**: Use `cli psql --adduser foo --password 1234` for specific tasks
 
-### Claudia Architecture Standards
-- **Smart intuitive interface**: Make Claudia CLI intelligent and user-friendly with auto-discovery
-- **Proper organization**: Keep everything under `dev/claudia/` directory with clear separation of responsibilities
+### CLI Architecture Standards
+- **Smart intuitive interface**: Make CLI intelligent and user-friendly with auto-discovery
+- **Proper organization**: Keep everything under `dev/cli/` directory with clear separation of responsibilities
 - **File size limits**: Keep ALL files under 200 LOC, target 100 LOC maximum
 - **Modular design**: Each component handles one responsibility (discovery, operations, execution, etc.)
 - **Auto-discovery**: Services and operations automatically discovered from filesystem structure
@@ -26,12 +26,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development Workflow
 1. **Activate venv**: `source .venv/bin/activate` before using cli
-2. **Use Claudia CLI**: `cli [service] --install` for recipe operations
+2. **Use CLI**: `cli [service] --install` for recipe operations
 3. **Use granular operations**: `cli psql --adduser foo --password 1234` for specific tasks
 4. **Test with dry runs**: `cli [service] --install --check` before real execution  
 4. **Maintain modularity**: Keep recipes focused, use `import_playbook` for orchestration
-5. **File organization**: `/claudia/` for CLI, `/tasks/` for reusable components, `/recipes/` for orchestration
-6. **Auto-discovery**: Add Claudia metadata headers to tasks for automatic CLI integration
+5. **File organization**: `/cli/` for CLI, `/tasks/` for reusable components, `/recipes/` for orchestration
+6. **Auto-discovery**: Add CLI metadata headers to tasks for automatic CLI integration
 
 ## Development Commands
 
@@ -52,7 +52,7 @@ cd ansible-cloudy/
 
 ### Core Development Commands
 
-#### Simplified Server Setup (Recommended) - Using Claudia CLI
+#### Simplified Server Setup (Recommended) - Using CLI
 
 **🔒 Simplified Authentication Model:**
 
@@ -90,10 +90,10 @@ cd ansible-cloudy/
 
 #### Development Tools
 - **Bootstrap**: `./bootstrap.sh` - Sets up .venv with all development tools
-- **Claudia CLI**: `cli security --install` - Intelligent infrastructure management
-- **Claudia Dev Commands**: `cli dev validate` (pre-commit suite), `cli dev syntax`, `cli dev comprehensive`, `cli dev lint`, `cli dev test`
+- **CLI**: `cli security --install` - Intelligent infrastructure management
+- **CLI Dev Commands**: `cli dev validate` (pre-commit suite), `cli dev syntax`, `cli dev comprehensive`, `cli dev lint`, `cli dev test`
 - **Authentication test**: `cli dev test` - Test server authentication flow
-- **Service discovery**: `cli --list-services` - Show all auto-discovered services
+- **Service discovery**: `cli --list` - Show all auto-discovered services and commands
 - **Clean output**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Spell checking**: Configured via `dev/.cspell.json` with 480+ technical terms
 - **Linting**: Configured via `dev/.ansible-lint.yml` and `dev/.yamlint.yml`
@@ -196,7 +196,7 @@ cli nginx --install   # Nginx load balancer
 **Security Features**:
 - ✅ Root login disabled (`PermitRootLogin no`)
 - ✅ Grunt user with SSH key authentication
-- ✅ Custom SSH port (default: 22022)
+- ✅ Custom SSH port (default: 2222)
 - ✅ UFW firewall configured
 - ✅ Sudo access for privileged operations
 
@@ -208,10 +208,10 @@ cli nginx --install   # Nginx load balancer
 - ✅ **Always Shown**: Changed tasks, failed tasks, unreachable hosts
 - ✅ **Hidden by Default**: Successful unchanged tasks, skipped tasks
 
-### Claudia Recipe Examples
+### CLI Recipe Examples
 
 ```bash
-# Claudia CLI - Universal Parameter Support
+# CLI - Universal Parameter Support
 # Help and Discovery (default action)
 cli security                  # Show security help and configuration options
 cli base                      # Show base setup help and variables
@@ -281,7 +281,7 @@ cli dev lint                      # Ansible linting
 cli dev spell                     # Spell checking
 
 # Service discovery
-cli --list-services               # Show all available services and operations
+cli --list                        # Show all available services and commands
 ```
 
 #### Recipe Categories
@@ -297,7 +297,7 @@ cli --list-services               # Show all available services and operations
 ## Environment Configuration
 
 ### Environment Selection
-Claudia supports multiple environments with flexible configuration options:
+CLI supports multiple environments with flexible configuration options:
 
 **Built-in Environments:**
 - `--dev` (default): Development environment using `inventory/dev.yml`
@@ -356,7 +356,7 @@ all:
   vars:
     ansible_user: admin
     ansible_ssh_pass: secure123
-    ansible_port: 22022
+    ansible_port: 2222
     
   children:
     generic_servers:
@@ -366,7 +366,7 @@ all:
           hostname: web.example.com
           admin_user: admin
           admin_password: secure123
-          ssh_port: 22022
+          ssh_port: 2222
 ```
 
 ### Recipe Pattern
@@ -399,7 +399,7 @@ Example recipe structure:
 
 ## Test Suite
 
-Claudia includes a comprehensive pytest-based test suite:
+CLI includes a comprehensive pytest-based test suite:
 
 ```bash
 # Run all tests
@@ -438,19 +438,19 @@ pip install ansible
 cd ansible-cloudy/
 ```
 
-### Core Claudia Commands
+### Core CLI Commands
 - **Show service help**: `cli [service-name]` (security, base, psql, redis, nginx, etc.)
 - **Execute recipes with parameters**: `cli [service-name] --install [options]` (requires explicit flag for safety)
 - **Granular operations**: `cli psql --adduser foo --password 1234` (no recipe installation)
 - **Test authentication flow**: `cli dev test`
-- **Service discovery**: `cli --list-services` (show all available services and operations)
+- **Service discovery**: `cli --list` (show all available services and commands)
 - **Clean output (changes only)**: Configured in `ansible.cfg` with `display_skipped_hosts = no`
 - **Alternative output formats**:
   - `ANSIBLE_STDOUT_CALLBACK=minimal cli ... --install` (compact format)
   - `ANSIBLE_STDOUT_CALLBACK=oneline cli ... --install` (one line per task)
   - Standard verbose: `cli ... --install -v` (detailed debugging)
 
-### Claudia Service Examples
+### CLI Service Examples
 ```bash
 # Help and configuration (default action)
 cli security              # Show security help and options
@@ -493,7 +493,7 @@ cli pgbouncer --set-pool-size 50                  # Update connection pool size
 - ✅ **Safe Authentication Flow**: UFW firewall configured before SSH port changes
 - ✅ **SSH Key Management**: Automated public key installation and validation
 - ✅ **Connection Transition**: Seamless root-to-admin user switching
-- ✅ **Firewall Integration**: Port 22022 opened before SSH service restart
+- ✅ **Firewall Integration**: Port 2222 opened before SSH service restart
 - ✅ **Sudo Configuration**: NOPASSWD sudo access for admin operations
 - ✅ **Root Login Disable**: Safely disabled after admin user verification
 - ✅ **Kernel Hardening**: Production-ready sysctl parameters, ASLR, secure shared memory
@@ -509,7 +509,7 @@ all:
   vars:
     ansible_user: admin          # Connect as admin user (after setup)
     ansible_ssh_pass: secure123  # Admin password
-    ansible_port: 22022          # Custom SSH port
+    ansible_port: 2222          # Custom SSH port
     ansible_host_key_checking: false
     
   children:
@@ -538,7 +538,7 @@ This shows only:
 
 ## 🔒 Simple Vault Configuration
 
-Claudia uses a simple vault system for credential management without encryption complexity.
+CLI uses a simple vault system for credential management without encryption complexity.
 
 ### Vault Directory Structure
 
@@ -559,7 +559,7 @@ cp .vault/dev.yml.example .vault/my-dev.yml
 # Edit with your real credentials
 vim .vault/my-dev.yml
 
-# Use with Claudia commands
+# Use with CLI commands
 cli psql --install -- -e @.vault/my-dev.yml
 ```
 
@@ -572,7 +572,7 @@ cli psql --install -- -e @.vault/my-dev.yml
 ### Usage with Playbooks
 
 ```bash
-# Use vault with Claudia commands
+# Use vault with CLI commands
 cli psql --install -- -e @.vault/my-dev.yml
 
 # Production deployment
@@ -595,11 +595,11 @@ ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbooks/recipes/db
 ---
 # === AUTHENTICATION CREDENTIALS ===
 vault_root_password: "your_root_password_here"
-vault_admin_password: "your_admin_password_here"
+vault_grunt_password: "your_grunt_password_here"
 
 # === CONNECTION CONFIGURATION ===
-vault_admin_user: "admin"
-vault_ssh_port: 22022
+vault_grunt_user: "grunt"
+vault_ssh_port: 2222
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Your Full Name"
@@ -684,7 +684,7 @@ cli redis --install
 Every service recipe automatically validates:
 - ✅ Connected as root user with SSH keys
 - ✅ Using SSH keys (no passwords)
-- ✅ Secure SSH port (22022 instead of 22)
+- ✅ Secure SSH port (2222 instead of 22)
 - ✅ Full root access available
 - ❌ Fails with clear error messages if wrong connection type
 
@@ -702,8 +702,8 @@ The admin user is **completely optional** and only created if you define it in v
 
 ```yaml
 # .vault/dev.yml
-vault_admin_user: "myservice"    # Uncomment to enable admin user creation
-vault_admin_password: "secret"
+vault_grunt_user: "myservice"    # Uncomment to enable grunt user creation
+vault_grunt_password: "secret"
 ```
 
 **When to use admin user:**

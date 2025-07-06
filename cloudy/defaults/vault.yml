@@ -4,37 +4,37 @@
 # in the actual vault files (.vault/*.yml)
 
 # === AUTHENTICATION DEFAULTS ===
-vault_root_user: "root"
-vault_root_ssh_private_key_file: "~/.ssh/id_rsa"
-vault_root_ssh_password_authentication: false
-vault_ssh_host_key_checking: false
-vault_ssh_common_args: "-o StrictHostKeyChecking=no"
+# NOTE: vault_root_user should come from vault - no default
+# NOTE: vault_root_password should come from vault - no default
+vault_root_ssh_private_key_file_default: "~/.ssh/id_rsa"
+vault_root_ssh_password_authentication_default: false
+vault_ssh_host_key_checking_default: false
+vault_ssh_common_args_default: "-o StrictHostKeyChecking=no"
 
 # === SSH PORT DEFAULTS ===
-vault_ssh_port_final: 22022       # Secure SSH port after security setup
-vault_ssh_port_initial: 22        # Standard SSH port for initial setup
+# SSH Port Configuration:
+# - vault_ssh_port: Configuration variable defining what port SSH is configured on
+# - ansible_port: Runtime variable set in inventory files as: ansible_port: "{{ vault_ssh_port }}"
+# - Only override vault_ssh_port in .vault/*.yml files, never hardcode ansible_port
+vault_ssh_port_default: 22                # SSH port for server connections (default: 22)
 
 # === GLOBAL CONFIGURATION DEFAULTS ===
-vault_git_user_full_name: "System Administrator"
-vault_git_user_email: "admin@example.com"
-vault_timezone: "America/New_York"
-vault_locale: "en_US.UTF-8"
+vault_git_user_full_name_default: "System Administrator"
+vault_git_user_email_default: "admin@example.com"
+vault_timezone_default: "America/New_York"
+vault_locale_default: "en_US.UTF-8"
 
-# === OPTIONAL GRUNT USER DEFAULTS ===
-# These are empty by default - grunt user is only created if defined
-vault_grunt_user: ""
-vault_grunt_password: ""
-vault_grunt_groups: "sudo,adm,systemd-journal"
-vault_grunt_ssh_private_key_file: "~/.ssh/id_rsa"
+# === OPTIONAL GRUNT USER ===
+# NOTE: vault_grunt_user should come from vault - no default (empty = skip creation)
+# NOTE: vault_grunt_password should come from vault - no default (empty = generate)
+vault_grunt_ssh_private_key_file_default: "~/.ssh/id_rsa"
 
 # === LEGACY COMPATIBILITY ===
 # Map old variable names to new ones for backward compatibility
-vault_ansible_user: "{{ vault_root_user | default('root') }}"
-vault_ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file | default('~/.ssh/id_rsa') }}"
-vault_ansible_host_key_checking: "{{ vault_ssh_host_key_checking | default(false) }}"
-vault_ansible_ssh_common_args: "{{ vault_ssh_common_args | default('-o StrictHostKeyChecking=no') }}"
-vault_ssh_port: "{{ vault_ssh_port_final | default(22022) }}"
-vault_initial_ssh_port: "{{ vault_ssh_port_initial | default(22) }}"
+vault_ansible_user: "{{ vault_root_user }}"
+vault_ansible_ssh_private_key_file: "{{ vault_root_ssh_private_key_file | default(vault_root_ssh_private_key_file_default) }}"
+vault_ansible_host_key_checking: "{{ vault_ssh_host_key_checking | default(vault_ssh_host_key_checking_default) }}"
+vault_ansible_ssh_common_args: "{{ vault_ssh_common_args | default(vault_ssh_common_args_default) }}"
 vault_admin_user: "{{ vault_grunt_user | default('') }}"
 vault_admin_password: "{{ vault_grunt_password | default('') }}"
 
@@ -47,23 +47,23 @@ vault_admin_password: "{{ vault_grunt_password | default('') }}"
 # vault_vpn_passphrase: ""        # Required for VPN
 
 # === SERVICE PORTS DEFAULTS ===
-vault_postgresql_port: 5432       # PostgreSQL standard port
-vault_pgbouncer_port: 6432        # PgBouncer standard port
-vault_redis_port: 6379            # Redis standard port
-vault_mysql_port: 3306            # MySQL standard port
-vault_nginx_http_port: 80         # HTTP standard port
-vault_nginx_https_port: 443       # HTTPS standard port
+vault_postgresql_port_default: 5432       # PostgreSQL standard port
+vault_pgbouncer_port_default: 6432        # PgBouncer standard port
+vault_redis_port_default: 6379            # Redis standard port
+vault_mysql_port_default: 3306            # MySQL standard port
+vault_nginx_http_port_default: 80         # HTTP standard port
+vault_nginx_https_port_default: 443       # HTTPS standard port
 
 # === SERVICE CONFIGURATION DEFAULTS ===
-vault_redis_memory_mb: 512        # Redis memory limit in MB
-vault_pgbouncer_pool_size: 25     # Connection pool size
-vault_pgbouncer_max_clients: 100  # Maximum client connections
+vault_redis_memory_mb_default: 512        # Redis memory limit in MB
+vault_pgbouncer_pool_size_default: 25     # Connection pool size
+vault_pgbouncer_max_clients_default: 100  # Maximum client connections
 
 # === NETWORK CONFIGURATION DEFAULTS ===
-vault_listen_interface: "0.0.0.0" # Listen on all interfaces
-vault_localhost: "127.0.0.1"      # Localhost address
+vault_listen_interface_default: "0.0.0.0" # Listen on all interfaces
+vault_localhost_default: "127.0.0.1"      # Localhost address
 
 # === DATABASE CONFIGURATION DEFAULTS ===
-vault_db_encoding: "UTF8"
-vault_db_lc_collate: "en_US.UTF-8"
-vault_db_lc_ctype: "en_US.UTF-8"
+vault_db_encoding_default: "UTF8"
+vault_db_lc_collate_default: "en_US.UTF-8"
+vault_db_lc_ctype_default: "en_US.UTF-8"

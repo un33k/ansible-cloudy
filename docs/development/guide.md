@@ -1,12 +1,12 @@
 # Ansible Cloudy - Development Tools & CLI Implementation
 
-This directory contains the **Claudia CLI** implementation and essential development tools for **Ansible Cloudy**.
+This directory contains the **CLI** implementation and essential development tools for **Ansible Cloudy**.
 
 ## 🏗️ Architecture Overview
 
 The `dev/` directory houses two main components:
 
-### **Claudia CLI Implementation** (`dev/claudia/`)
+### **CLI Implementation** (`dev/cli/`)
 Sophisticated Python-based CLI with intelligent auto-discovery and universal parameter mapping.
 
 ### **Development Tools** (`dev/*.py`, `dev/*.sh`)
@@ -32,35 +32,35 @@ cli dev syntax
 cli dev test
 ```
 
-## 🧠 Claudia CLI Implementation
+## 🧠 CLI Implementation
 
 ### **Architecture Components**
 
-#### **`claudia/cli/main.py`** - Command Router
+#### **`cli/cli/main.py`** - Command Router
 - **Entry Point**: Main CLI coordinator and argument parser
 - **Service Routing**: Dispatches commands to service-specific operations
 - **Help System**: Coordinates context-aware help display
 - **Development Integration**: Routes to dev tools for validation and testing
 
-#### **`claudia/operations/`** - Service Operations
+#### **`cli/operations/`** - Service Operations
 - **`base_service.py`**: Abstract base class for all service operations
 - **`postgresql.py`**: PostgreSQL operations with 17+ granular commands
 - **`redis.py`**: Redis configuration with memory, port, password management
 - **`nginx.py`**: Nginx load balancer with domain and SSL management
 - **`recipes.py`**: Recipe discovery and execution management
 
-#### **`claudia/discovery/service_scanner.py`** - Auto-Discovery
+#### **`cli/discovery/service_scanner.py`** - Auto-Discovery
 - **Service Detection**: Scans filesystem for available services and operations
 - **Dynamic Mapping**: Maps directory structure to CLI commands
-- **Metadata Extraction**: Parses Claudia-Operation headers from task files
+- **Metadata Extraction**: Parses CLI-Operation headers from task files
 - **Help Generation**: Automatically generates help from discovered metadata
 
-#### **`claudia/execution/ansible.py`** - Execution Engine
+#### **`cli/execution/ansible.py`** - Execution Engine
 - **AnsibleRunner**: Executes Ansible automation with proper context
 - **SmartSecurityRunner**: Handles intelligent server security and connection management
 - **Task Execution**: Runs individual Ansible tasks for granular operations
 
-#### **`claudia/utils/`** - Support Systems
+#### **`cli/utils/`** - Support Systems
 - **`config.py`**: Project configuration and path management
 - **`colors.py`**: Consistent terminal color output
 - **`connection_manager.py`**: Smart connection detection and validation
@@ -156,9 +156,9 @@ cloudy/tasks/db/mysql/
     - include_tasks: ../../tasks/db/mysql/install.yml
 ```
 
-#### 3. **Create CLI Operations** (`dev/claudia/operations/`)
+#### 3. **Create CLI Operations** (`dev/cli/operations/`)
 ```python
-# dev/claudia/operations/mysql.py
+# dev/cli/operations/mysql.py
 class MySQLOperations(BaseServiceOperations):
     def get_parameter_mappings(self):
         return {
@@ -277,7 +277,7 @@ cli dev validate
 ### **CLI Development Issues**
 ```bash
 # Service not discovered
-cli --list-services
+cli --list
 
 # Parameter mapping not working
 cli [service] --help

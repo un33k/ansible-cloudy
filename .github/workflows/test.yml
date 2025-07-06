@@ -92,9 +92,9 @@ jobs:
       run: |
         source .venv/bin/activate
         # Test key recipes in check mode
-        cli harden --check || echo "Harden dry run completed"
         cli security --check || echo "Security dry run completed"
         cli base --check || echo "Base dry run completed"
+        cli ssh --help || echo "SSH help completed"
         cli django --check || echo "Django dry run completed"
         cli redis --check || echo "Redis dry run completed"
     
@@ -124,7 +124,6 @@ jobs:
         echo "- cli dev lint: ✅" >> test-report.md
         echo "- cli dev spell: ⚠️ (warnings)" >> test-report.md
         echo "- cli dev validate: ✅" >> test-report.md
-        echo "- cli harden --check: ✅" >> test-report.md
         echo "- cli security --check: ✅" >> test-report.md
         echo "- cli security --check --prod: ✅" >> test-report.md
         echo "- cli security --check --production-hardening: ✅" >> test-report.md

@@ -4,7 +4,7 @@
 # These are overridden by vault_security_<setting> variables
 
 # === SSH DEFAULTS ===
-ssh_port_default: 22            # Standard SSH port (override with vault for security)
+# SSH port is defined in vault.yml as vault_ssh_port (default: 22)
 ssh_permit_root_login_default: "prohibit-password"
 ssh_password_authentication_default: "no"
 ssh_pubkey_authentication_default: "yes"
@@ -56,10 +56,10 @@ sysctl_rp_filter_default: 1
 sysctl_tcp_timestamps_default: 0
 
 # === USER DEFAULTS ===
-admin_user_default: "admin"
-admin_shell_default: "/bin/bash"
-admin_groups_default: "sudo,adm,systemd-journal"
-admin_sudo_default: "ALL=(ALL) NOPASSWD:ALL"
+grunt_shell_default: "/bin/bash"
+grunt_groups_string_default: "sudo,adm,systemd-journal,www-data,docker,ssl-cert"
+grunt_create_home_default: true
+grunt_sudo_default: "ALL=(ALL) NOPASSWD:ALL"
 
 # === PASSWORD POLICY DEFAULTS ===
 password_min_length_default: 12
@@ -103,6 +103,7 @@ kernel_modules_blacklist_default:
   - "usb-storage"
 
 # === ANSIBLE CONNECTION DEFAULTS ===
+# NOTE: These are legacy - should use vault_* versions instead
 ansible_user_default: "root"
 ansible_ssh_private_key_file_default: "~/.ssh/id_rsa"
 ansible_ssh_common_args_default: "-o StrictHostKeyChecking=no"

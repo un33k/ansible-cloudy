@@ -40,9 +40,9 @@ main() {
     # Test 2: CLI availability
     echo "Test 2: CLI availability"
     if command -v cli &> /dev/null; then
-        log_success "Claudia CLI available"
+        log_success "CLI available"
     else
-        log_error "Claudia CLI not found"
+        log_error "CLI not found"
     fi
     
     # Test 3: Syntax validation
@@ -63,7 +63,7 @@ main() {
     
     # Test 5: Service discovery
     echo "Test 5: Service discovery"
-    if cli --list-services | grep -q "security"; then
+    if cli --list | grep -q "security"; then
         log_success "Service discovery working"
     else
         log_error "Service discovery failed"

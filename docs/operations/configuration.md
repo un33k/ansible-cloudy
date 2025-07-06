@@ -32,17 +32,15 @@ Vault files contain sensitive credentials and configuration overrides. They are:
 # .vault/production.yml
 ---
 # === AUTHENTICATION CREDENTIALS ===
-vault_root_password: "secure_root_password"
-vault_admin_password: "secure_admin_password"
+vault_root_user: "root"                 # Root username
+vault_root_password: "secure_root_password"  # Root password (required)
 
 # === CONNECTION CONFIGURATION ===
-vault_ansible_user: "root"              # User for connections
-vault_initial_ssh_port: 22              # Port before security setup
-vault_ssh_port: 22022                   # Port after security setup
+vault_ssh_port: 22                      # SSH port for server connections
 
 # === OPTIONAL GRUNT USER ===
-vault_grunt_user: ""                    # Empty = don't create user
-vault_grunt_password: ""                # Required if user defined
+vault_grunt_user: "grunt"               # Grunt username (empty = skip creation)
+vault_grunt_password: ""                # Grunt password (empty = generate)
 
 # === GLOBAL CONFIGURATION ===
 vault_git_user_full_name: "DevOps Team"
@@ -285,7 +283,7 @@ postgresql_port_default: 5432
 
 2. **Port Management**
    - Initial connection on port 22
-   - Security setup changes to 22022
+   - Security setup changes to 2222
    - Firewall blocks port 22 after setup
 
 3. **User Management**
