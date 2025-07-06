@@ -15,7 +15,7 @@ redis_timeout_default: 0        # 0 = no timeout
 redis_tcp_keepalive_default: 300
 
 # === AUTHENTICATION DEFAULTS ===
-redis_requirepass_default: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=32') }}"  # Random if not set
+# NOTE: redis_requirepass should come from vault - no default
 redis_acl_enabled_default: "no"
 
 # === MEMORY DEFAULTS ===
@@ -72,3 +72,7 @@ redis_data_dir_default: "/var/lib/redis"
 redis_log_dir_default: "/var/log/redis"
 redis_pid_file_default: "/var/run/redis/redis-server.pid"
 redis_socket_default: "/var/run/redis/redis.sock"
+
+# === BACKUP DEFAULTS ===
+redis_backup_hour_default: "3"
+redis_backup_minute_default: "0"

@@ -2,14 +2,14 @@
 # Development Environment Configuration
 # Copy this file to your own vault file and edit the values
 
-# === AUTHENTICATION CREDENTIALS ===
-vault_root_password: "your_root_password_here"  # Required for initial hardening
-vault_grunt_password: "your_grunt_password_here"  # Optional service user (only if vault_grunt_user is set)
-
-# === CONNECTION CONFIGURATION ===
+# === SUPERUSER CREDENTIALS ===
 vault_root_user: "root"  # Default root user
+vault_root_password: "pass4now"  # Required for initial hardening
+
+# === GRUNT USER CREDENTIALS ===
 vault_grunt_user: "grunt"  # Optional service user (leave empty to skip creation)
-vault_ssh_port: 22  # SSH port for server connections
+vault_grunt_groups_string: "sudo,adm,systemd-journal,www-data,docker,ssl-cert"
+# vault_grunt_password: "pass5now"  # Optional service user (only if vault_grunt_user is set)
 
 # === GLOBAL SERVER CONFIGURATION ===
 vault_git_user_full_name: "Your Full Name"
@@ -36,6 +36,7 @@ vault_grunt_ssh_private_key_file: "~/.ssh/id_rsa"  # SSH key for grunt user
 vault_root_ssh_password_authentication: false  # Disable after key setup
 vault_ssh_host_key_checking: false  # For dev environments
 vault_ssh_common_args: "-o StrictHostKeyChecking=no"  # Dev SSH args
+vault_ssh_port: 22  # SSH port for server connections
 
 # === SERVICE CONFIGURATION ===
 vault_redis_memory_mb: 512  # Redis memory limit
@@ -53,4 +54,4 @@ vault_db_lc_ctype: "en_US.UTF-8"  # Database character type
 # 1. Copy this file: cp .vault/dev.yml.example .vault/my-dev.yml
 # 2. Edit with your real credentials: vim .vault/my-dev.yml
 # 3. Use in playbooks: ansible-playbook -i inventory/dev.yml -e @.vault/my-dev.yml playbook.yml
-# 4. Or use with CLI: source .venv/bin/activate && cli security --install
+# 4. Or use with CLI: source .venv/bin/activate && cli harden --install

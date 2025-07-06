@@ -6,9 +6,11 @@ This document describes the enhancements made to the grunt user management syste
 ## Changes Made
 
 ### 1. Enhanced Group Memberships
-Updated the default groups for the grunt user in `cloudy/defaults/vault.yml`:
+Updated the default groups for the grunt user:
+- **Location:** `cloudy/defaults/security.yml` (as `grunt_groups_string_default`)
 - **Previous groups:** `sudo,adm,systemd-journal`
 - **New groups:** `sudo,adm,systemd-journal,www-data,docker,ssl-cert`
+- **Override:** Set `vault_grunt_groups_string` in vault files
 
 This allows the grunt user to:
 - Manage web server files (www-data)

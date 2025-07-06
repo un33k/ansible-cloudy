@@ -12,7 +12,7 @@
 
 - name: Create Redis data directory
   file:
-    path: "{{ redis_dir | default('/var/lib/redis') }}"
+    path: "{{ redis_dir | default(redis_data_dir_default) }}"
     state: directory
     owner: redis
     group: redis
@@ -60,8 +60,8 @@
     group: redis
     mode: '0640'
   when: 
-    - redis_version | default('7') | int >= 6
-    - redis_acl_enabled | default(false)
+    - redis_version | default(redis_version_default) | int >= 6
+    - redis_acl_enabled | default(redis_acl_enabled_default)
   notify: restart redis
 
 - name: Configure Redis systemd service override
@@ -79,7 +79,7 @@
       LimitNOFILE=65535
       PrivateTmp=yes
       NoNewPrivileges=yes
-      ReadWritePaths={{ redis_dir | default('/var/lib/redis') }} /var/log/redis /var/run/redis
+      ReadWritePaths={{ redis_dir | default(redis_data_dir_default) }} /var/log/redis /var/run/redis
       ProtectSystem=strict
       ProtectHome=yes
       
@@ -158,8 +158,8 @@
     name: "Redis backup"
     user: redis
     job: "/usr/local/bin/redis-backup.sh"
-    hour: "{{ redis_backup_hour | default('3') }}"
-    minute: "{{ redis_backup_minute | default('0') }}"
+    hour: "{{ redis_backup_hour | default(redis_backup_hour_default) }}"
+    minute: "{{ redis_backup_minute | default(redis_backup_minute_default) }}"
     state: present
 
 - name: Test Redis configuration
@@ -181,16 +181,16 @@
     echo "Redis Version: $(redis-cli --version)" >> /root/redis-report.txt
     echo "" >> /root/redis-report.txt
     echo "Memory Settings:" >> /root/redis-report.txt
-    echo "  Max Memory: {{ redis_maxmemory | default(redis_memory_mb + 'mb') }}" >> /root/redis-report.txt
-    echo "  Eviction Policy: {{ redis_maxmemory_policy | default('noeviction') }}" >> /root/redis-report.txt
+    echo "  Max Memory: {{ redis_maxmemory | default(vault_redis_memory_mb_default | string + 'mb') }}" >> /root/redis-report.txt
+    echo "  Eviction Policy: {{ redis_maxmemory_policy | default(redis_maxmemory_policy_default) }}" >> /root/redis-report.txt
     echo "" >> /root/redis-report.txt
     echo "Persistence:" >> /root/redis-report.txt
-    echo "  AOF: {{ redis_appendonly | default('yes') }}" >> /root/redis-report.txt
+    echo "  AOF: {{ redis_appendonly | default(redis_appendonly_default) }}" >> /root/redis-report.txt
     echo "  RDB: Enabled with save rules" >> /root/redis-report.txt
     echo "" >> /root/redis-report.txt
     echo "Security:" >> /root/redis-report.txt
-    echo "  Protected Mode: {{ redis_protected_mode | default('yes') }}" >> /root/redis-report.txt
+    echo "  Protected Mode: {{ redis_protected_mode | default(redis_protected_mode_default) }}" >> /root/redis-report.txt
     echo "  Password: {{ 'Configured' if redis_requirepass is defined else 'Not configured' }}" >> /root/redis-report.txt
-    echo "  Bind: {{ redis_bind | default('127.0.0.1 ::1') }}" >> /root/redis-report.txt
+    echo "  Bind: {{ redis_bind | default(redis_bind_default) }}" >> /root/redis-report.txt
   args:
     creates: /root/redis-report.txt
