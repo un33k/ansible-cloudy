@@ -106,21 +106,6 @@ def show_validate_help():
     print(f"  • All commands respect obsolete vault environment variable detection")
 
 
-def show_dev_commands_help():
-    """Show development commands help"""
-    print(f"{Colors.CYAN}CLI Development Commands{Colors.NC}")
-    print(f"  {Colors.GREEN}cli dev precommit{Colors.NC}      Run all validation checks before commit")
-    print(f"  {Colors.GREEN}cli dev validate{Colors.NC}       Ansible structural validation")
-    print(f"  {Colors.GREEN}cli dev syntax{Colors.NC}         Quick syntax checking")
-    print(f"  {Colors.GREEN}cli dev test{Colors.NC}           Authentication testing")
-    print(f"  {Colors.GREEN}cli dev lint{Colors.NC}           Ansible linting")
-    print(f"  {Colors.GREEN}cli dev yamlint{Colors.NC}        YAML linting")
-    print(f"  {Colors.GREEN}cli dev flake8{Colors.NC}         Python code linting")
-    print(f"  {Colors.GREEN}cli dev spell{Colors.NC}          Spell checking")
-    print(f"")
-    print(f"{Colors.YELLOW}💡 Use {Colors.GREEN}cli dev precommit{Colors.NC} to run all checks before committing{Colors.NC}")
-
-
 def show_version():
     """Show version information"""
     print(f"{Colors.CYAN}CLI{Colors.NC} (Infrastructure Management Tool)")

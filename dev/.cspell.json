@@ -412,6 +412,7 @@
     "stresstest",
     "subcollection",
     "subcollections",
+    "subparsers",
     "sudo",
     "sudoer",
     "sudoers",

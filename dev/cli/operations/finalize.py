@@ -17,90 +17,31 @@ class FinalizeService(BaseServiceOperations):
         """Get the recipe description."""
         return "Complete server configuration with system updates, optional port change, and reboot if needed"
     
-    def define_arguments(self, subparser):
-        """Define finalize-specific arguments."""
-        # SSH port change
-        subparser.add_argument(
-            '--change-port',
-            action='store_true',
-            help='Change SSH port (requires --to-port)'
-        )
-        
-        subparser.add_argument(
-            '--to-port',
-            type=int,
-            help='Target SSH port (required with --change-port)'
-        )
-        
-        # Upgrade control
-        subparser.add_argument(
-            '--skip-upgrade',
-            action='store_true',
-            help='Skip system upgrades'
-        )
-        
-        # Reboot control
-        subparser.add_argument(
-            '--force-reboot',
-            action='store_true',
-            help='Force reboot even if not required'
-        )
-        
-        subparser.add_argument(
-            '--no-reboot',
-            action='store_true',
-            help='Skip reboot even if required'
-        )
-    
     def get_recipe_path(self) -> str:
         """Get the path to the finalize recipe."""
         return "playbooks/recipes/core/finalize.yml"
     
     def _handle_recipe_install(self, args, ansible_args: List[str], service_args: Dict[str, Any]) -> int:
         """Handle the finalize installation."""
-        # Parse finalize-specific arguments from remaining args
+        # Build extra vars from properly parsed arguments
         extra_vars = []
-        has_change_port = False
-        has_to_port = False
         
-        # Check for arguments in ansible_args
-        i = 0
-        while i < len(ansible_args):
-            arg = ansible_args[i]
-            if arg == '--change-port':
-                has_change_port = True
-                extra_vars.append("change_ssh_port=true")
-                ansible_args.pop(i)
-            elif arg == '--to-port' and i + 1 < len(ansible_args):
-                has_to_port = True
-                extra_vars.append(f"target_ssh_port={ansible_args[i+1]}")
-                ansible_args.pop(i)  # Remove --to-port
-                ansible_args.pop(i)  # Remove the port number
-            elif arg == '--skip-upgrade':
-                extra_vars.append("perform_system_upgrade=false")
-                ansible_args.pop(i)
-            elif arg == '--force-reboot':
-                extra_vars.append("force_reboot=true")
-                ansible_args.pop(i)
-            elif arg == '--no-reboot':
-                extra_vars.append("reboot_after_upgrade=false")
-                ansible_args.pop(i)
-            else:
-                i += 1
-        
-        # Validate port change arguments
-        if has_change_port and not has_to_port:
-            error("--change-port requires --to-port to specify the target port")
-            error("Example: cli finalize --install --change-port --to-port 2222")
-            return 1
-            
-        if has_to_port and not has_change_port:
-            error("--to-port requires --change-port flag")
-            return 1
-            
-        # Auto-enable change_ssh_port if to_port is specified
-        if has_to_port and "change_ssh_port=true" not in extra_vars:
+        # Handle port change
+        if hasattr(args, 'change_port') and args.change_port:
+            # Validation already done by validate_operation
             extra_vars.append("change_ssh_port=true")
+            if hasattr(args, 'to_port') and args.to_port:
+                extra_vars.append(f"target_ssh_port={args.to_port}")
+        
+        # Handle upgrades
+        if hasattr(args, 'skip_upgrade') and args.skip_upgrade:
+            extra_vars.append("perform_system_upgrade=false")
+        
+        # Handle reboot
+        if hasattr(args, 'force_reboot') and args.force_reboot:
+            extra_vars.append("force_reboot=true")
+        elif hasattr(args, 'no_reboot') and args.no_reboot:
+            extra_vars.append("reboot_after_upgrade=false")
         
         # Find recipe
         finder = RecipeFinder(self.config)

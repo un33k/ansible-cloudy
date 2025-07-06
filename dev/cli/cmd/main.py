@@ -13,7 +13,13 @@ cmd_dir = Path(__file__).parent
 sys.path.insert(0, str(cli_dir))
 sys.path.insert(0, str(cmd_dir))
 
-from argument_parser import split_arguments, parse_arguments, create_parser  # noqa: E402
+from argument_parser import (  # noqa: E402
+    split_arguments, 
+    parse_arguments, 
+    create_parser,
+    register_service_subparsers,
+    register_dev_subparsers
+)
 from command_router import CommandRouter  # noqa: E402
 from dev_commands import DevCommandsHandler  # noqa: E402
 from help_system import show_version  # noqa: E402
@@ -53,22 +59,29 @@ def main() -> None:
     # Initialize command router
     router = CommandRouter()
     
-    # Handle help requests before main parsing
-    if router.handle_help_requests(cli_args):
+    # Parse arguments with new subparser system
+    try:
+        args, _ = parse_arguments(cli_args)
+    except SystemExit:
+        # argparse calls sys.exit on error or help
         return
     
-    # Parse arguments now
-    args, remaining_args = parse_arguments(cli_args)
-    ansible_args.extend(remaining_args)
-    
     # Handle version command
-    if args.version:
+    if hasattr(args, 'version') and args.version:
         show_version()
         return
     
     # Handle list services command
-    if args.list_services:
+    if hasattr(args, 'list_services') and args.list_services:
         router.handle_list_services()
+        return
+    
+    # If no service specified, show main help
+    if not hasattr(args, 'service') or not args.service:
+        parser, subparsers, common_parser, install_parser = create_parser()
+        register_service_subparsers(subparsers, common_parser, install_parser)
+        register_dev_subparsers(subparsers)
+        parser.print_help()
         return
     
     # Handle dev commands
@@ -76,12 +89,6 @@ def main() -> None:
         config = router.initialize_config()
         dev_handler = DevCommandsHandler(config)
         dev_handler.handle_dev_commands(args, ansible_args)
-        return
-    
-    # Require service name if not listing or dev command
-    if not args.service:
-        parser = create_parser()
-        parser.print_help()
         return
     
     # Handle service-specific operations
