@@ -22,11 +22,16 @@
     # Configuration options
     perform_system_upgrade: true
     change_ssh_port: false
-    target_ssh_port: "{{ vault_ssh_port_hardened | default(vault_ssh_port_hardened_default) }}"
-    current_ssh_port: "{{ ansible_port | default(22) }}"
+    target_ssh_port: ""  # Must be explicitly provided via --to-port
+    current_ssh_port: "{{ vault_ssh_port | default(vault_ssh_port_default) }}"
     force_reboot: false
     
   pre_tasks:
+    # Check SSH connectivity first
+    - name: Verify SSH connectivity
+      include_tasks: "{{ task_paths }}/sys/core/check-ssh-connectivity.yml"
+      tags: [always]
+    
     - name: Display finalization start
       debug:
         msg: |
@@ -52,6 +57,17 @@
     # SSH Port Change (optional) - Atomic operation
     - name: Change SSH port if requested
       block:
+        - name: Validate target port is provided
+          fail:
+            msg: |
+              ❌ ERROR: Target SSH port not specified!
+              
+              When using --change-port, you must specify the target port:
+              cli finalize --install --change-port --to-port XXXX
+              
+              Example:
+              cli finalize --install --change-port --to-port 2222
+          when: target_ssh_port == "" or target_ssh_port is not defined
         - name: Allow new SSH port in firewall FIRST
           ufw:
             rule: allow

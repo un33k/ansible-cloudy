@@ -23,13 +23,13 @@ class FinalizeService(BaseServiceOperations):
         subparser.add_argument(
             '--change-port',
             action='store_true',
-            help='Change SSH port to hardened port (2222)'
+            help='Change SSH port (requires --to-port)'
         )
         
         subparser.add_argument(
             '--to-port',
             type=int,
-            help='Target SSH port (default: 2222)'
+            help='Target SSH port (required with --change-port)'
         )
         
         # Upgrade control
@@ -60,16 +60,19 @@ class FinalizeService(BaseServiceOperations):
         """Handle the finalize installation."""
         # Parse finalize-specific arguments from remaining args
         extra_vars = []
+        has_change_port = False
+        has_to_port = False
         
         # Check for arguments in ansible_args
         i = 0
         while i < len(ansible_args):
             arg = ansible_args[i]
             if arg == '--change-port':
+                has_change_port = True
                 extra_vars.append("change_ssh_port=true")
                 ansible_args.pop(i)
             elif arg == '--to-port' and i + 1 < len(ansible_args):
-                extra_vars.append("change_ssh_port=true")  # Automatically enable port change
+                has_to_port = True
                 extra_vars.append(f"target_ssh_port={ansible_args[i+1]}")
                 ansible_args.pop(i)  # Remove --to-port
                 ansible_args.pop(i)  # Remove the port number
@@ -84,6 +87,20 @@ class FinalizeService(BaseServiceOperations):
                 ansible_args.pop(i)
             else:
                 i += 1
+        
+        # Validate port change arguments
+        if has_change_port and not has_to_port:
+            error("--change-port requires --to-port to specify the target port")
+            error("Example: cli finalize --install --change-port --to-port 2222")
+            return 1
+            
+        if has_to_port and not has_change_port:
+            error("--to-port requires --change-port flag")
+            return 1
+            
+        # Auto-enable change_ssh_port if to_port is specified
+        if has_to_port and "change_ssh_port=true" not in extra_vars:
+            extra_vars.append("change_ssh_port=true")
         
         # Find recipe
         finder = RecipeFinder(self.config)
@@ -114,8 +131,7 @@ class FinalizeService(BaseServiceOperations):
         """Get example usage commands."""
         return [
             "cli finalize --install                    # Run upgrades and reboot if needed",
-            "cli finalize --install --change-port      # Also change SSH port to 2222",
-            "cli finalize --install --to-port 2222     # Change to custom port",
+            "cli finalize --install --change-port --to-port 2222  # Change SSH port",
             "cli finalize --install --skip-upgrade     # Skip system updates",
             "cli finalize --install --force-reboot     # Force reboot",
             "cli finalize --install --no-reboot        # Never reboot",
@@ -123,8 +139,16 @@ class FinalizeService(BaseServiceOperations):
     
     def validate_operation(self, args) -> tuple[bool, str]:
         """Validate the operation arguments."""
+        # Check if --change-port requires --to-port
+        if hasattr(args, 'change_port') and args.change_port and not args.to_port:
+            return False, "--change-port requires --to-port to specify the target port"
+            
+        # Check if --to-port is used without --change-port
+        if hasattr(args, 'to_port') and args.to_port and not args.change_port:
+            return False, "--to-port requires --change-port flag"
+        
         # Validate port number if provided
-        if args.to_port:
+        if hasattr(args, 'to_port') and args.to_port:
             if args.to_port < 1 or args.to_port > 65535:
                 return False, "Port must be between 1 and 65535"
             if args.to_port == 22:

@@ -21,6 +21,10 @@
     # Security setup after SSH hardening
     
   pre_tasks:
+    # Check SSH connectivity first (for security, this might use password auth)
+    - name: Verify SSH connectivity
+      include_tasks: "{{ task_paths }}/sys/core/check-ssh-connectivity.yml"
+      tags: [always]
     - name: Validate root connection for security setup
       fail:
         msg: |

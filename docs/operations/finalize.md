@@ -24,7 +24,7 @@ Run finalize:
 # Standard finalization with upgrades
 cli finalize --install
 
-# Finalize and change SSH port to hardened default (2222)
+# Finalize with SSH port change to your configured hardened port
 cli finalize --install --change-port
 
 # Finalize with custom SSH port

@@ -19,6 +19,11 @@
     setup_swap: false
           
   pre_tasks:
+    # Check SSH connectivity first
+    - name: Verify SSH connectivity
+      include_tasks: "{{ task_paths }}/sys/core/check-ssh-connectivity.yml"
+      tags: [always]
+      
     # Ensure proper secure connection
     - name: Validate secure connection
       include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"

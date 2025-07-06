@@ -1,0 +1,41 @@
+---
+# Task: Check SSH Connectivity
+# Purpose: Verify SSH connection to target server before proceeding
+# This provides clear error messages when connection fails
+
+- name: Check SSH connectivity on configured port
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ vault_ssh_port | default(vault_ssh_port_default) }}"
+    timeout: 10
+    state: started
+    msg: "Waiting for SSH on {{ ansible_host }}:{{ vault_ssh_port | default(vault_ssh_port_default) }}"
+  delegate_to: localhost
+  become: false
+  register: ssh_check
+  ignore_errors: true
+  no_log: false
+
+- name: Display connection failure message
+  fail:
+    msg: |
+      ❌ Unable to communicate with target server!
+      
+      Server: {{ ansible_host }}
+      Port: {{ vault_ssh_port | default(vault_ssh_port_default) }}
+      
+      Please check:
+      1. Server is running and accessible
+      2. SSH service is running on the server
+      3. Port {{ vault_ssh_port | default(vault_ssh_port_default) }} is correct in your .vault/*.yml file
+      4. Firewall allows connections on port {{ vault_ssh_port | default(vault_ssh_port_default) }}
+      5. Network connectivity to {{ ansible_host }}
+      
+      To test manually:
+      ssh {{ ansible_user }}@{{ ansible_host }} -p {{ vault_ssh_port | default(vault_ssh_port_default) }}
+  when: ssh_check.failed | default(false)
+
+- name: Confirm SSH connectivity
+  debug:
+    msg: "✅ SSH connectivity confirmed on {{ ansible_host }}:{{ vault_ssh_port | default(vault_ssh_port_default) }}"
+  when: not (ssh_check.failed | default(false))
