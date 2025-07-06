@@ -21,13 +21,13 @@
         msg: |
           🔐 Starting Security Configuration Verification
           Target: {{ inventory_hostname }} ({{ ansible_host }}:{{ ansible_port }})
-          Admin User: {{ admin_user }}
+          Admin User: {{ grunt_user }}
           Expected SSH Port: {{ ansible_port }}
           
   tasks:
     # Basic Admin User Validation
     - name: Validate grunt user access and configuration
-      include_tasks: "{{ task_paths }}/sys/core/validate-admin-access.yml"
+      include_tasks: "{{ task_paths }}/sys/core/validate-grunt-access.yml"
       tags: [validation, admin, access]
       
     # SSH Security Validation
@@ -86,20 +86,20 @@
     # User and Group Validation
     - name: Verify admin user exists
       user:
-        name: "{{ admin_user }}"
+        name: "{{ grunt_user }}"
         state: present
       check_mode: true
       register: admin_user_exists
       tags: [validation, users, admin]
       
     - name: Check admin user group memberships
-      command: groups {{ admin_user }}
+      command: groups {{ grunt_user }}
       register: admin_groups_check
       changed_when: false
       tags: [validation, users, groups]
       
     - name: Verify admin user has sudo access
-      command: sudo -l -U {{ admin_user }}
+      command: sudo -l -U {{ grunt_user }}
       register: sudo_check
       changed_when: false
       tags: [validation, users, sudo]
@@ -111,7 +111,7 @@
           🎉 ✅ SECURITY VERIFICATION COMPLETED!
           
           📋 Security Configuration Status:
-             ├── Admin User: {{ admin_user }} - {{ 'EXISTS' if admin_user_exists is not changed else 'MISSING' }}
+             ├── Admin User: {{ grunt_user }} - {{ 'EXISTS' if admin_user_exists is not changed else 'MISSING' }}
              ├── SSH Keys: {{ 'WORKING' if ssh_key_test is succeeded else 'FAILED' }}
              ├── Root Login: {{ 'DISABLED' if root_login_check is not changed else 'NEEDS FIXING' }}
              ├── Password Auth: {{ 'DISABLED' if password_auth_check is not changed else 'NEEDS FIXING' }}
