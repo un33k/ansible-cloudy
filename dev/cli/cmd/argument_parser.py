@@ -210,6 +210,11 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
         action='store_true',
         help='Install PostGIS extension'
     )
+    psql_parser.add_argument(
+        '--pgvector',
+        action='store_true',
+        help='Install pgvector extension'
+    )
     # PostgreSQL operations
     psql_parser.add_argument('--adduser', metavar='USERNAME', help='Create PostgreSQL user')
     psql_parser.add_argument('--password', metavar='PASSWORD', help='User password')
@@ -219,6 +224,12 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
     psql_parser.add_argument('--owner', metavar='OWNER', help='Database owner')
     psql_parser.add_argument('--delete-db', metavar='DATABASE', help='Delete database')
     psql_parser.add_argument('--list-databases', action='store_true', help='List all databases')
+    psql_parser.add_argument('--database', metavar='DATABASE', help='Target database for operations')
+    # Extension management
+    psql_parser.add_argument('--enable-extension', metavar='EXTENSION', help='Enable PostgreSQL extension')
+    psql_parser.add_argument('--disable-extension', metavar='EXTENSION', help='Disable PostgreSQL extension')
+    psql_parser.add_argument('--list-extensions', action='store_true', help='List all extensions')
+    psql_parser.add_argument('--verify-extensions', action='store_true', help='Verify pgvector and PostGIS status')
     
     # Redis service
     redis_parser = subparsers.add_parser(

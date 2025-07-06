@@ -1,0 +1,60 @@
+# Granular Task: Disable PostgreSQL Extension
+# Purpose: Disable/drop a specific extension from a PostgreSQL database
+# Usage: ansible-playbook tasks/db/postgresql/disable-extension.yml -e "extension_name=vector database=mydb"
+
+---
+- name: Disable PostgreSQL Extension
+  hosts: "{{ target_hosts | default('all') }}"
+  gather_facts: false
+  become: true
+  
+  vars:
+    ext_name: "{{ extension_name }}"
+    target_database: "{{ database | default('postgres') }}"
+    cascade_drop: "{{ cascade | default(false) }}"
+    
+  tasks:
+    - name: Validate required parameters
+      fail:
+        msg: "Extension name is required. Use -e extension_name=<name>"
+      when: ext_name is not defined or ext_name == ''
+      
+    - name: Check if extension is enabled
+      postgresql_query:
+        db: "{{ target_database }}"
+        query: "SELECT extname FROM pg_extension WHERE extname = '{{ ext_name }}';"
+      become_user: postgres
+      register: extension_check
+      
+    - name: Display extension status
+      debug:
+        msg: "Extension '{{ ext_name }}' is not enabled in database '{{ target_database }}'"
+      when: extension_check.query_result | length == 0
+      
+    - name: Disable {{ ext_name }} extension from {{ target_database }}
+      postgresql_ext:
+        name: "{{ ext_name }}"
+        db: "{{ target_database }}"
+        state: absent
+        cascade: "{{ cascade_drop }}"
+      become_user: postgres
+      register: disable_result
+      when: extension_check.query_result | length > 0
+      
+    - name: Verify extension is disabled
+      postgresql_query:
+        db: "{{ target_database }}"
+        query: "SELECT extname FROM pg_extension WHERE extname = '{{ ext_name }}';"
+      become_user: postgres
+      register: verify_disabled
+      
+    - name: Display result
+      debug:
+        msg: |
+          {% if disable_result.changed is defined and disable_result.changed %}
+          ✅ Extension '{{ ext_name }}' disabled from database '{{ target_database }}'
+          {% elif extension_check.query_result | length == 0 %}
+          ℹ️  Extension '{{ ext_name }}' was not enabled in database '{{ target_database }}'
+          {% else %}
+          ❌ Failed to disable extension '{{ ext_name }}' from database '{{ target_database }}'
+          {% endif %}

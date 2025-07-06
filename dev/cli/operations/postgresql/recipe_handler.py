@@ -28,13 +28,15 @@ class PostgreSQLRecipeHandler:
             extra_vars.extend(["-e", f"database_port={psql_args['database_port']}"])
         if psql_args.get('setup_postgis'):
             extra_vars.extend(["-e", "setup_postgis=true"])
+        if psql_args.get('setup_pgvector'):
+            extra_vars.extend(["-e", "setup_pgvector=true"])
         
         # Add verbose flag if requested
         if hasattr(args, 'verbose') and args.verbose:
             extra_vars.insert(0, "-v")
         
         # Execute with automatic dependency resolution (security → base → psql)
-        full_extra_args = extra_vars + [arg for arg in ansible_args if arg not in ['--port', '--pgis'] and not arg.isdigit()]
+        full_extra_args = extra_vars + [arg for arg in ansible_args if arg not in ['--port', '--pgis', '--pgvector'] and not arg.isdigit()]
         
         environment = self.inventory_manager.get_environment_from_args(args)
         

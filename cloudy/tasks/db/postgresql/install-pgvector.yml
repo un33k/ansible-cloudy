@@ -2,16 +2,45 @@
 # cloudy/tasks/db/postgresql/install-pgvector.yml
 # Install pgvector extension for PostgreSQL vector operations
 
-- name: Install build dependencies for pgvector
+- name: Detect PostgreSQL version
+  shell: |
+    psql --version | grep -oP 'PostgreSQL \K\d+' || echo "{{ pg_version | default('17') }}"
+  register: detected_pg_version
+  changed_when: false
+  
+- name: Set PostgreSQL version
+  set_fact:
+    actual_pg_version: "{{ detected_pg_version.stdout | default(pg_version | default('17')) }}"
+    
+- name: Display detected version
+  debug:
+    msg: "Detected PostgreSQL version: {{ actual_pg_version }}"
+
+- name: Check if pgvector package is available
+  shell: |
+    apt-cache search postgresql-{{ actual_pg_version }}-pgvector | grep -q pgvector && echo "available" || echo "not_available"
+  register: pgvector_apt_check
+  changed_when: false
+
+- name: Install pgvector from apt repository
+  apt:
+    name: "postgresql-{{ actual_pg_version }}-pgvector"
+    state: present
+    update_cache: yes
+  when: pgvector_apt_check.stdout == "available"
+  register: pgvector_apt_install
+
+- name: Install build dependencies for pgvector (if building from source)
   apt:
     name:
       - build-essential
-      - postgresql-server-dev-{{ pg_version }}
+      - postgresql-server-dev-{{ actual_pg_version }}
       - git
       - make
       - gcc
     state: present
     update_cache: yes
+  when: pgvector_apt_check.stdout == "not_available"
 
 - name: Check if pgvector is already installed
   shell: |
@@ -26,7 +55,9 @@
     dest: /tmp/pgvector
     version: "{{ pgvector_version | default('v0.5.1') }}"
     force: yes
-  when: pgvector_check.rc != 0
+  when: 
+    - pgvector_check.rc != 0
+    - pgvector_apt_check.stdout == "not_available"
 
 - name: Build and install pgvector
   shell: |
@@ -34,7 +65,9 @@
     make clean
     make
     make install
-  when: pgvector_check.rc != 0
+  when: 
+    - pgvector_check.rc != 0
+    - pgvector_apt_check.stdout == "not_available"
 
 - name: Create pgvector extension in postgres database
   postgresql_ext:
@@ -93,4 +126,6 @@
   file:
     path: /tmp/pgvector
     state: absent
-  when: pgvector_check.rc != 0
+  when: 
+    - pgvector_check.rc != 0
+    - pgvector_apt_check.stdout == "not_available"

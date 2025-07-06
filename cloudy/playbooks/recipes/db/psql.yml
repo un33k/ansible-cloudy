@@ -18,6 +18,7 @@
     # PostgreSQL configuration
     setup_postgresql: true
     setup_postgis: false
+    setup_pgvector: false
     
     # Apply defaults with vault override pattern
     pg_version: "{{ vault_pg_version | default(pg_version_default) }}"
@@ -25,6 +26,7 @@
     pg_databases: "{{ vault_pg_databases | default([]) }}"
     pg_users: "{{ vault_pg_users | default([]) }}"
     pg_postgis_version: "{{ vault_pg_postgis_version | default(pg_postgis_version_default) }}"
+    pgvector_version: "{{ vault_pgvector_version | default(pgvector_version_default) }}"
     
   pre_tasks:
     # Ensure proper secure connection
@@ -46,6 +48,7 @@
           ├── PostgreSQL: v{{ pg_version }}
           ├── Port: {{ pg_port }}
           ├── PostGIS: {{ 'Yes (v' + pg_postgis_version + ')' if setup_postgis else 'No' }}
+          ├── pgvector: {{ 'Yes' if setup_pgvector else 'No' }}
           └── Firewall: PostgreSQL port configured
           
   tasks:
@@ -70,6 +73,11 @@
         postgis_version: "{{ pg_postgis_version }}"
       when: setup_postgresql | bool and setup_postgis | bool
       tags: [postgresql, postgis, install]
+      
+    - name: Install pgvector extension
+      include_tasks: "{{ task_paths }}/db/postgresql/install-pgvector.yml"
+      when: setup_postgresql | bool and setup_pgvector | bool
+      tags: [postgresql, pgvector, install]
       
     - name: Configure PostgreSQL port
       include_tasks: "{{ task_paths }}/db/postgresql/configure-port.yml"

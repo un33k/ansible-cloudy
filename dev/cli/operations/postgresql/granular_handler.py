@@ -41,6 +41,10 @@ class PostgreSQLGranularHandler:
             'create-cluster': 'create-cluster.yml',
             'remove-cluster': 'remove-cluster.yml',
             'install-repo': 'install-repo.yml',
+            'enable-extension': 'enable-extension.yml',
+            'disable-extension': 'disable-extension.yml',
+            'list-extensions': 'list-extensions.yml',
+            'verify-extensions': 'verify-extensions.yml',
         }
         
         task_file = operation_map.get(operation)
@@ -119,9 +123,28 @@ class PostgreSQLGranularHandler:
                 error("--remove-cluster requires a cluster name")
             extra_vars.extend(["-e", f"cluster_name={psql_args['cluster_name']}"])
             
+        # Extension operations
+        elif operation == 'enable-extension':
+            if 'extension_name' not in psql_args:
+                error("--enable-extension requires an extension name")
+            extra_vars.extend(["-e", f"extension_name={psql_args['extension_name']}"])
+            if 'database' in psql_args:
+                extra_vars.extend(["-e", f"database={psql_args['database']}"])
+                
+        elif operation == 'disable-extension':
+            if 'extension_name' not in psql_args:
+                error("--disable-extension requires an extension name")
+            extra_vars.extend(["-e", f"extension_name={psql_args['extension_name']}"])
+            if 'database' in psql_args:
+                extra_vars.extend(["-e", f"database={psql_args['database']}"])
+                
+        elif operation == 'list-extensions':
+            if 'database' in psql_args:
+                extra_vars.extend(["-e", f"database={psql_args['database']}"])
+                
         # Operations that don't require additional parameters
         elif operation in ['list-users', 'list-databases', 'install-postgis', 'get-installed-version',
-                           'get-latest-version', 'install-client', 'install-repo']:
+                           'get-latest-version', 'install-client', 'install-repo', 'verify-extensions']:
             pass  # No additional parameters needed
         
         # Add verbose flag if requested
