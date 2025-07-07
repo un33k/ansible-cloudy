@@ -25,10 +25,12 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=ColoredHelpFormatter,
         epilog=f"""
 {Colors.YELLOW}Quick Start:{Colors.NC}
-  {Colors.GREEN}cli security --install{Colors.NC}         Setup server security (run first!)
-  {Colors.GREEN}cli base --install{Colors.NC}             Setup base configuration
-  {Colors.GREEN}cli psql --install{Colors.NC}             Install PostgreSQL
-  {Colors.GREEN}cli finalize --install{Colors.NC}         Finalize with upgrades
+  {Colors.GREEN}cli psql-server --install{Colors.NC}      Full PostgreSQL server (security + base + psql)
+  {Colors.GREEN}cli nginx-server --install{Colors.NC}     Full Nginx server (security + base + nginx)
+  
+  {Colors.BLUE}Or for existing secured servers:{Colors.NC}
+  {Colors.GREEN}cli psql --install{Colors.NC}             Install only PostgreSQL
+  {Colors.GREEN}cli nginx --install{Colors.NC}            Install only Nginx
 
 {Colors.YELLOW}Getting Help:{Colors.NC}
   {Colors.GREEN}cli --help{Colors.NC}                     Show this help
@@ -422,6 +424,79 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
         formatter_class=ColoredHelpFormatter,
         help='All-in-one server setup',
         description=f"{Colors.CYAN}Standalone Service - Complete server with all services{Colors.NC}"
+    )
+    
+    # ===== Server Variants (-server commands) =====
+    # These commands include full server setup: security → base → service
+    
+    # PostgreSQL server
+    psql_server_parser = subparsers.add_parser(  # noqa: F841
+        'psql-server',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='PostgreSQL full server setup (security + base + psql)',
+        description=f"{Colors.CYAN}PostgreSQL Server - Complete PostgreSQL server deployment{Colors.NC}\n"
+                    f"{Colors.YELLOW}Includes: Security hardening → Base configuration → PostgreSQL{Colors.NC}"
+    )
+    
+    # PostGIS server
+    postgis_server_parser = subparsers.add_parser(  # noqa: F841
+        'postgis-server',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='PostGIS full server setup (security + base + postgis)',
+        description=f"{Colors.CYAN}PostGIS Server - Complete spatial database server{Colors.NC}\n"
+                    f"{Colors.YELLOW}Includes: Security hardening → Base configuration → PostGIS{Colors.NC}"
+    )
+    
+    # Redis server
+    redis_server_parser = subparsers.add_parser(  # noqa: F841
+        'redis-server',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='Redis full server setup (security + base + redis)',
+        description=f"{Colors.CYAN}Redis Server - Complete Redis cache server{Colors.NC}\n"
+                    f"{Colors.YELLOW}Includes: Security hardening → Base configuration → Redis{Colors.NC}"
+    )
+    
+    # Nginx server
+    nginx_server_parser = subparsers.add_parser(  # noqa: F841
+        'nginx-server',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='Nginx full server setup (security + base + nginx)',
+        description=f"{Colors.CYAN}Nginx Server - Complete web server deployment{Colors.NC}\n"
+                    f"{Colors.YELLOW}Includes: Security hardening → Base configuration → Nginx{Colors.NC}"
+    )
+    
+    # Django server
+    django_server_parser = subparsers.add_parser(  # noqa: F841
+        'django-server',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='Django full server setup (security + base + django + pgbouncer)',
+        description=f"{Colors.CYAN}Django Server - Complete Django application server{Colors.NC}\n"
+                    f"{Colors.YELLOW}Includes: Security hardening → Base configuration → Django → PgBouncer{Colors.NC}"
+    )
+    
+    # Node.js server
+    nodejs_server_parser = subparsers.add_parser(  # noqa: F841
+        'nodejs-server',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='Node.js full server setup (security + base + nodejs + pgbouncer)',
+        description=f"{Colors.CYAN}Node.js Server - Complete Node.js application server{Colors.NC}\n"
+                    f"{Colors.YELLOW}Includes: Security hardening → Base configuration → Node.js → PgBouncer{Colors.NC}"
+    )
+    
+    # OpenVPN server
+    openvpn_server_parser = subparsers.add_parser(  # noqa: F841
+        'openvpn-server',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='OpenVPN full server setup (security + base + openvpn)',
+        description=f"{Colors.CYAN}OpenVPN Server - Complete VPN server deployment{Colors.NC}\n"
+                    f"{Colors.YELLOW}Includes: Security hardening → Base configuration → OpenVPN{Colors.NC}"
     )
     
     return subparsers
