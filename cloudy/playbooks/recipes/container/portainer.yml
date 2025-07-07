@@ -1,0 +1,129 @@
+# Recipe: Portainer Container Management UI
+# Purpose: Deploy Portainer for Docker container management
+# Usage: cli portainer --install or cli docker --compose portainer
+
+---
+- name: Portainer Container Management Deployment
+  hosts: all
+  become: true
+  vars:
+    recipe_name: portainer
+    recipe_description: "Portainer container management UI"
+    recipe_category: container
+    recipe_version: "1.0.0"
+    recipe_dependencies:
+      - docker
+      
+    # Portainer configuration
+    portainer_domain: "{{ vault_portainer_domain_name }}"
+    portainer_container_name: "{{ vault_portainer_docker_name | default('portainer') }}"
+    portainer_internal_port: "{{ vault_portainer_internal_port | default(9000) }}"
+    portainer_data_dir: "/data/docker/portainer"
+    
+    # Docker networks
+    docker_proxy_network: "{{ vault_docker_proxy_network | default('proxy_network') }}"
+    docker_internal_network: "{{ vault_docker_internal_network | default('internal_network') }}"
+    
+  pre_tasks:
+    - name: Validate required variables
+      fail:
+        msg: "vault_portainer_domain_name is required. Please set it in your vault file."
+      when: vault_portainer_domain_name is not defined
+      
+  tasks:
+    - name: Recipe header
+      debug:
+        msg: |
+          📦 Deploying {{ recipe_description }}
+          Category: {{ recipe_category }}
+          Version: {{ recipe_version }}
+          Domain: {{ portainer_domain }}
+          Container: {{ portainer_container_name }}
+          
+    # Create data directory
+    - name: Create Portainer data directory
+      file:
+        path: "{{ portainer_data_dir }}"
+        state: directory
+        owner: root
+        group: docker
+        mode: '0775'
+        
+    # Create compose directory
+    - name: Create docker-compose directory
+      file:
+        path: "/tmp/docker-compose/portainer"
+        state: directory
+        mode: '0755'
+        
+    # Deploy docker-compose template
+    - name: Deploy Portainer docker-compose file
+      template:
+        src: ../../../templates/container/portainer/docker-compose.yml.j2
+        dest: "/tmp/docker-compose/portainer/docker-compose.yml"
+        mode: '0644'
+        
+    # Start Portainer container
+    - name: Deploy Portainer container
+      docker_compose:
+        project_src: "/tmp/docker-compose/portainer"
+        state: present
+        restarted: true
+      register: portainer_deploy_result
+      
+    # Configure nginx reverse proxy
+    - name: Check if nginx is installed
+      stat:
+        path: /etc/nginx/nginx.conf
+      register: nginx_installed
+      
+    - name: Configure nginx reverse proxy for Portainer
+      template:
+        src: ../../../templates/container/nginx/portainer-proxy.conf.j2
+        dest: "/etc/nginx/sites-available/{{ portainer_domain }}.conf"
+        mode: '0644'
+      when: nginx_installed.stat.exists
+      notify: reload nginx
+      
+    - name: Enable Portainer nginx site
+      file:
+        src: "/etc/nginx/sites-available/{{ portainer_domain }}.conf"
+        dest: "/etc/nginx/sites-enabled/{{ portainer_domain }}.conf"
+        state: link
+      when: nginx_installed.stat.exists
+      notify: reload nginx
+      
+    # Wait for Portainer to be ready
+    - name: Wait for Portainer to be ready
+      wait_for:
+        port: "{{ portainer_internal_port }}"
+        host: localhost
+        delay: 5
+        timeout: 60
+      
+    - name: Deployment summary
+      debug:
+        msg: |
+          ✅ Portainer deployed successfully!
+          
+          Container: {{ portainer_container_name }}
+          Internal Port: {{ portainer_internal_port }}
+          Data Directory: {{ portainer_data_dir }}
+          
+          Access URL: https://{{ portainer_domain }}
+          
+          {% if not nginx_installed.stat.exists %}
+          ⚠️  Nginx not found - Portainer is only accessible internally
+          Deploy nginx container with: cli docker --compose nginx
+          {% endif %}
+          
+          Next steps:
+          1. Visit https://{{ portainer_domain }}
+          2. Create initial admin account
+          3. Connect to local Docker environment
+          
+  handlers:
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded

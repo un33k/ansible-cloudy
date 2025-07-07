@@ -1,0 +1,34 @@
+# Default values for container services
+# These can be overridden in vault files or via CLI parameters
+
+---
+# Docker configuration
+vault_docker_version: "24.0.7"
+vault_docker_compose_version: "2.23.3"
+vault_docker_data_dir: "/data/docker"
+
+# Docker networks
+vault_docker_proxy_network: "proxy_network"
+vault_docker_internal_network: "internal_network"
+
+# Portainer defaults
+vault_portainer_docker_name: "portainer"
+vault_portainer_internal_port: 9000
+# vault_portainer_domain_name: required - must be set in vault
+
+# Nginx container defaults
+vault_nginx_container_name: "nginx"
+vault_nginx_container_http_port: 80
+vault_nginx_container_https_port: 443
+
+# Container resource limits (optional)
+vault_container_memory_limit: "512m"
+vault_container_cpu_limit: "1.0"
+
+# Container restart policies
+vault_container_restart_policy: "unless-stopped"
+
+# Container logging
+vault_container_log_driver: "json-file"
+vault_container_log_max_size: "10m"
+vault_container_log_max_file: "3"

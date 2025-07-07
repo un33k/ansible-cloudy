@@ -1,0 +1,182 @@
+# Recipe: Nginx Container for Reverse Proxy
+# Purpose: Deploy Nginx as Docker container for edge service routing
+# Usage: cli nginx-docker --install or cli docker --compose nginx
+
+---
+- name: Nginx Container Deployment
+  hosts: all
+  become: true
+  vars:
+    recipe_name: nginx-docker
+    recipe_description: "Nginx reverse proxy container"
+    recipe_category: container
+    recipe_version: "1.0.0"
+    recipe_dependencies:
+      - docker
+      
+    # Nginx configuration
+    nginx_container_name: "nginx"
+    nginx_data_dir: "/data/docker/nginx"
+    
+    # Docker networks
+    docker_proxy_network: "{{ vault_docker_proxy_network | default('proxy_network') }}"
+    docker_internal_network: "{{ vault_docker_internal_network | default('internal_network') }}"
+    
+  tasks:
+    - name: Recipe header
+      debug:
+        msg: |
+          🔧 Deploying {{ recipe_description }}
+          Category: {{ recipe_category }}
+          Version: {{ recipe_version }}
+          Container: {{ nginx_container_name }}
+          
+    # Create nginx directories
+    - name: Create nginx directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: docker
+        mode: '0775'
+      loop:
+        - "{{ nginx_data_dir }}"
+        - "{{ nginx_data_dir }}/conf.d"
+        - "{{ nginx_data_dir }}/certs"
+        - "{{ nginx_data_dir }}/logs"
+        - "{{ nginx_data_dir }}/assets"
+        
+    # Create basic nginx configuration
+    - name: Create default nginx configuration
+      copy:
+        content: |
+          user nginx;
+          worker_processes auto;
+          error_log /var/log/nginx/error.log notice;
+          pid /var/run/nginx.pid;
+          
+          events {
+              worker_connections 1024;
+          }
+          
+          http {
+              include /etc/nginx/mime.types;
+              default_type application/octet-stream;
+              
+              log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                            '$status $body_bytes_sent "$http_referer" '
+                            '"$http_user_agent" "$http_x_forwarded_for"';
+              
+              access_log /var/log/nginx/access.log main;
+              
+              sendfile on;
+              tcp_nopush on;
+              keepalive_timeout 65;
+              gzip on;
+              
+              include /etc/nginx/conf.d/*.conf;
+          }
+        dest: "{{ nginx_data_dir }}/nginx.conf"
+        mode: '0644'
+        
+    # Create default server block
+    - name: Create default server configuration
+      copy:
+        content: |
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+              server_name _;
+              
+              location / {
+                  return 444;  # Close connection without response
+              }
+              
+              location /health {
+                  access_log off;
+                  return 200 "healthy\n";
+                  add_header Content-Type text/plain;
+              }
+          }
+        dest: "{{ nginx_data_dir }}/conf.d/default.conf"
+        mode: '0644'
+        
+    # Open UFW ports for nginx
+    - name: Check if UFW is installed
+      command: which ufw
+      register: ufw_installed
+      changed_when: false
+      failed_when: false
+      
+    - name: Open HTTP port in UFW
+      ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+        comment: "Nginx HTTP"
+      when: ufw_installed.rc == 0
+      
+    - name: Open HTTPS port in UFW
+      ufw:
+        rule: allow
+        port: '443'
+        proto: tcp
+        comment: "Nginx HTTPS"
+      when: ufw_installed.rc == 0
+      
+    # Create compose directory
+    - name: Create docker-compose directory
+      file:
+        path: "/tmp/docker-compose/nginx"
+        state: directory
+        mode: '0755'
+        
+    # Deploy docker-compose template
+    - name: Deploy nginx docker-compose file
+      template:
+        src: ../../../templates/container/nginx/docker-compose.yml.j2
+        dest: "/tmp/docker-compose/nginx/docker-compose.yml"
+        mode: '0644'
+        
+    # Start nginx container
+    - name: Deploy nginx container
+      docker_compose:
+        project_src: "/tmp/docker-compose/nginx"
+        state: present
+        restarted: true
+      register: nginx_deploy_result
+      
+    # Wait for nginx to be ready
+    - name: Wait for nginx to be ready
+      wait_for:
+        port: 80
+        host: localhost
+        delay: 5
+        timeout: 60
+        
+    # Test nginx configuration
+    - name: Test nginx configuration
+      command: docker exec nginx nginx -t
+      register: nginx_test
+      changed_when: false
+      
+    - name: Deployment summary
+      debug:
+        msg: |
+          ✅ Nginx container deployed successfully!
+          
+          Container: {{ nginx_container_name }}
+          External Ports: 80, 443
+          Configuration: {{ nginx_data_dir }}
+          
+          UFW Rules: {% if ufw_installed.rc == 0 %}Added for ports 80/443{% else %}UFW not installed{% endif %}
+          Config Test: {{ nginx_test.stdout }}
+          
+          Networks connected:
+          - {{ docker_proxy_network }} (external-facing)
+          - {{ docker_internal_network }} (internal services)
+          
+          Next steps:
+          1. Add SSL certificates to {{ nginx_data_dir }}/certs/
+          2. Add site configurations to {{ nginx_data_dir }}/conf.d/
+          3. Reload nginx with: docker exec nginx nginx -s reload
