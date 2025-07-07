@@ -32,10 +32,19 @@ class DependencyManager:
         extra_args: List[str] = None,
         dry_run: bool = False,
         target_host: str = None,
+        skip_dependencies: bool = False,
     ) -> int:
         """Execute service with automatic dependency resolution"""
         if extra_args is None:
             extra_args = []
+
+        # If skip_dependencies is True, execute service directly
+        if skip_dependencies:
+            info(f"🚀 Executing service: {service_name} (dependencies skipped)")
+            return self._execute_service_directly(
+                service_name, environment, custom_inventory, extra_vars_file,
+                extra_args, dry_run, target_host
+            )
 
         info(f"🔍 Checking dependencies for service: {service_name}")
 
@@ -66,46 +75,81 @@ class DependencyManager:
 
         # Execute the main service
         info(f"🚀 Executing main service: {service_name}")
-        return self._execute_service_directly(
-            service_name, environment, custom_inventory, extra_vars_file,
+        
+        # For -server variants, use the base service name
+        if service_name.endswith('-server'):
+            base_service_name = service_name[:-7]  # Remove '-server'
+        else:
+            base_service_name = service_name
+            
+        result = self._execute_service_directly(
+            base_service_name, environment, custom_inventory, extra_vars_file,
             extra_args, dry_run, target_host
         )
+        
+        if result != 0:
+            return result
+            
+        # Special handling: django-server and nodejs-server also install pgbouncer
+        if service_name in ['django-server', 'nodejs-server']:
+            info(f"🔧 Installing pgbouncer for {service_name}")
+            return self._execute_service_directly(
+                'pgbouncer', environment, custom_inventory, extra_vars_file,
+                extra_args, dry_run, target_host
+            )
+            
+        return result
 
     def _get_dependency_chain(self, service_name: str) -> List[str]:
         """Get the dependency chain for a service"""
         # Define dependency mappings
+        # Note: Regular services now have NO dependencies by default
+        # Only -server variants will have dependencies
         dependencies = {
             # Core services
             "harden": [],  # No dependencies - port change tool
             "security": [],  # No dependencies - handles initial setup
-            "base": ["security"],  # Base depends on security
+            "base": [],  # No dependencies for direct base install
             
-            # Database services
-            "psql": ["security", "base"],
-            "postgis": ["security", "base"],
-            "mongodb": ["security", "base"],
+            # Database services (no dependencies for service-only install)
+            "psql": [],
+            "postgis": [],
+            "mongodb": [],
             
             # Cache services
-            "redis": ["security", "base"],
+            "redis": [],
             
             # Connection pooling
             "pgbouncer": [],  # No dependencies - installed on existing web servers
             
             # Web services
-            "nginx": ["security", "base"],
-            "apache": ["security", "base"],
-            "django": ["security", "base"],
-            "nodejs": ["security", "base"],
+            "nginx": [],
+            "apache": [],
+            "django": [],
+            "nodejs": [],
             
             # VPN services
-            "openvpn": ["security", "base"],
-            "wireguard": ["security", "base"],
+            "openvpn": [],
+            "wireguard": [],
             
-            # Finalization - no dependencies, run after everything else
+            # Finalization
             "finalize": [],
+            
+            # Full server installations (-server variants)
+            # These will be handled by the command router
+            "psql-server": ["security", "base"],
+            "postgis-server": ["security", "base"],
+            "mongodb-server": ["security", "base"],
+            "redis-server": ["security", "base"],
+            "nginx-server": ["security", "base"],
+            "apache-server": ["security", "base"],
+            "django-server": ["security", "base"],
+            "nodejs-server": ["security", "base"],
+            "openvpn-server": ["security", "base"],
+            "wireguard-server": ["security", "base"],
         }
         
-        return dependencies.get(service_name, ["security", "base"])
+        return dependencies.get(service_name, [])
 
     def _execute_dependency(
         self,

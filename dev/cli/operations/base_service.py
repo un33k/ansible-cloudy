@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 from utils.colors import Colors, error, info
 from utils.config import CliConfig, InventoryManager
 from execution.ansible import AnsibleRunner
+from execution.dependency_manager import DependencyManager
 from discovery.service_scanner import ServiceScanner
 from operations.recipes import RecipeFinder, RecipeHelpParser
 
@@ -24,6 +25,7 @@ class BaseServiceOperations(ABC):
         self.inventory_manager = InventoryManager(config)
         self.runner = AnsibleRunner(config)
         self.scanner = ServiceScanner(config)
+        self.dependency_manager = DependencyManager(config)
 
     def handle_operation(self, args, ansible_args: List[str]) -> int:
         """Route service operation to appropriate handler"""
@@ -106,13 +108,6 @@ class BaseServiceOperations(ABC):
     def _handle_recipe_install(self, args, ansible_args: List[str], service_args: Dict[str, Any]) -> int:
         """Handle service recipe installation"""
         
-        # Find service recipe
-        finder = RecipeFinder(self.config)
-        recipe_path = finder.find_recipe(self.service_name)
-        
-        if not recipe_path:
-            error(f"{self.service_name.title()} recipe not found")
-        
         # Build Ansible extra vars from service_args
         extra_vars = []
         param_mapping = self._get_parameter_mapping()
@@ -126,13 +121,28 @@ class BaseServiceOperations(ABC):
         if hasattr(args, 'verbose') and args.verbose:
             extra_vars.insert(0, "-v")
         
-        # Execute recipe
-        inventory_path = self.inventory_manager.get_inventory_path(args.prod)
-        return self.runner.run_recipe(
-            recipe_path=recipe_path,
-            inventory_path=inventory_path,
-            extra_args=extra_vars + [arg for arg in ansible_args if not self._is_service_arg(arg)],
+        # Combine extra vars with other ansible args
+        all_args = extra_vars + [arg for arg in ansible_args if not self._is_service_arg(arg)]
+        
+        # Get environment
+        if hasattr(args, 'prod') and args.prod:
+            environment = 'prod'
+        elif hasattr(args, 'ci') and args.ci:
+            environment = 'ci'
+        else:
+            environment = 'dev'
+        
+        # Execute with dependency manager
+        # Service-only installs skip dependencies by default
+        return self.dependency_manager.execute_with_dependencies(
+            service_name=self.service_name,
+            environment=environment,
+            custom_inventory=getattr(args, 'inventory_path', None),
+            extra_vars_file=getattr(args, 'extra_vars_file', None),
+            extra_args=all_args,
             dry_run=args.check,
+            target_host=getattr(args, 'target_host', None),
+            skip_dependencies=True,  # Service-only installation
         )
 
     def _handle_granular_operation(self, operation: str, args, ansible_args: List[str], service_args: Dict[str, Any]) -> int:

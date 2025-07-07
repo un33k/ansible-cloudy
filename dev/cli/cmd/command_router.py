@@ -47,39 +47,47 @@ class CommandRouter:
         """Handle service-specific operations"""
         config = self.initialize_config()
         
-        if service_name == "psql":
+        # -server variants should always go through generic handler
+        # to ensure proper dependency chain execution
+        if service_name.endswith('-server'):
+            return False
+        
+        # Regular services use their specific handlers
+        base_service_name = service_name
+        
+        if base_service_name == "psql":
             psql_ops = PostgreSQLOperations(config)
             exit_code = psql_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
-        elif service_name == "pgvector":
+        elif base_service_name == "pgvector":
             from operations.pgvector import PgVectorOperations
             pgvector_ops = PgVectorOperations(config)
             exit_code = pgvector_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
-        elif service_name == "redis":
+        elif base_service_name == "redis":
             redis_ops = RedisOperations(config)
             exit_code = redis_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
-        elif service_name == "nginx":
+        elif base_service_name == "nginx":
             nginx_ops = NginxOperations(config)
             exit_code = nginx_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
-        elif service_name == "nodejs":
+        elif base_service_name == "nodejs":
             from operations.nodejs import NodeJSOperations
             nodejs_ops = NodeJSOperations(config)
             exit_code = nodejs_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
-        elif service_name == "standalone":
+        elif base_service_name == "standalone":
             from operations.standalone import StandaloneOperations
             standalone_ops = StandaloneOperations(config)
             exit_code = standalone_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
-        elif service_name == "ssh":
+        elif base_service_name == "ssh":
             from operations.ssh import SSHOperations
             ssh_ops = SSHOperations(config)
             exit_code = ssh_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
-        elif service_name == "finalize":
+        elif base_service_name == "finalize":
             from operations.finalize import FinalizeService
             finalize_ops = FinalizeService(config, "finalize")
             exit_code = finalize_ops.handle_operation(args, ansible_args)
@@ -95,8 +103,20 @@ class CommandRouter:
         from execution.dependency_manager import DependencyManager  # noqa: E402
         
         config = self.initialize_config()
+        
+        # Check if this is a -server variant
+        is_server_variant = service_name.endswith('-server')
+        if is_server_variant:
+            # For -server variants, we use the base service name for recipe lookup
+            base_service_name = service_name[:-7]  # Remove '-server'
+            # But keep the full name for dependency resolution
+            dependency_service_name = service_name
+        else:
+            base_service_name = service_name
+            dependency_service_name = service_name
+        
         finder = RecipeFinder(config)
-        recipe_path = finder.find_recipe(service_name)
+        recipe_path = finder.find_recipe(base_service_name)
         
         if not recipe_path:
             error(f"Service '{service_name}' not found. Use 'cli --list-services' to see available services.")
@@ -117,14 +137,17 @@ class CommandRouter:
         if service_name == 'security' and getattr(args, 'production_hardening', False):
             ansible_args.extend(['-e', 'use_production_hardening=true'])
         
+        # For -server variants, we pass the full name to get dependencies
+        # For regular services, dependencies are skipped by default now
         exit_code = dependency_manager.execute_with_dependencies(
-            service_name=service_name,
+            service_name=dependency_service_name,
             environment=environment,
             custom_inventory=getattr(args, 'inventory_path', None),
             extra_vars_file=getattr(args, 'extra_vars_file', None),
             extra_args=ansible_args,
             dry_run=args.check,
             target_host=getattr(args, 'target_host', None),
+            skip_dependencies=False,  # Let dependency manager handle based on service name
         )
         
         sys.exit(exit_code)
