@@ -60,6 +60,11 @@ class CommandRouter:
             redis_ops = RedisOperations(config)
             exit_code = redis_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
+        elif service_name == "docker":
+            from operations.docker import DockerOperations
+            docker_ops = DockerOperations(config)
+            exit_code = docker_ops.handle_operation(args, ansible_args)
+            sys.exit(exit_code)
         elif service_name == "nginx":
             nginx_ops = NginxOperations(config)
             exit_code = nginx_ops.handle_operation(args, ansible_args)

@@ -1,0 +1,69 @@
+# Task: Deploy Docker Compose Stack
+
+---
+- name: Validate compose file exists
+  stat:
+    path: "{{ docker_compose_file }}"
+  register: compose_file_stat
+  delegate_to: localhost
+  become: false
+
+- name: Fail if compose file doesn't exist
+  fail:
+    msg: "Docker Compose file not found: {{ docker_compose_file }}"
+  when: not compose_file_stat.stat.exists
+
+- name: Create deployment directory
+  file:
+    path: "/opt/docker-compose/{{ docker_compose_project_name | default(compose_file_stat.stat.path | dirname | basename) }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy compose file to target
+  copy:
+    src: "{{ docker_compose_file }}"
+    dest: "/opt/docker-compose/{{ docker_compose_project_name | default(compose_file_stat.stat.path | dirname | basename) }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy any additional files from the same directory
+  synchronize:
+    src: "{{ docker_compose_file | dirname }}/"
+    dest: "/opt/docker-compose/{{ docker_compose_project_name | default(compose_file_stat.stat.path | dirname | basename) }}/"
+    archive: false
+    recursive: true
+    delete: false
+  when: docker_compose_sync_dir | default(false)
+
+- name: Pull Docker images
+  command: docker-compose pull
+  args:
+    chdir: "/opt/docker-compose/{{ docker_compose_project_name | default(compose_file_stat.stat.path | dirname | basename) }}"
+  register: pull_result
+  changed_when: '"Pulling" in pull_result.stdout'
+
+- name: Deploy Docker Compose stack
+  command: docker-compose up -d
+  args:
+    chdir: "/opt/docker-compose/{{ docker_compose_project_name | default(compose_file_stat.stat.path | dirname | basename) }}"
+  register: deploy_result
+
+- name: Show deployment status
+  command: docker-compose ps
+  args:
+    chdir: "/opt/docker-compose/{{ docker_compose_project_name | default(compose_file_stat.stat.path | dirname | basename) }}"
+  register: status_result
+  changed_when: false
+
+- name: Display deployment result
+  debug:
+    msg: |
+      Docker Compose stack deployed successfully!
+      Project: {{ docker_compose_project_name | default(compose_file_stat.stat.path | dirname | basename) }}
+      Location: /opt/docker-compose/{{ docker_compose_project_name | default(compose_file_stat.stat.path | dirname | basename) }}
+      
+      Status:
+      {{ status_result.stdout }}

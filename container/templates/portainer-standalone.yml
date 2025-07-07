@@ -1,0 +1,26 @@
+# Standalone Portainer Deployment
+# Simple Portainer deployment for Docker management
+# Usage: cli docker --deploy-compose /path/to/this/file --compose-name portainer
+
+version: "3.8"
+
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    command: -H unix:///var/run/docker.sock
+    ports:
+      - "9000:9000"
+      - "9443:9443"  # HTTPS port
+      - "8000:8000"  # Edge agent port (optional)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /data/portainer/data:/data
+    environment:
+      - PORTAINER_ADMIN_PASSWORD_FILE=/run/secrets/portainer_admin_password
+    secrets:
+      - portainer_admin_password
+
+secrets:
+  portainer_admin_password:
+    file: ./portainer_admin_password.txt

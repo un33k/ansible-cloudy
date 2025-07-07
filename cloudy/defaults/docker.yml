@@ -1,0 +1,33 @@
+# Default Docker Configuration
+# These defaults can be overridden by vault variables
+
+---
+# Docker package settings
+docker_package: docker-ce
+docker_package_state: present
+
+# Docker daemon configuration
+docker_daemon_options:
+  log-driver: json-file
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+  storage-driver: overlay2
+  live-restore: true
+
+# Docker compose
+docker_compose_version: "2.21.0"
+docker_compose_install: true
+
+# Docker user management
+docker_users: []
+
+# Docker network settings
+docker_default_network_mtu: 1500
+
+# Docker storage settings
+docker_data_root: /var/lib/docker
+
+# Security settings
+docker_tls_enabled: false
+docker_remote_api_enabled: false

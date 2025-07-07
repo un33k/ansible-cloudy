@@ -303,6 +303,45 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
         description=f"{Colors.CYAN}OpenVPN Service - Virtual private network server{Colors.NC}"
     )
     
+    # Docker service
+    docker_parser = subparsers.add_parser(
+        'docker',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='Docker container runtime',
+        description=f"{Colors.CYAN}Docker Service - Container runtime and orchestration{Colors.NC}",
+        epilog=f"""
+{Colors.YELLOW}Examples:{Colors.NC}
+  {Colors.GREEN}cli docker --install{Colors.NC}                       Install Docker CE
+  {Colors.GREEN}cli docker --add-user username{Colors.NC}            Add user to docker group
+  {Colors.GREEN}cli docker --configure{Colors.NC}                    Configure Docker daemon
+  {Colors.GREEN}cli docker --deploy-compose /path/file{Colors.NC}    Deploy docker-compose stack
+
+{Colors.YELLOW}Container Management:{Colors.NC}
+  Use Portainer for web-based container management after installation
+        """
+    )
+    docker_parser.add_argument(
+        '--add-user',
+        metavar='USERNAME',
+        help='Add user to docker group'
+    )
+    docker_parser.add_argument(
+        '--configure',
+        action='store_true',
+        help='Configure Docker daemon settings'
+    )
+    docker_parser.add_argument(
+        '--deploy-compose',
+        metavar='PATH',
+        help='Deploy docker-compose stack from file'
+    )
+    docker_parser.add_argument(
+        '--compose-name',
+        metavar='NAME',
+        help='Name for docker-compose stack (default: dirname)'
+    )
+    
     # SSH service - port management
     ssh_parser = subparsers.add_parser(
         'ssh',

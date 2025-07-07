@@ -1,0 +1,122 @@
+# Recipe: Docker Container Runtime Setup
+# Usage: ansible-playbook playbooks/recipes/sys/docker.yml -i inventory/hosts.yml
+
+---
+- name: Docker Container Runtime Setup Recipe
+  hosts: service_targets
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - "../../../defaults/all.yml"
+    - "../../../defaults/docker.yml"
+  
+  vars:
+    task_paths: "../../../tasks"
+    
+    # Apply defaults with vault override pattern
+    docker_package: "{{ vault_docker_package | default(docker_package) }}"
+    docker_daemon_options: "{{ vault_docker_daemon_options | default(docker_daemon_options) }}"
+    docker_compose_install: "{{ vault_docker_compose_install | default(docker_compose_install) }}"
+    docker_compose_version: "{{ vault_docker_compose_version | default(docker_compose_version) }}"
+    docker_users: "{{ vault_docker_users | default(docker_users) }}"
+    
+    # Setup flags
+    run_generic_setup: "{{ generic | default(true) }}"
+    configure_daemon: "{{ docker_configure_daemon | default(false) }}"
+    
+  pre_tasks:
+    # Ensure proper secure connection
+    - name: Validate secure connection
+      include_tasks: "{{ task_paths }}/sys/core/ensure-secure-connection.yml"
+    
+    - name: Display Docker setup information
+      debug:
+        msg: |
+          🚀 Starting Docker Container Runtime Setup
+          Target: {{ inventory_hostname }} ({{ ansible_host }})
+          Package: {{ docker_package }}
+          Compose: {{ 'Yes (v' + docker_compose_version + ')' if docker_compose_install else 'No' }}
+          Configure Daemon: {{ 'Yes' if configure_daemon else 'No' }}
+          
+  tasks:
+    # Generic Server Setup - Include core tasks
+    - name: Initialize system
+      include_tasks: "{{ task_paths }}/sys/core/init.yml"
+      when: run_generic_setup | bool
+      tags: [generic, foundation, init]
+      
+    - name: Update system packages
+      include_tasks: "{{ task_paths }}/sys/core/update.yml"
+      when: run_generic_setup | bool
+      tags: [generic, foundation, update]
+      
+    - name: Install common utilities
+      include_tasks: "{{ task_paths }}/sys/core/install-common.yml"
+      when: run_generic_setup | bool
+      tags: [generic, foundation, packages]
+      
+    # Docker Installation
+    - name: Install Docker
+      include_tasks: "{{ task_paths }}/sys/docker/install.yml"
+      tags: [docker, install]
+      
+    # Docker Configuration
+    - name: Configure Docker daemon
+      include_tasks: "{{ task_paths }}/sys/docker/configure.yml"
+      when: configure_daemon | bool
+      tags: [docker, configure]
+      
+    # Docker Compose Installation
+    - name: Install Docker Compose
+      include_tasks: "{{ task_paths }}/sys/docker/install-compose.yml"
+      when: docker_compose_install | bool
+      tags: [docker, compose]
+      
+    # Add users to docker group
+    - name: Add users to docker group
+      include_tasks: "{{ task_paths }}/sys/docker/add-user.yml"
+      vars:
+        username: "{{ item }}"
+      loop: "{{ docker_users }}"
+      when: docker_users | length > 0
+      tags: [docker, users]
+      
+  post_tasks:
+    - name: Get Docker version
+      command: docker --version
+      register: docker_version_output
+      changed_when: false
+      tags: [docker, verify]
+      
+    - name: Get Docker Compose version
+      command: docker-compose --version
+      register: compose_version_output
+      changed_when: false
+      when: docker_compose_install | bool
+      ignore_errors: true
+      tags: [docker, verify]
+      
+    - name: Display Docker setup completion summary
+      debug:
+        msg: |
+          🎉 ✅ DOCKER CONTAINER RUNTIME SETUP COMPLETED SUCCESSFULLY!
+          📋 Configuration Summary:
+             ├── Docker Version: {{ docker_version_output.stdout | regex_replace('Docker version ', '') }}
+             ├── Docker Compose: {{ compose_version_output.stdout | regex_replace('docker-compose version ', '') if docker_compose_install and compose_version_output.rc == 0 else 'Not installed' }}
+             ├── Daemon Configured: {{ 'Yes' if configure_daemon else 'No' }}
+             ├── Users Added: {{ docker_users | join(', ') if docker_users else 'None' }}
+             └── Status: Running and ready
+          
+          🚀 Docker is ready for container deployments!
+          
+          📖 Next Steps:
+          1. Test Docker: docker run hello-world
+          2. Deploy containers using Docker Compose
+          3. Install Portainer for web-based management:
+             cli docker --deploy-compose /path/to/portainer-compose.yml
+          
+          💡 Container Management:
+          - Use Docker CLI for command-line management
+          - Deploy Portainer for web-based container management
+          - Configure docker-compose files for your applications

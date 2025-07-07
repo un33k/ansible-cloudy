@@ -1,0 +1,4 @@
+# Ignore all deployment files except this gitignore
+*
+!.gitignore
+!README.md

@@ -1,0 +1,26 @@
+# Task: Install Docker Compose
+
+---
+- name: Check if Docker Compose is already installed
+  stat:
+    path: /usr/local/bin/docker-compose
+  register: compose_binary
+
+- name: Download Docker Compose binary
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_machine }}"
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+    owner: root
+    group: root
+  when: not compose_binary.stat.exists or docker_compose_force_update | default(false)
+
+- name: Verify Docker Compose installation
+  command: docker-compose --version
+  register: compose_version_check
+  changed_when: false
+  failed_when: compose_version_check.rc != 0
+
+- name: Display Docker Compose version
+  debug:
+    msg: "Docker Compose installed: {{ compose_version_check.stdout }}"
