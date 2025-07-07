@@ -282,11 +282,6 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
         metavar='SERVICE',
         help='Deploy containerized service (portainer, nginx)'
     )
-    docker_parser.add_argument(
-        '--add-user',
-        metavar='USERNAME',
-        help='Add user to docker group'
-    )
     
     # Portainer service
     portainer_parser = subparsers.add_parser(  # noqa: F841

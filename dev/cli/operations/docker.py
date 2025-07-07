@@ -29,12 +29,6 @@ class DockerOperations(BaseServiceOperations):
                     i += 2
                 else:
                     error("--compose requires a service name (e.g., portainer)")
-            elif arg == "--add-user":
-                if i + 1 < len(ansible_args):
-                    docker_args['add_user'] = ansible_args[i + 1]
-                    i += 2
-                else:
-                    error("--add-user requires a username")
             elif arg == "--network":
                 if i + 1 < len(ansible_args):
                     docker_args['network'] = ansible_args[i + 1]
@@ -69,13 +63,13 @@ class DockerOperations(BaseServiceOperations):
     def _get_operation_flags(self) -> List[str]:
         """Get list of operation flags for Docker"""
         return [
-            '--add-user', '--compose'
+            '--compose'
         ]
 
     def _detect_operation(self, ansible_args: List[str]) -> Optional[str]:
         """Detect which Docker operation is requested"""
         operations = [
-            '--add-user', '--compose'
+            '--compose'
         ]
         
         for arg in ansible_args:
@@ -86,6 +80,16 @@ class DockerOperations(BaseServiceOperations):
 
     def handle_operation(self, args, ansible_args: List[str]) -> int:
         """Route Docker operation to appropriate handler"""
+        
+        # Check if --compose was provided
+        if hasattr(args, 'compose') and args.compose:
+            # Show connection info
+            self._show_connection_info(args)
+            # Extract service args and handle compose deployment
+            service_args = self._extract_service_args(ansible_args)
+            service_args['compose'] = args.compose
+            return self._handle_compose_deployment(args, ansible_args, service_args)
+        
         
         # Let parent class handle the standard flow
         return super().handle_operation(args, ansible_args)
@@ -165,34 +169,6 @@ class DockerOperations(BaseServiceOperations):
         
         if operation == 'compose':
             return self._handle_compose_deployment(args, ansible_args, docker_args)
-        elif operation == 'add-user':
-            # Add user to docker group
-            task_path = self.config.base_dir / "cloudy" / "tasks" / "sys" / "docker" / "add-user.yml"
-            
-            if not task_path.exists():
-                error(f"Task file not found: {task_path}")
-            
-            # Build extra vars
-            extra_vars = []
-            
-            if 'add_user' not in docker_args:
-                error("--add-user requires a username")
-            
-            extra_vars.extend(["-e", f"username={docker_args['add_user']}"])
-            
-            # Add verbose flag if requested
-            if hasattr(args, 'verbose') and args.verbose:
-                extra_vars.insert(0, "-v")
-            
-            # Execute task
-            inventory_path = self.inventory_manager.get_inventory_path(args.prod)
-            return self.runner.run_task(
-                task_path=str(task_path),
-                inventory_path=inventory_path,
-                extra_args=extra_vars,
-                dry_run=args.check,
-            )
-        
         else:
             error(f"Unknown Docker operation: {operation}")
 
@@ -208,7 +184,4 @@ class DockerOperations(BaseServiceOperations):
         print(f"{Colors.BLUE}Container Deployment:{Colors.NC}")
         print(f"  {Colors.GREEN}cli docker --compose portainer{Colors.NC}         Install docker, nginx, and portainer")
         print(f"  {Colors.GREEN}cli docker --compose nginx{Colors.NC}             Deploy nginx container (opens 80/443)")
-        print()
-        print(f"{Colors.BLUE}User Management:{Colors.NC}")
-        print(f"  {Colors.GREEN}cli docker --add-user username{Colors.NC}         Add user to docker group")
         print()

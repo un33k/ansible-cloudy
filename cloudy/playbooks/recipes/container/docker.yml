@@ -26,14 +26,22 @@
     - name: Recipe header
       debug:
         msg: |
-          🐳 Installing {{ recipe_description }}
+          🐳 Setting up {{ recipe_description }}
           Category: {{ recipe_category }}
           Version: {{ recipe_version }}
           Environment: {{ environment | default('dev') }}
           
+    # Check if Docker is already installed
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      changed_when: false
+      failed_when: false
+
     # Install Docker CE
     - name: Install Docker CE
-      include_tasks: ../../../tasks/sys/docker/install-docker.yml
+      include_tasks: ../../../tasks/sys/docker/install.yml
+      when: docker_check.rc != 0
       
     # Install Docker Compose
     - name: Check if Docker Compose is installed
@@ -92,21 +100,21 @@
         mode: '0644'
       notify: restart docker
       
-    # Add current user to docker group if running locally
-    - name: Add current user to docker group
+    # Add grunt user to docker group (same as base recipe)
+    - name: Add grunt user to docker group
       user:
-        name: "{{ ansible_user }}"
+        name: "{{ grunt_user }}"
         groups: docker
         append: true
-      when: ansible_connection == 'local'
+      when: grunt_user is defined
       register: docker_user_result
       
     - name: Installation summary
       debug:
         msg: |
-          ✅ Docker installation complete!
+          ✅ Docker setup complete!
           
-          Docker CE: {{ docker_version }}
+          Docker CE: {% if docker_check.rc == 0 %}Already installed{% else %}Installed{% endif %} ({{ docker_compose_version }})
           Docker Compose: {{ docker_compose_version }}
           
           Networks created:
@@ -116,7 +124,7 @@
           Data directory: {{ docker_data_dir }}
           
           {% if docker_user_result.changed | default(false) %}
-          ⚠️  User '{{ ansible_user }}' added to docker group
+          ⚠️  User '{{ grunt_user }}' added to docker group
           Please log out and back in for group changes to take effect
           {% endif %}
           

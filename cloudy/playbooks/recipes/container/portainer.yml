@@ -94,11 +94,12 @@
       
     # Wait for Portainer to be ready
     - name: Wait for Portainer to be ready
-      wait_for:
-        port: "{{ portainer_internal_port }}"
-        host: localhost
-        delay: 5
-        timeout: 60
+      shell: |
+        docker ps --filter "name=portainer" --format {% raw %}"table {{.Status}}"{% endraw %}
+      register: portainer_status
+      until: "'Up' in portainer_status.stdout"
+      retries: 12
+      delay: 5
       
     - name: Deployment summary
       debug:
