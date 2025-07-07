@@ -140,10 +140,9 @@
         
     # Start nginx container
     - name: Deploy nginx container
-      docker_compose:
+      community.docker.docker_compose_v2:
         project_src: "/tmp/docker-compose/nginx"
         state: present
-        restarted: true
       register: nginx_deploy_result
       
     # Wait for nginx to be ready

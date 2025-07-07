@@ -33,7 +33,7 @@
           
     # Install Docker CE
     - name: Install Docker CE
-      include_tasks: ../../tasks/sys/docker/install-docker.yml
+      include_tasks: ../../../tasks/sys/docker/install-docker.yml
       
     # Install Docker Compose
     - name: Check if Docker Compose is installed

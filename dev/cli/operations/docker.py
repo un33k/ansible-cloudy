@@ -87,14 +87,7 @@ class DockerOperations(BaseServiceOperations):
     def handle_operation(self, args, ansible_args: List[str]) -> int:
         """Route Docker operation to appropriate handler"""
         
-        # Extract service-specific arguments
-        service_args = self._extract_service_args(ansible_args)
-        
-        # Handle --compose flag specially
-        if 'compose' in service_args:
-            return self._handle_compose_deployment(args, ansible_args, service_args)
-        
-        # Otherwise use parent class logic
+        # Let parent class handle the standard flow
         return super().handle_operation(args, ansible_args)
 
     def _handle_compose_deployment(self, args, ansible_args: List[str], docker_args: Dict[str, Any]) -> int:
@@ -170,7 +163,9 @@ class DockerOperations(BaseServiceOperations):
     def _handle_granular_operation(self, operation: str, args, ansible_args: List[str], docker_args: Dict[str, Any]) -> int:
         """Handle granular Docker operations"""
         
-        if operation == 'add-user':
+        if operation == 'compose':
+            return self._handle_compose_deployment(args, ansible_args, docker_args)
+        elif operation == 'add-user':
             # Add user to docker group
             task_path = self.config.base_dir / "cloudy" / "tasks" / "sys" / "docker" / "add-user.yml"
             

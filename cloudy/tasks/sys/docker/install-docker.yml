@@ -46,7 +46,7 @@
     name: "{{ grunt_user }}"
     groups: docker
     append: true
-  when: vault_grunt_user is defined
+  when: grunt_user is defined
   register: docker_group_result
   
 - name: Verify Docker installation

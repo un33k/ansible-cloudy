@@ -65,10 +65,9 @@
         
     # Start Portainer container
     - name: Deploy Portainer container
-      docker_compose:
+      community.docker.docker_compose_v2:
         project_src: "/tmp/docker-compose/portainer"
         state: present
-        restarted: true
       register: portainer_deploy_result
       
     # Configure nginx reverse proxy
