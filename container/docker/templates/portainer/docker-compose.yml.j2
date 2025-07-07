@@ -14,16 +14,14 @@ services:
     # Configure with Docker socket
     command: -H unix:///var/run/docker.sock
     
-    ports:
-      - "9000:9000"
-      - "9443:9443"
+    # No ports exposed - only accessible via internal network
+    # Access through nginx reverse proxy or other containers
     
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Docker API access
       - /data/docker/portainer:/data  # Persistent data
     
     networks:
-      - proxy
       - internal
     
     labels:

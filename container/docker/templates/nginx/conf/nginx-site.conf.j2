@@ -37,7 +37,7 @@ server {
     client_max_body_size 100M;
 
     location / {
-        proxy_pass http://{{domain_name}}:{{remote_port}};
+        proxy_pass http://{{docker_container_name}}:{{remote_port}};
         
         # Pass all client headers
         proxy_pass_request_headers on;
