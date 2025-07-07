@@ -169,7 +169,7 @@
       unarchive:
         src: /tmp/nginx-exporter.tar.gz
         dest: /usr/local/bin
-        remote_src: yes
+        remote_src: true
         owner: root
         group: root
         mode: '0755'
@@ -316,10 +316,10 @@
         
     - name: reload systemd
       systemd:
-        daemon_reload: yes
+        daemon_reload: true
         
     - name: restart nginx-exporter
       service:
         name: nginx-exporter
         state: restarted
-        enabled: yes
+        enabled: true

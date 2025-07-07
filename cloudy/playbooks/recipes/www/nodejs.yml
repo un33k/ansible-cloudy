@@ -59,9 +59,17 @@
           
   tasks:
     # Install Node.js
-    - name: Install Node.js repository
-      shell: |
-        curl -fsSL https://deb.nodesource.com/setup_{{ node_version }}.x | sudo -E bash -
+    - name: Download Node.js setup script
+      get_url:
+        url: "https://deb.nodesource.com/setup_{{ node_version }}.x"
+        dest: "/tmp/nodesource_setup.sh"
+        mode: '0755'
+      args:
+        creates: /tmp/nodesource_setup.sh
+      tags: [nodejs, install]
+
+    - name: Run Node.js setup script
+      command: bash /tmp/nodesource_setup.sh
       args:
         creates: /etc/apt/sources.list.d/nodesource.list
       tags: [nodejs, install]
@@ -73,13 +81,13 @@
           - build-essential
           - git
         state: present
-        update_cache: yes
+        update_cache: true
       tags: [nodejs, install]
     
     - name: Install Yarn package manager
       npm:
         name: yarn
-        global: yes
+        global: true
         state: present
       tags: [nodejs, yarn]
     
@@ -93,14 +101,15 @@
     - name: Install PM2 process manager
       npm:
         name: pm2
-        global: yes
+        global: true
         state: present
       tags: [nodejs, pm2]
     
     - name: Install PM2 log rotation
-      shell: pm2 install pm2-logrotate
-      args:
-        creates: /home/{{ ansible_user }}/.pm2/modules/pm2-logrotate
+      npm:
+        name: pm2-logrotate
+        global: true
+        state: present
       tags: [nodejs, pm2]
     
     - name: Configure PM2 log rotation
@@ -114,10 +123,10 @@
     - name: Create application user
       user:
         name: "{{ app_name }}"
-        system: yes
+        system: true
         shell: /bin/bash
         home: "/home/{{ app_name }}"
-        createhome: yes
+        createhome: true
       tags: [nodejs, user]
     
     # Setup application directory
@@ -136,7 +145,8 @@
         repo: "{{ app_repo }}"
         dest: "{{ app_path }}"
         version: "{{ app_branch }}"
-        force: yes
+        force: true
+      become: true
       become_user: "{{ app_name }}"
       when: app_repo != ''
       tags: [nodejs, app, git]
@@ -206,6 +216,7 @@
       npm:
         path: "{{ app_path }}"
         production: "{{ app_env == 'production' }}"
+      become: true
       become_user: "{{ app_name }}"
       tags: [nodejs, app, npm]
     
@@ -235,6 +246,7 @@
         cd {{ app_path }}
         pm2 start ecosystem.config.js
         pm2 save
+      become: true
       become_user: "{{ app_name }}"
       environment:
         NODE_ENV: "{{ app_env }}"

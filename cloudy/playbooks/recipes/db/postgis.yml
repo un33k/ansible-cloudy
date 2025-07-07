@@ -62,8 +62,6 @@
     # PostgreSQL Installation
     - name: Install PostgreSQL server
       include_tasks: "{{ task_paths }}/db/postgresql/install.yml"
-      vars:
-        pg_version: "{{ pg_version }}"
       tags: [database, postgresql, install]
       
     # PostGIS Installation and Configuration
@@ -71,14 +69,14 @@
       include_tasks: "{{ task_paths }}/db/postgis/install.yml"
       vars:
         psql_version: "{{ pg_version }}"
-        pgis_version: "{{ pgis_version }}"
+        pgis_version: "{{ postgis_version | default(pg_postgis_version_default) }}"
       tags: [database, postgis, install]
       
     - name: Configure PostGIS template
       include_tasks: "{{ task_paths }}/db/postgis/configure.yml"
       vars:
-        pg_version: "{{ pg_version }}"
-        pgis_version: "{{ pgis_version }}"
+        pg_version: "{{ postgresql_version | default(pg_version_default) }}"
+        pgis_version: "{{ postgis_version | default(pg_postgis_version_default) }}"
         legacy: "{{ legacy_postgis | default(false) }}"
       tags: [database, postgis, configure]
       

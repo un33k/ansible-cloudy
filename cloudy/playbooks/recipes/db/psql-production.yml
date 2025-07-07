@@ -138,6 +138,7 @@
         name: pg_stat_statements
         db: postgres
         state: present
+      become: true
       become_user: postgres
       when: setup_postgresql | bool and pg_monitoring_enabled | bool
       tags: [postgresql, monitoring]
@@ -151,7 +152,17 @@
     # Performance Validation
     - name: Run PostgreSQL performance check
       shell: |
-        sudo -u postgres psql -c "SELECT name, setting, unit FROM pg_settings WHERE name IN ('shared_buffers', 'effective_cache_size', 'work_mem', 'maintenance_work_mem', 'max_connections');"
+        sudo -u postgres psql -c "
+          SELECT name, setting, unit
+          FROM pg_settings
+          WHERE name IN (
+            'shared_buffers',
+            'effective_cache_size',
+            'work_mem',
+            'maintenance_work_mem',
+            'max_connections'
+          );
+        "
       register: pg_performance_settings
       changed_when: false
       tags: [postgresql, validation]
@@ -167,7 +178,9 @@
         echo "Data Directory: $(sudo -u postgres psql -t -c 'SHOW data_directory;')" >> /root/postgresql-report.txt
         echo "" >> /root/postgresql-report.txt
         echo "Performance Settings:" >> /root/postgresql-report.txt
-        sudo -u postgres psql -c "SELECT name, setting, unit FROM pg_settings WHERE name IN ('shared_buffers', 'effective_cache_size', 'work_mem', 'max_connections');" >> /root/postgresql-report.txt
+        sudo -u postgres psql -c "SELECT name, setting, unit FROM pg_settings \
+          WHERE name IN ('shared_buffers', 'effective_cache_size', 'work_mem', 'max_connections');" \
+          >> /root/postgresql-report.txt
         echo "" >> /root/postgresql-report.txt
         echo "Security Settings:" >> /root/postgresql-report.txt
         echo "SSL: $(sudo -u postgres psql -t -c 'SHOW ssl;')" >> /root/postgresql-report.txt
@@ -178,7 +191,8 @@
         echo "Archive Command: $(sudo -u postgres psql -t -c 'SHOW archive_command;')" >> /root/postgresql-report.txt
         echo "" >> /root/postgresql-report.txt
         echo "Monitoring:" >> /root/postgresql-report.txt
-        echo "Extensions: $(sudo -u postgres psql -t -c 'SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL;')" >> /root/postgresql-report.txt
+        echo "Extensions: $(sudo -u postgres psql -t -c 'SELECT name FROM pg_available_extensions \
+          WHERE installed_version IS NOT NULL;')" >> /root/postgresql-report.txt
       when: production_mode | bool
       
     - name: Display PostgreSQL production completion summary

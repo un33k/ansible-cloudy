@@ -119,7 +119,8 @@
              ├── Status: Active and accepting connections
              ├── Listen: localhost:{{ pgbouncer_port }}
              ├── Backend: {{ pgbouncer_backend_host }}:{{ pgbouncer_backend_port }}
-             ├── Pool Size: {{ pgbouncer_default_pool_size }} × {{ pgbouncer_max_db_connections }} = {{ pgbouncer_default_pool_size | int * pgbouncer_max_db_connections | int }} max
+             ├── Pool Size: {{ pgbouncer_default_pool_size }} × {{ pgbouncer_max_db_connections }}
+             │      = {{ pgbouncer_default_pool_size | int * pgbouncer_max_db_connections | int }} max
              └── Mode: Transaction pooling (most efficient)
           
           🚀 Connection pooling is now active!

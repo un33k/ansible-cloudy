@@ -39,7 +39,7 @@
     redis_password: "{{ vault_redis_password | default('redis123') }}"
     
     # Application settings
-    app_name: "{{ vault_app_name | default('webapp') }}"
+    app_name: "{{ 'webapp' if (vault_app_name is not defined or vault_app_name == '' or vault_app_name is none) else vault_app_name }}"
     app_port: "{{ vault_app_port | default(8000 if app_type == 'django' else 3000) }}"
     app_path: "{{ vault_app_path | default('/var/www/' + app_name) }}"
     
@@ -205,9 +205,9 @@
         - name: Configure PM2 for Node.js
           include_tasks: "{{ task_paths }}/web/nodejs/configure-pm2.yml"
           vars:
-            app_name: "{{ app_name }}"
-            app_path: "{{ app_path }}"
-            app_port: "{{ app_port }}"
+            nodejs_app_name: "{{ app_name }}"
+            nodejs_app_path: "{{ app_path }}"
+            nodejs_app_port: "{{ app_port }}"
           tags: [nodejs, pm2]
     
     # =============================================================================

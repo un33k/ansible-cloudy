@@ -135,6 +135,7 @@
         name: vector
         db: "{{ item.name }}"
         state: present
+      become: true
       become_user: postgres
       loop: "{{ pg_databases }}"
       when: 
@@ -204,6 +205,7 @@
             ORDER BY embedding <=> query_embedding
             LIMIT limit_n;
           $$;
+      become: true
       become_user: postgres
       when: pg_create_example_schema | default(true)
       tags: [postgresql, pgvector, schema]
@@ -231,6 +233,7 @@
             'max_parallel_workers',
             'jit'
           );
+      become: true
       become_user: postgres
       register: pgvector_settings
       tags: [postgresql, pgvector, validation]

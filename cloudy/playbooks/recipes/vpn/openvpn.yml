@@ -102,7 +102,11 @@
           
           📖 Next Steps:
           1. Create client certificates:
-             ansible-playbook -i inventory/hosts.yml --extra-vars="client_name=myclient domain={{ vpn_domain }}" --tags=create-client tasks/services/openvpn/create-client.yml
+             >-
+               ansible-playbook -i inventory/hosts.yml \
+                 --extra-vars="client_name=myclient domain={{ vpn_domain }}" \
+                 --tags=create-client \
+                 tasks/services/openvpn/create-client.yml
           
           2. List clients:
              ansible-playbook -i inventory/hosts.yml --extra-vars="domain={{ vpn_domain }}" --tags=list-clients tasks/services/openvpn/list-clients.yml
