@@ -21,6 +21,10 @@ vault_nginx_container_name: "nginx"
 vault_nginx_container_http_port: 80
 vault_nginx_container_https_port: 443
 
+# Nginx site configuration defaults
+vault_nginx_ssl_challenge_path: "/var/www/letsencrypt"
+vault_nginx_client_max_body_size: "100M"
+
 # Container resource limits (optional)
 vault_container_memory_limit: "512m"
 vault_container_cpu_limit: "1.0"
