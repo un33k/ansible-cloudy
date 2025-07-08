@@ -1,0 +1,40 @@
+# Docker Container Status Task
+# Usage: ansible-playbook tasks/container/docker-status.yml
+
+---
+- name: Docker Container Status
+  hosts: all
+  become: true
+  gather_facts: false
+  
+  tasks:
+    - name: Get container status
+      shell: |
+        docker ps -a --format {% raw %}"table {{.Names}}\t{{.Status}}\t{{.Ports}}"{% endraw %}
+      register: container_status
+      changed_when: false
+      
+    - name: Get Docker version
+      command: docker version --format {% raw %}"Docker {{.Server.Version}}"{% endraw %}
+      register: docker_version
+      changed_when: false
+      
+    - name: Get Docker networks
+      command: docker network ls --format {% raw %}"table {{.Name}}\t{{.Driver}}"{% endraw %}
+      register: docker_networks
+      changed_when: false
+      
+    - name: Display Docker status
+      debug:
+        msg: |
+          ============================================
+          🐳 DOCKER STATUS
+          ============================================
+          {{ docker_version.stdout }}
+          
+          📦 CONTAINERS:
+          {{ container_status.stdout }}
+          
+          🌐 NETWORKS:
+          {{ docker_networks.stdout }}
+          ============================================

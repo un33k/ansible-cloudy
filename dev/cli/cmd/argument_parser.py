@@ -282,6 +282,37 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
         metavar='SERVICE',
         help='Deploy containerized service (portainer, nginx)'
     )
+    docker_parser.add_argument(
+        '--status',
+        action='store_true',
+        help='Show container status'
+    )
+    docker_parser.add_argument(
+        '--restart',
+        metavar='CONTAINER',
+        nargs='?',
+        const='all',
+        help='Restart container(s) (default: all)'
+    )
+    docker_parser.add_argument(
+        '--stop',
+        metavar='CONTAINER',
+        nargs='?',
+        const='all',
+        help='Stop container(s) (default: all)'
+    )
+    docker_parser.add_argument(
+        '--pull',
+        metavar='IMAGE',
+        nargs='?',
+        const='all',
+        help='Pull latest image(s) (default: all)'
+    )
+    docker_parser.add_argument(
+        '--logs',
+        metavar='CONTAINER',
+        help='Show container logs'
+    )
     
     # Portainer service
     portainer_parser = subparsers.add_parser(  # noqa: F841

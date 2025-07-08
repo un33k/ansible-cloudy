@@ -110,17 +110,20 @@
           Internal Port: {{ portainer_internal_port }}
           Data Directory: {{ portainer_data_dir }}
           
-          Access URL: https://{{ portainer_domain }}
+          🌐 Access URL: https://{{ portainer_domain }}
           
           {% if not nginx_installed.stat.exists %}
           ⚠️  Nginx not found - Portainer is only accessible internally
           Deploy nginx container with: cli docker --compose nginx
+          {% else %}
+          📝 Note: Make sure {{ portainer_domain }} points to your server IP
           {% endif %}
           
           Next steps:
-          1. Visit https://{{ portainer_domain }}
-          2. Create initial admin account
-          3. Connect to local Docker environment
+          1. Add DNS record: {{ portainer_domain }} → {{ ansible_host }}
+          2. Visit https://{{ portainer_domain }}
+          3. Create initial admin account
+          4. Connect to local Docker environment
           
   handlers:
     - name: reload nginx
