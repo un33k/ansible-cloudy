@@ -18,6 +18,7 @@ from operations.recipes import RecipeFinder  # noqa: E402
 from operations.postgresql import PostgreSQLOperations  # noqa: E402
 from operations.redis import RedisOperations  # noqa: E402
 from operations.nginx import NginxOperations  # noqa: E402
+from operations.docker import DockerOperations  # noqa: E402
 from discovery.service_scanner import ServiceScanner  # noqa: E402
 from help_system import show_validate_help  # noqa: E402
 
@@ -71,6 +72,10 @@ class CommandRouter:
         elif base_service_name == "nginx":
             nginx_ops = NginxOperations(config)
             exit_code = nginx_ops.handle_operation(args, ansible_args)
+            sys.exit(exit_code)
+        elif base_service_name == "docker":
+            docker_ops = DockerOperations(config)
+            exit_code = docker_ops.handle_operation(args, ansible_args)
             sys.exit(exit_code)
         elif base_service_name == "nodejs":
             from operations.nodejs import NodeJSOperations

@@ -1,0 +1,38 @@
+version: "3.8"
+
+# Portainer container management UI
+# - Direct access via ports 9000 (HTTP) and 9443 (HTTPS)
+# - Can be accessed through Nginx reverse proxy or directly
+# - Provides Docker container management interface
+
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    
+    # Configure with Docker socket
+    command: -H unix:///var/run/docker.sock
+    
+    # No ports exposed - only accessible via internal network
+    # Access through nginx reverse proxy or other containers
+    
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker API access
+      - /data/docker/portainer:/data  # Persistent data
+    
+    networks:
+      - internal
+    
+    labels:
+      # Labels for service discovery and monitoring
+      service.name: "portainer"
+      service.type: "container-management"
+
+networks:
+  proxy:
+    external: true
+    name: proxy_network
+  internal:
+    external: true
+    name: internal_network 

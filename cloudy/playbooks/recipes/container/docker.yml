@@ -1,0 +1,136 @@
+# Recipe: Docker CE and Container Platform Installation
+# Purpose: Install Docker CE, Docker Compose, and create Docker networks
+# Usage: cli docker --install
+
+---
+- name: Docker Container Platform Installation
+  hosts: all
+  become: true
+  vars:
+    recipe_name: docker
+    recipe_description: "Docker CE and container platform"
+    recipe_category: container
+    recipe_version: "1.0.0"
+    recipe_dependencies: []
+    
+    # Docker configuration
+    docker_version: "{{ vault_docker_version | default('24.0.7') }}"
+    docker_compose_version: "{{ vault_docker_compose_version | default('2.23.3') }}"
+    docker_data_dir: "{{ vault_docker_data_dir | default('/data/docker') }}"
+    
+    # Network configuration
+    docker_proxy_network: "{{ vault_docker_proxy_network | default('proxy_network') }}"
+    docker_internal_network: "{{ vault_docker_internal_network | default('internal_network') }}"
+    
+  tasks:
+    - name: Recipe header
+      debug:
+        msg: |
+          🐳 Setting up {{ recipe_description }}
+          Category: {{ recipe_category }}
+          Version: {{ recipe_version }}
+          Environment: {{ environment | default('dev') }}
+          
+    # Check if Docker is already installed
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      changed_when: false
+      failed_when: false
+
+    # Install Docker CE
+    - name: Install Docker CE
+      include_tasks: ../../../tasks/sys/docker/install.yml
+      when: docker_check.rc != 0
+      
+    # Install Docker Compose
+    - name: Check if Docker Compose is installed
+      stat:
+        path: /usr/local/bin/docker-compose
+      register: compose_installed
+      
+    - name: Download Docker Compose
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-linux-x86_64"
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+      when: not compose_installed.stat.exists
+      
+    - name: Create Docker data directory
+      file:
+        path: "{{ docker_data_dir }}"
+        state: directory
+        owner: root
+        group: docker
+        mode: '0775'
+        
+    # Create Docker networks
+    - name: Create Docker proxy network
+      docker_network:
+        name: "{{ docker_proxy_network }}"
+        driver: bridge
+        driver_options:
+          com.docker.network.bridge.name: br-proxy
+      register: proxy_network_result
+      
+    - name: Create Docker internal network
+      docker_network:
+        name: "{{ docker_internal_network }}"
+        driver: bridge
+        internal: true
+        driver_options:
+          com.docker.network.bridge.name: br-internal
+      register: internal_network_result
+      
+    # Configure Docker daemon
+    - name: Create Docker daemon configuration directory
+      file:
+        path: /etc/docker
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+        
+    - name: Configure Docker daemon
+      template:
+        src: ../../../templates/container/docker/daemon.json.j2
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart docker
+      
+    # Add grunt user to docker group (same as base recipe)
+    - name: Add grunt user to docker group
+      user:
+        name: "{{ grunt_user }}"
+        groups: docker
+        append: true
+      when: grunt_user is defined
+      register: docker_user_result
+      
+    - name: Installation summary
+      debug:
+        msg: |
+          ✅ Docker setup complete!
+          
+          Docker CE: {% if docker_check.rc == 0 %}Already installed{% else %}Installed{% endif %} ({{ docker_compose_version }})
+          Docker Compose: {{ docker_compose_version }}
+          
+          Networks created:
+          - {{ docker_proxy_network }} (external-facing)
+          - {{ docker_internal_network }} (internal-only)
+          
+          Data directory: {{ docker_data_dir }}
+          
+          {% if docker_user_result.changed | default(false) %}
+          ⚠️  User '{{ grunt_user }}' added to docker group
+          Please log out and back in for group changes to take effect
+          {% endif %}
+          
+  handlers:
+    - name: restart docker
+      systemd:
+        name: docker
+        state: restarted
+        daemon_reload: true

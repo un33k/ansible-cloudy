@@ -269,6 +269,69 @@ def register_service_subparsers(subparsers, common_parser, install_parser):
         help='HTTP port (default: 80)'
     )
     
+    # Docker service
+    docker_parser = subparsers.add_parser(
+        'docker',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='Docker container platform',
+        description=f"{Colors.CYAN}Docker Service - Container platform and orchestration{Colors.NC}"
+    )
+    docker_parser.add_argument(
+        '--compose',
+        metavar='SERVICE',
+        help='Deploy containerized service (portainer, nginx)'
+    )
+    docker_parser.add_argument(
+        '--status',
+        action='store_true',
+        help='Show container status'
+    )
+    docker_parser.add_argument(
+        '--restart',
+        metavar='CONTAINER',
+        nargs='?',
+        const='all',
+        help='Restart container(s) (default: all)'
+    )
+    docker_parser.add_argument(
+        '--stop',
+        metavar='CONTAINER',
+        nargs='?',
+        const='all',
+        help='Stop container(s) (default: all)'
+    )
+    docker_parser.add_argument(
+        '--pull',
+        metavar='IMAGE',
+        nargs='?',
+        const='all',
+        help='Pull latest image(s) (default: all)'
+    )
+    docker_parser.add_argument(
+        '--logs',
+        metavar='CONTAINER',
+        help='Show container logs'
+    )
+    
+    # Portainer service
+    portainer_parser = subparsers.add_parser(  # noqa: F841
+        'portainer',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='Portainer container management UI',
+        description=f"{Colors.CYAN}Portainer Service - Docker container management interface{Colors.NC}"
+    )
+    
+    # Nginx Docker service
+    nginx_docker_parser = subparsers.add_parser(  # noqa: F841
+        'nginx-docker',
+        parents=[install_parser],
+        formatter_class=ColoredHelpFormatter,
+        help='Nginx container for reverse proxy',
+        description=f"{Colors.CYAN}Nginx Docker Service - Containerized reverse proxy{Colors.NC}"
+    )
+    
     # Django service
     django_parser = subparsers.add_parser(  # noqa: F841
         'django',

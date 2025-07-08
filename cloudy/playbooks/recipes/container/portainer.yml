@@ -1,0 +1,137 @@
+# Recipe: Portainer Container Management UI
+# Purpose: Deploy Portainer for Docker container management
+# Usage: cli portainer --install or cli docker --compose portainer
+
+---
+- name: Portainer Container Management Deployment
+  hosts: all
+  become: true
+  vars:
+    recipe_name: portainer
+    recipe_description: "Portainer container management UI"
+    recipe_category: container
+    recipe_version: "1.0.0"
+    recipe_dependencies:
+      - docker
+      
+    # Portainer configuration
+    portainer_domain: "{{ vault_portainer_domain_name }}"
+    portainer_container_name: "{{ vault_portainer_docker_name | default('portainer') }}"
+    portainer_internal_port: "{{ vault_portainer_internal_port | default(9000) }}"
+    portainer_data_dir: "/data/docker/portainer"
+    
+    # Docker networks
+    docker_proxy_network: "{{ vault_docker_proxy_network | default('proxy_network') }}"
+    docker_internal_network: "{{ vault_docker_internal_network | default('internal_network') }}"
+    
+  pre_tasks:
+    - name: Validate required variables
+      fail:
+        msg: "vault_portainer_domain_name is required. Please set it in your vault file."
+      when: vault_portainer_domain_name is not defined
+      
+  tasks:
+    - name: Recipe header
+      debug:
+        msg: |
+          📦 Deploying {{ recipe_description }}
+          Category: {{ recipe_category }}
+          Version: {{ recipe_version }}
+          Domain: {{ portainer_domain }}
+          Container: {{ portainer_container_name }}
+          
+    # Create data directory
+    - name: Create Portainer data directory
+      file:
+        path: "{{ portainer_data_dir }}"
+        state: directory
+        owner: root
+        group: docker
+        mode: '0775'
+        
+    # Create compose directory
+    - name: Create docker-compose directory
+      file:
+        path: "/tmp/docker-compose/portainer"
+        state: directory
+        mode: '0755'
+        
+    # Deploy docker-compose template
+    - name: Deploy Portainer docker-compose file
+      template:
+        src: ../../../templates/container/portainer/docker-compose.yml.j2
+        dest: "/tmp/docker-compose/portainer/docker-compose.yml"
+        mode: '0644'
+        
+    # Start Portainer container
+    - name: Deploy Portainer container
+      community.docker.docker_compose_v2:
+        project_src: "/tmp/docker-compose/portainer"
+        state: present
+      register: portainer_deploy_result
+      
+    # Configure nginx reverse proxy
+    - name: Check if nginx container data directory exists
+      stat:
+        path: /data/docker/nginx/conf.d
+      register: nginx_data_dir
+      
+    - name: Generate self-signed SSL certificate for Portainer
+      command: |
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /data/docker/nginx/certs/{{ portainer_domain }}_selfsigned.key \
+        -out /data/docker/nginx/certs/{{ portainer_domain }}_selfsigned.crt \
+        -subj "/C=US/ST=State/L=City/O=Organization/CN={{ portainer_domain }}"
+      when: nginx_data_dir.stat.exists
+      args:
+        creates: "/data/docker/nginx/certs/{{ portainer_domain }}_selfsigned.crt"
+      
+    - name: Configure nginx reverse proxy for Portainer
+      template:
+        src: ../../../templates/container/nginx/nginx-site.conf.j2
+        dest: "/data/docker/nginx/conf.d/{{ portainer_domain }}.conf"
+        mode: '0644'
+      vars:
+        domain_name: "{{ portainer_domain }}"
+        docker_container_name: "{{ portainer_container_name }}"
+        remote_port: "{{ portainer_internal_port }}"
+      when: nginx_data_dir.stat.exists
+      
+    - name: Reload nginx container
+      command: docker exec nginx nginx -s reload
+      when: nginx_data_dir.stat.exists
+      changed_when: false
+      
+    # Wait for Portainer to be ready
+    - name: Wait for Portainer to be ready
+      shell: |
+        docker ps --filter "name=portainer" --format {% raw %}"table {{.Status}}"{% endraw %}
+      register: portainer_status
+      until: "'Up' in portainer_status.stdout"
+      retries: 12
+      delay: 5
+      
+    - name: Deployment summary
+      debug:
+        msg: |
+          ✅ Portainer deployed successfully!
+          
+          Container: {{ portainer_container_name }}
+          Internal Port: {{ portainer_internal_port }}
+          Data Directory: {{ portainer_data_dir }}
+          
+          🌐 Access URL: https://{{ portainer_domain }}
+          
+          {% if not nginx_data_dir.stat.exists %}
+          ⚠️  Nginx not found - Portainer is only accessible internally
+          Deploy nginx container with: cli docker --compose nginx
+          {% else %}
+          📝 Note: Make sure {{ portainer_domain }} points to your server IP
+          🔐 SSL: Using self-signed certificate (browser warning expected)
+          {% endif %}
+          
+          Next steps:
+          1. Add DNS record: {{ portainer_domain }} → {{ ansible_host }}
+          2. Visit https://{{ portainer_domain }}
+          3. Create initial admin account
+          4. Connect to local Docker environment

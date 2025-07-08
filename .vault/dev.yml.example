@@ -50,6 +50,10 @@ vault_db_encoding: "UTF8"  # Optional - has default
 vault_db_lc_collate: "en_US.UTF-8"  # Optional - has default
 vault_db_lc_ctype: "en_US.UTF-8"  # Optional - has default
 
+vault_portainer_domain_name = "portainer.example.com"
+vault_portainer_docker_name = "portainer"
+vault_portainer_internal_port = 9000
+
 # === USAGE INSTRUCTIONS ===
 # 1. Copy this file: cp .vault/dev.yml.example .vault/my-dev.yml
 # 2. Edit with your real credentials: vim .vault/my-dev.yml

@@ -1,0 +1,59 @@
+# Nginx container configuration for reverse proxy
+# - Direct access via ports 80 (HTTP) and 443 (HTTPS)
+# - Can be accessed through directly
+# - Provides Docker proxy services to other dockers on the private interface
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+
+    # These ports expose Nginx to the host on all interfaces (e.g., eth0, eth1, etc.)
+    # You can later restrict binding to specific IPs via daemon-level rules if needed.
+    ports:
+      - "80:80"    # HTTP traffic from external clients
+      - "443:443"  # HTTPS traffic from external clients
+
+    volumes:
+      # Main nginx configuration file (optional, uses default if not present)
+      - /data/docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      
+      # Read-only mount for Nginx site configuration
+      - /data/docker/nginx/conf.d:/etc/nginx/conf.d:ro
+
+      # Read-only mount for TLS certificates (self-signed or Let's Encrypt)
+      - /data/docker/nginx/certs:/etc/nginx/certs:ro
+      
+      # Logs for debugging and monitoring
+      - /data/docker/nginx/logs:/var/log/nginx
+      
+      # Static content serving (optional)
+      - /data/docker/nginx/assets:/usr/share/nginx/assets:ro
+
+    networks:
+      - proxy      # External-facing network, binds to host network stack
+      - internal   # Internal-only network to reach backend services
+    
+    # Health check validates nginx configuration syntax
+    # nginx -t tests config files without starting the server
+    # Helps detect config errors, missing files, or cert issues
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    labels:
+      # Labels for service discovery and monitoring
+      service.name: "nginx"
+      service.type: "network-proxy"
+
+networks:
+  proxy:
+    external: true
+    name: proxy_network
+  internal:
+    external: true
+    name: internal_network 

@@ -60,6 +60,10 @@ vault_db_lc_ctype: "en_US.UTF-8"  # Optional - has default
 # Regularly rotate these credentials
 # Enable monitoring and security features
 
+vault_portainer_domain_name = "portainer.example.com"
+vault_portainer_docker_name = "portainer"
+vault_portainer_internal_port = 9000
+
 # === USAGE INSTRUCTIONS ===
 # 1. Copy this file: cp .vault/prod.yml.example .vault/my-prod.yml
 # 2. Edit with your real credentials: vim .vault/my-prod.yml

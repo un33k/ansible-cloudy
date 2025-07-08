@@ -44,6 +44,10 @@ vault_vpn_passphrase: "ci_vpn_passphrase"  # Required when using VPN
 # Keep them simple but secure for CI environments
 # Use different credentials than dev/prod
 
+vault_portainer_domain_name = "portainer.example.com"
+vault_portainer_docker_name = "portainer"
+vault_portainer_internal_port = 9000
+
 # === USAGE INSTRUCTIONS ===
 # 1. Copy this file: cp .vault/ci.yml.example .vault/my-ci.yml
 # 2. Edit with your real credentials: vim .vault/my-ci.yml
