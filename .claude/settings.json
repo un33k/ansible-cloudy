@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/dev/pre_tool_use.py"
+            "command": ".claude/hooks/dev/pre.py"
           }
         ]
       }
@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/dev/post_tool_use.py"
+            "command": ".claude/hooks/dev/post.py"
           }
         ]
       }
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/dev/notification.py --notify"
+            "command": ".claude/hooks/dev/notify.py --notify"
           }
         ]
       }
@@ -75,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/dev/subagent_stop.py"
+            "command": ".claude/hooks/dev/agent.py"
           }
         ]
       }
