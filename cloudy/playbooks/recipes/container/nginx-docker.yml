@@ -79,7 +79,7 @@
         dest: "{{ nginx_data_dir }}/nginx.conf"
         mode: '0644'
         
-    # Create default server block
+    # Create default server block (keeps unmatched requests from hitting other sites)
     - name: Create default server configuration
       copy:
         content: |

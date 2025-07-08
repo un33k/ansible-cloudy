@@ -71,26 +71,36 @@
       register: portainer_deploy_result
       
     # Configure nginx reverse proxy
-    - name: Check if nginx is installed
+    - name: Check if nginx container data directory exists
       stat:
-        path: /etc/nginx/nginx.conf
-      register: nginx_installed
+        path: /data/docker/nginx/conf.d
+      register: nginx_data_dir
+      
+    - name: Generate self-signed SSL certificate for Portainer
+      command: |
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /data/docker/nginx/certs/{{ portainer_domain }}_selfsigned.key \
+        -out /data/docker/nginx/certs/{{ portainer_domain }}_selfsigned.crt \
+        -subj "/C=US/ST=State/L=City/O=Organization/CN={{ portainer_domain }}"
+      when: nginx_data_dir.stat.exists
+      args:
+        creates: "/data/docker/nginx/certs/{{ portainer_domain }}_selfsigned.crt"
       
     - name: Configure nginx reverse proxy for Portainer
       template:
-        src: ../../../templates/container/nginx/portainer-proxy.conf.j2
-        dest: "/etc/nginx/sites-available/{{ portainer_domain }}.conf"
+        src: ../../../templates/container/nginx/nginx-site.conf.j2
+        dest: "/data/docker/nginx/conf.d/{{ portainer_domain }}.conf"
         mode: '0644'
-      when: nginx_installed.stat.exists
-      notify: reload nginx
+      vars:
+        domain_name: "{{ portainer_domain }}"
+        docker_container_name: "{{ portainer_container_name }}"
+        remote_port: "{{ portainer_internal_port }}"
+      when: nginx_data_dir.stat.exists
       
-    - name: Enable Portainer nginx site
-      file:
-        src: "/etc/nginx/sites-available/{{ portainer_domain }}.conf"
-        dest: "/etc/nginx/sites-enabled/{{ portainer_domain }}.conf"
-        state: link
-      when: nginx_installed.stat.exists
-      notify: reload nginx
+    - name: Reload nginx container
+      command: docker exec nginx nginx -s reload
+      when: nginx_data_dir.stat.exists
+      changed_when: false
       
     # Wait for Portainer to be ready
     - name: Wait for Portainer to be ready
@@ -112,11 +122,12 @@
           
           🌐 Access URL: https://{{ portainer_domain }}
           
-          {% if not nginx_installed.stat.exists %}
+          {% if not nginx_data_dir.stat.exists %}
           ⚠️  Nginx not found - Portainer is only accessible internally
           Deploy nginx container with: cli docker --compose nginx
           {% else %}
           📝 Note: Make sure {{ portainer_domain }} points to your server IP
+          🔐 SSL: Using self-signed certificate (browser warning expected)
           {% endif %}
           
           Next steps:
@@ -124,9 +135,3 @@
           2. Visit https://{{ portainer_domain }}
           3. Create initial admin account
           4. Connect to local Docker environment
-          
-  handlers:
-    - name: reload nginx
-      systemd:
-        name: nginx
-        state: reloaded
