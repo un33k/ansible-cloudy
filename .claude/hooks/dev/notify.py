@@ -43,7 +43,7 @@ class NotificationHandler:
         Priority order: ElevenLabs > OpenAI > pytts
         """
         script_dir = Path(__file__).parent
-        tts_dir = script_dir / "utils" / "tts"
+        tts_dir = script_dir.parent / "utils" / "tts"
         
         # Define TTS providers in priority order
         tts_providers = [

@@ -73,8 +73,6 @@ async def main():
 
     except ImportError as e:
         print("❌ Error: Required package not installed")
-        print("This script uses UV to auto-install dependencies.")
-        print("Make sure UV is installed: https://docs.astral.sh/uv/")
         sys.exit(1)
     except Exception as e:
         print(f"❌ Unexpected error: {e}")

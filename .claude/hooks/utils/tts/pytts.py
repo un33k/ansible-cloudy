@@ -60,7 +60,6 @@ def main():
         
     except ImportError:
         print("❌ Error: pyttsx3 package not installed")
-        print("This script uses UV to auto-install dependencies.")
         sys.exit(1)
     except Exception as e:
         print(f"❌ Error: {e}")

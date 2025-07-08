@@ -56,7 +56,7 @@ class PreToolValidator:
         """Initialize the validator with log directory."""
         self.log_dir = Path(__file__).parent.parent / log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.log_path = self.log_dir / "pre_tool_use.json"
+        self.log_path = self.log_dir / "pre.json"
     
     def is_dangerous_rm_command(self, command: str) -> bool:
         """

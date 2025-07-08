@@ -57,8 +57,8 @@ class StopHookProcessor:
         
         # Setup paths for utility scripts
         self.script_dir = Path(__file__).parent
-        self.tts_dir = self.script_dir / "utils" / "tts"
-        self.llm_dir = self.script_dir / "utils" / "llm"
+        self.tts_dir = self.script_dir.parent / "utils" / "tts"
+        self.llm_dir = self.script_dir.parent / "utils" / "llm"
         
         # Configuration
         self.config = CompletionConfig(
@@ -134,11 +134,17 @@ class StopHookProcessor:
             completion_message = self.get_llm_completion_message()
             
             # Call the TTS script with the completion message
-            subprocess.run(
+            result = subprocess.run(
                 [sys.executable, tts_script, completion_message],
                 capture_output=True,  # Suppress output
                 timeout=10  # 10-second timeout
             )
+            # Debug: log the result
+            if result.returncode != 0:
+                with open(self.log_dir / "tts_debug.log", "a") as f:
+                    f.write(f"TTS failed: {tts_script}\n")
+                    f.write(f"stderr: {result.stderr}\n")
+                    f.write(f"stdout: {result.stdout}\n")
             
         except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
             pass  # Fail silently if TTS encounters issues
