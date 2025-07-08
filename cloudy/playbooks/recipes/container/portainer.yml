@@ -79,12 +79,12 @@
     - name: Generate self-signed SSL certificate for Portainer
       command: |
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout /data/docker/nginx/certs/{{ portainer_domain }}_selfsigned.key \
-        -out /data/docker/nginx/certs/{{ portainer_domain }}_selfsigned.crt \
+        -keyout /data/docker/nginx/certs/{{ portainer_domain }}.key \
+        -out /data/docker/nginx/certs/{{ portainer_domain }}.crt \
         -subj "/C=US/ST=State/L=City/O=Organization/CN={{ portainer_domain }}"
       when: nginx_data_dir.stat.exists
       args:
-        creates: "/data/docker/nginx/certs/{{ portainer_domain }}_selfsigned.crt"
+        creates: "/data/docker/nginx/certs/{{ portainer_domain }}.crt"
       
     - name: Configure nginx reverse proxy for Portainer
       template:
@@ -95,6 +95,8 @@
         domain_name: "{{ portainer_domain }}"
         docker_container_name: "{{ portainer_container_name }}"
         remote_port: "{{ portainer_internal_port }}"
+        ssl_challenge_path: "{{ vault_nginx_ssl_challenge_path | default('/var/www/letsencrypt') }}"
+        client_max_body_size: "{{ vault_nginx_client_max_body_size | default('100M') }}"
       when: nginx_data_dir.stat.exists
       
     - name: Reload nginx container
