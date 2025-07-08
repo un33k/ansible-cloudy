@@ -1,23 +1,84 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(python:*)",
+      "Bash(uv:*)",
+      "Bash(find:*)",
+      "Bash(mv:*)",
+      "Bash(grep:*)",
+      "Bash(npm:*)",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Write",
+      "Edit",
+      "Bash(chmod:*)",
+      "Bash(touch:*)"
+    ],
+    "deny": []
+  },
   "hooks": {
     "PreToolUse": [
-      {
-        "matcher": "Task",
+    {
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [{
           "type": "command",
-          "command": "echo '🤔 Complex search initiated - Consider using extended thinking'"
+          "command": "echo '📋 LEVER Check: Can you extend existing code instead? Review principles.md'"
         }]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/dev/pre_tool_use.py"
+          }
+        ]
       }
     ],
-    "PostToolUse": []
-  },
-  "templates": {
-    "optimization_review": ".claude/templates/optimization-review.md"
-  },
-  "development": {
-    "max_file_lines": 200,
-    "target_file_lines": 100,
-    "min_optimization_score": 7,
-    "enforce_lever": true
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/dev/post_tool_use.py"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/dev/notification.py --notify"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/dev/stop.py --chat"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/dev/subagent_stop.py"
+          }
+        ]
+      }
+    ]
   }
 }
