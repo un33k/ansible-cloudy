@@ -25,7 +25,9 @@ class NotificationHandler:
             log_dir: Directory for storing notification logs
             name_probability: Probability of including engineer name in message
         """
-        self.log_dir = Path(__file__).parent.parent / log_dir
+        # Use project root for logs directory
+        project_root = Path(__file__).parent.parent.parent.parent
+        self.log_dir = project_root / log_dir
         self.log_dir.mkdir(exist_ok=True)
         self.log_path = self.log_dir / "notify.json"
         self.name_probability = name_probability

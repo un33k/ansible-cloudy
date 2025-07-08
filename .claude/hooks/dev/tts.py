@@ -193,7 +193,7 @@ class TTSLoader:
         
         self.voice_gender = voice_gender
         self.providers: Dict[str, TTSProvider] = {
-            'elevenlabs': ElevenLabsProvider(os.getenv('ELEVENLABS_API_KEYS'), voice_gender),
+            'elevenlabs': ElevenLabsProvider(os.getenv('ELEVENLABS_API_KEY') or os.getenv('ELEVENLABS_API_KEYS'), voice_gender),
             'openai': OpenAIProvider(os.getenv('OPENAI_API_KEY'), voice_gender),
             'pyttsx3': Pyttsx3Provider(voice_gender)
         }

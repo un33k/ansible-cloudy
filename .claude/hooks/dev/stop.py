@@ -45,7 +45,9 @@ class StopHookProcessor:
         Args:
             log_dir: Directory for storing logs
         """
-        self.log_dir = Path(__file__).parent.parent / log_dir
+        # Use project root for logs directory
+        project_root = Path(__file__).parent.parent.parent.parent
+        self.log_dir = project_root / log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.log_path = self.log_dir / "stop.json"
         
