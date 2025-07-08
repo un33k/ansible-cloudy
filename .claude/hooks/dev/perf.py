@@ -17,8 +17,8 @@ class PerformanceMonitor:
         """Initialize the performance monitor."""
         self.metrics_dir = Path(__file__).parent.parent / metrics_dir
         self.metrics_dir.mkdir(parents=True, exist_ok=True)
-        self.metrics_path = self.metrics_dir / "performance.json"
-        self.summary_path = self.metrics_dir / "performance_summary.json"
+        self.metrics_path = self.metrics_dir / "perf.json"
+        self.summary_path = self.metrics_dir / "perfs.json"
         
     def load_metrics(self) -> Dict[str, Any]:
         """Load existing metrics from file."""

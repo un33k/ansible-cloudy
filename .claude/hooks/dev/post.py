@@ -10,7 +10,7 @@ from typing import Dict, Any, List, Optional
 class PostToolLogger:
     """Handles logging of post-tool-use events from Claude."""
     
-    def __init__(self, log_dir: str = "logs", log_filename: str = "post_tool_use.json"):
+    def __init__(self, log_dir: str = "logs", log_filename: str = "post.json"):
         """
         Initialize the post-tool logger.
         

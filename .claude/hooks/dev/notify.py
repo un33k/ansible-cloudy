@@ -34,7 +34,7 @@ class NotificationHandler:
         """
         self.log_dir = Path(__file__).parent.parent / log_dir
         self.log_dir.mkdir(exist_ok=True)
-        self.log_path = self.log_dir / "notification.json"
+        self.log_path = self.log_dir / "notify.json"
         self.name_probability = name_probability
         
     def get_tts_script_path(self) -> Optional[str]:
