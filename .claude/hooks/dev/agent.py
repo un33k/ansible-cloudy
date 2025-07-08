@@ -66,7 +66,7 @@ class AgentHook:
             
             # Call the TTS script with the completion message
             subprocess.run(
-                ["uv", "run", tts_script, completion_message],
+                [sys.executable, tts_script, completion_message],
                 capture_output=True,  # Suppress output
                 timeout=10,  # 10-second timeout
                 check=False
