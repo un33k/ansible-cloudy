@@ -29,11 +29,8 @@ class PreToolValidator:
     # Dangerous rm command patterns
     DANGEROUS_RM_PATTERNS = [
         r'\brm\s+.*-[a-z]*r[a-z]*f',  # rm -rf, rm -fr, rm -Rf, etc.
-        r'\brm\s+.*-[a-z]*f[a-z]*r',  # rm -fr variations
-        r'\brm\s+--recursive\s+--force',  # rm --recursive --force
-        r'\brm\s+--force\s+--recursive',  # rm --force --recursive
-        r'\brm\s+-r\s+.*-f',  # rm -r ... -f
-        r'\brm\s+-f\s+.*-r',  # rm -f ... -r
+        r'\brm\s+--recursive\s+--force|\brm\s+--force\s+--recursive',  # long form
+        r'\brm\s+-[rf]\s+.*-[rf]',  # rm -r ... -f or rm -f ... -r
     ]
     
     # Dangerous paths for rm commands
@@ -52,11 +49,7 @@ class PreToolValidator:
     # Patterns for .env file access
     ENV_FILE_PATTERNS = [
         r'\b\.env\b(?!\.sample)',  # .env but not .env.sample
-        r'cat\s+.*\.env\b(?!\.sample)',  # cat .env
-        r'echo\s+.*>\s*\.env\b(?!\.sample)',  # echo > .env
-        r'touch\s+.*\.env\b(?!\.sample)',  # touch .env
-        r'cp\s+.*\.env\b(?!\.sample)',  # cp .env
-        r'mv\s+.*\.env\b(?!\.sample)',  # mv .env
+        r'(cat|echo|touch|cp|mv)\s+.*\.env\b(?!\.sample)',  # commands with .env
     ]
     
     def __init__(self, log_dir: str = "logs"):
@@ -79,15 +72,12 @@ class PreToolValidator:
         normalized = ' '.join(command.lower().split())
         
         # Check for dangerous rm patterns
-        for pattern in self.DANGEROUS_RM_PATTERNS:
-            if re.search(pattern, normalized):
-                return True
+        if any(re.search(pattern, normalized) for pattern in self.DANGEROUS_RM_PATTERNS):
+            return True
         
         # Check for rm with recursive flag targeting dangerous paths
         if re.search(r'\brm\s+.*-[a-z]*r', normalized):  # If rm has recursive flag
-            for path in self.DANGEROUS_PATHS:
-                if re.search(path, normalized):
-                    return True
+            return any(re.search(path, normalized) for path in self.DANGEROUS_PATHS)
         
         return False
     
@@ -114,9 +104,7 @@ class PreToolValidator:
         # Check bash commands for .env file access
         elif tool_name == 'Bash':
             command = tool_input.get('command', '')
-            for pattern in self.ENV_FILE_PATTERNS:
-                if re.search(pattern, command):
-                    return True
+            return any(re.search(pattern, command) for pattern in self.ENV_FILE_PATTERNS)
         
         return False
     
