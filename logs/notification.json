@@ -4,5 +4,11 @@
     "transcript_path": "/Users/val/.claude/projects/-Users-val-Projects-cloudy-ansible-cloudy/99bfc29b-8157-4128-a9c3-9dbc75d7e7c3.jsonl",
     "hook_event_name": "Notification",
     "message": "Claude is waiting for your input"
+  },
+  {
+    "session_id": "96e87392-c8d1-464e-99b4-3f9083cbcf4c",
+    "transcript_path": "/Users/val/.claude/projects/-Users-val-Projects-cloudy-ansible-cloudy/96e87392-c8d1-464e-99b4-3f9083cbcf4c.jsonl",
+    "hook_event_name": "Notification",
+    "message": "Claude is waiting for your input"
   }
 ]

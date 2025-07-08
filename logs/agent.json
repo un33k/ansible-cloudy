@@ -4,5 +4,11 @@
     "transcript_path": "/Users/val/.claude/projects/-Users-val-Projects-cloudy-ansible-cloudy/968371be-0505-4763-ba01-87c81cd0d1bc.jsonl",
     "hook_event_name": "SubagentStop",
     "stop_hook_active": false
+  },
+  {
+    "session_id": "96e87392-c8d1-464e-99b4-3f9083cbcf4c",
+    "transcript_path": "/Users/val/.claude/projects/-Users-val-Projects-cloudy-ansible-cloudy/96e87392-c8d1-464e-99b4-3f9083cbcf4c.jsonl",
+    "hook_event_name": "SubagentStop",
+    "stop_hook_active": false
   }
 ]

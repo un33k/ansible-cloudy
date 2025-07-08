@@ -1,100 +1,17 @@
 {
-  "project": {
-    "name": "Ansible Cloudy",
-    "description": "Infrastructure as Code for cloud server management with intelligent automation",
-    "type": "infrastructure-automation",
-    "languages": ["python", "yaml", "bash"],
-    "cli_command": "cli",
-    "python_module": "dev.cli.main"
-  },
-  
-  "context": {
-    "architecture": {
-      "cli": "dev/cli - Python CLI with modular operations",
-      "playbooks": "cloudy/playbooks - Ansible recipes organized by category",
-      "inventory": "cloudy/inventory - Environment-specific configurations",
-      "tasks": "cloudy/tasks - Reusable Ansible task modules"
-    },
-    "key_flows": {
-      "deployment": "harden → security → base → services",
-      "connection_groups": "harden_targets (password) → security_targets (SSH keys) → service_targets (SSH keys)",
-      "ports": "Initial: 22, Final: 2222 (vault-driven)"
-    },
-    "vault_variables": {
-      "location": ".vault/*.yml",
-      "key_vars": ["vault_root_user", "vault_root_password", "vault_ssh_port_initial", "vault_ssh_port_final", "vault_grunt_user"]
-    },
-    "recent_changes": {
-      "ssh_hardening": "Implemented atomic SSH hardening as separate first step",
-      "variable_naming": "Migrated to new vault variable names (vault_root_*, vault_grunt_*, vault_ssh_port_*)",
-      "scripts_organization": "All scripts now in scripts/ directory (test/, verify/, examples/)"
-    }
-  },
-  
-  "important_paths": {
-    "scripts": "./scripts/ - Testing, verification, and example scripts",
-    "tests": "./test/e2e/ - End-to-end Docker tests",
-    "docs": "./docs/ - Project documentation",
-    "vault": ".vault/*.yml - Sensitive configuration (git-ignored)"
-  },
-  
-  "common_commands": {
-    "setup": "./bootstrap.sh && source .venv/bin/activate",
-    "harden": "cli harden --install",
-    "security": "cli security --install",
-    "base": "cli base --install",
-    "test_syntax": "./scripts/test/test-simple.sh",
-    "test_full": "./scripts/test/run-complete-test.sh",
-    "verify": "./scripts/verify/verify-variable-mapping.sh",
-    "check_server": "./scripts/examples/check-server-status.sh <ip>"
+  "developer": {
+    "// Add your developer-specific settings here": "",
+    "// Examples:": "",
+    "// - Custom aliases or shortcuts": "",
+    "// - Personal environment paths": "",
+    "// - Debug or development flags": "",
+    "// - Local testing configurations": ""
   },
   
   "permissions": {
     "allow": [
-      "Bash(cli:*)",
-      "Bash(python:*)",
-      "Bash(python3:*)",
-      "Bash(python -m dev.cli.main:*)",
-      "Bash(ansible:*)",
-      "Bash(ansible-playbook:*)",
-      "Bash(ansible-inventory:*)",
-      "Bash(ansible-lint:*)",
-      "Bash(./bootstrap.sh:*)",
-      "Bash(./scripts/*)",
-      "Bash(source:*)",
-      "Bash(git:*)",
-      "Bash(docker:*)",
-      "Bash(docker-compose:*)",
-      "Bash(ls:*)",
-      "Bash(find:*)",
-      "Bash(grep:*)",
-      "Bash(rg:*)",
-      "Bash(sed:*)",
-      "Bash(awk:*)",
-      "Bash(cat:*)",
-      "Bash(echo:*)",
-      "Bash(touch:*)",
-      "Bash(mkdir:*)",
-      "Bash(mv:*)",
-      "Bash(cp:*)",
-      "Bash(rm:*)",
-      "Bash(chmod:*)",
-      "Bash(tree:*)",
-      "Bash(ping:*)",
-      "Bash(ssh:*)",
-      "Bash(sshpass:*)",
-      "Bash(pip install:*)",
-      "Bash(flake8:*)",
-      "Bash(black:*)",
-      "Bash(act:*)",
-      "Bash(timeout:*)",
-      "Bash(true)",
-      "Bash(bash -n:*)",
-      "Bash(npm --version)",
-      "Bash(export ANSIBLE_VAULT_PASSWORD_FILE=.vault_pass)",
-      "Bash(ANSIBLE_VAULT_PASSWORD_FILE=.vault_pass git push)",
-      "Bash(unset ANSIBLE_VAULT_PASSWORD_FILE)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "// Add any developer-specific tool permissions here",
+      "// Example: Bash(my-custom-tool:*)"
     ],
     "deny": []
   }
