@@ -10,5 +10,17 @@
     "transcript_path": "/Users/val/.claude/projects/-Users-val-Projects-cloudy-ansible-cloudy/99bfc29b-8157-4128-a9c3-9dbc75d7e7c3.jsonl",
     "hook_event_name": "Stop",
     "stop_hook_active": false
+  },
+  {
+    "session_id": "968371be-0505-4763-ba01-87c81cd0d1bc",
+    "transcript_path": "/Users/val/.claude/projects/-Users-val-Projects-cloudy-ansible-cloudy/968371be-0505-4763-ba01-87c81cd0d1bc.jsonl",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
+  },
+  {
+    "session_id": "968371be-0505-4763-ba01-87c81cd0d1bc",
+    "transcript_path": "/Users/val/.claude/projects/-Users-val-Projects-cloudy-ansible-cloudy/968371be-0505-4763-ba01-87c81cd0d1bc.jsonl",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
   }
 ]
