@@ -733,7 +733,10 @@
     "zoneinfo",
     "zrange",
     "zshrc",
-    "zypper"
+    "zypper",
+    "referer",
+    "endraw",
+    "traefik"
   ],
   "flagWords": [],
   "enableFiletypes": [
