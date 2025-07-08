@@ -1,0 +1,201 @@
+[
+  {
+    "session_id": "fcece8ca-0e42-421f-978c-c94d0ab0d9fd",
+    "transcript_path": "/Users/val/.claude/projects/-Users-val-Projects-cloudy-ansible-cloudy/fcece8ca-0e42-421f-978c-c94d0ab0d9fd.jsonl",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Read",
+    "tool_input": {
+      "file_path": "/Users/val/Projects/cloudy/ansible-cloudy/.claude/hooks/dev/agent.py"
+    },
+    "tool_response": {
+      "type": "text",
+      "file": {
+        "filePath": "/Users/val/Projects/cloudy/ansible-cloudy/.claude/hooks/dev/agent.py",
+        "content": "#!/usr/bin/env python\n\"\"\"Agent hook for handling subagent completion events.\"\"\"\n\nimport argparse\nimport json\nimport os\nimport sys\nimport subprocess\nfrom pathlib import Path\nfrom typing import Optional, Dict, Any, List\n\ntry:\n    from dotenv import load_dotenv\nexcept ImportError:\n    def load_dotenv():\n        \"\"\"Dummy function when dotenv is not available.\"\"\"\n        pass\n\n\nclass AgentHook:\n    \"\"\"Handles subagent completion events including logging and TTS announcements.\"\"\"\n    \n    def __init__(self, log_dir: str = \"logs\"):\n        \"\"\"Initialize the agent hook with log directory.\"\"\"\n        self.log_dir = Path(os.getcwd()) / log_dir\n        self.log_dir.mkdir(exist_ok=True)\n        self.log_path = self.log_dir / \"agent.json\"\n        \n    def get_tts_script_path(self) -> Optional[str]:\n        \"\"\"\n        Determine which TTS script to use based on available API keys.\n        Priority order: ElevenLabs > OpenAI > pyttsx3\n        \"\"\"\n        script_dir = Path(__file__).parent\n        tts_dir = script_dir / \"utils\" / \"tts\"\n        \n        # Define TTS providers in priority order\n        tts_providers = [\n            {\"env_key\": \"ELEVENLABS_API_KEY\", \"script\": \"elevenlabs_tts.py\"},\n            {\"env_key\": \"OPENAI_API_KEY\", \"script\": \"openai_tts.py\"},\n            {\"env_key\": None, \"script\": \"pyttsx3_tts.py\"},  # No API key required\n        ]\n        \n        # Check each provider in order\n        for provider in tts_providers:\n            # Skip if API key is required but not present\n            if provider[\"env_key\"] and not os.getenv(provider[\"env_key\"]):\n                continue\n            \n            # Check if script exists\n            script_path = tts_dir / provider[\"script\"]\n            if script_path.exists():\n                return str(script_path)\n        \n        return None\n    \n    def announce_completion(self) -> None:\n        \"\"\"Announce subagent completion using the best available TTS service.\"\"\"\n        try:\n            tts_script = self.get_tts_script_path()\n            if not tts_script:\n                return  # No TTS scripts available\n            \n            # Use fixed message for subagent completion\n            completion_message = \"Subagent Complete\"\n            \n            # Call the TTS script with the completion message\n            subprocess.run(\n                [\"uv\", \"run\", tts_script, completion_message],\n                capture_output=True,  # Suppress output\n                timeout=10,  # 10-second timeout\n                check=False\n            )\n            \n        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):\n            # Fail silently if TTS encounters issues\n            pass\n        except Exception:\n            # Fail silently for any other errors\n            pass\n    \n    def log_event(self, input_data: Dict[str, Any]) -> None:\n        \"\"\"Log the subagent event to the log file.\"\"\"\n        # Read existing log data or initialize empty list\n        log_data: List[Dict[str, Any]] = []\n        if self.log_path.exists():\n            try:\n                with open(self.log_path, 'r', encoding='utf-8') as f:\n                    log_data = json.load(f)\n            except (json.JSONDecodeError, ValueError):\n                log_data = []\n        \n        # Append new data\n        log_data.append(input_data)\n        \n        # Write back to file with formatting\n        with open(self.log_path, 'w', encoding='utf-8') as f:\n            json.dump(log_data, f, indent=2)\n    \n    def handle_chat_export(self, input_data: Dict[str, Any]) -> None:\n        \"\"\"Export transcript to chat.json if requested.\"\"\"\n        transcript_path = input_data.get('transcript_path')\n        if not transcript_path or not os.path.exists(transcript_path):\n            return\n        \n        # Read .jsonl file and convert to JSON array\n        chat_data = []\n        try:\n            with open(transcript_path, 'r', encoding='utf-8') as f:\n                for line in f:\n                    line = line.strip()\n                    if line:\n                        try:\n                            chat_data.append(json.loads(line))\n                        except json.JSONDecodeError:\n                            pass  # Skip invalid lines\n            \n            # Write to logs/chat.json\n            chat_file = self.log_dir / 'chat.json'\n            with open(chat_file, 'w', encoding='utf-8') as f:\n                json.dump(chat_data, f, indent=2)\n        except Exception:\n            pass  # Fail silently\n    \n    def process(self, input_data: Dict[str, Any], export_chat: bool = False) -> None:\n        \"\"\"Process the subagent completion event.\"\"\"\n        # Log the event\n        self.log_event(input_data)\n        \n        # Handle chat export if requested\n        if export_chat:\n            self.handle_chat_export(input_data)\n        \n        # Announce completion\n        self.announce_completion()\n\n\ndef main():\n    \"\"\"Main entry point for the agent hook.\"\"\"\n    # Load environment variables\n    load_dotenv()\n    \n    try:\n        # Parse command line arguments\n        parser = argparse.ArgumentParser(description=\"Agent hook for subagent completion\")\n        parser.add_argument('--chat', action='store_true', help='Copy transcript to chat.json')\n        args = parser.parse_args()\n        \n        # Read JSON input from stdin\n        input_data = json.load(sys.stdin)\n        \n        # Create agent hook and process the event\n        agent = AgentHook()\n        agent.process(input_data, export_chat=args.chat)\n        \n        sys.exit(0)\n        \n    except json.JSONDecodeError:\n        # Handle JSON decode errors gracefully\n        sys.exit(0)\n    except Exception:\n        # Handle any other errors gracefully\n        sys.exit(0)\n\n\nif __name__ == \"__main__\":\n    main()",
+        "numLines": 167,
+        "startLine": 1,
+        "totalLines": 167
+      }
+    }
+  },
+  {
+    "session_id": "fcece8ca-0e42-421f-978c-c94d0ab0d9fd",
+    "transcript_path": "/Users/val/.claude/projects/-Users-val-Projects-cloudy-ansible-cloudy/fcece8ca-0e42-421f-978c-c94d0ab0d9fd.jsonl",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "MultiEdit",
+    "tool_input": {
+      "file_path": "/Users/val/Projects/cloudy/ansible-cloudy/.claude/hooks/dev/agent.py",
+      "edits": [
+        {
+          "old_string": "    \n    def __init__(self, log_dir: str = \"logs\"):",
+          "new_string": "\n    def __init__(self, log_dir: str = \"logs\"):",
+          "replace_all": false
+        },
+        {
+          "old_string": "        self.log_path = self.log_dir / \"agent.json\"\n        \n    def get_tts_script_path(self) -> Optional[str]:",
+          "new_string": "        self.log_path = self.log_dir / \"agent.json\"\n\n    def get_tts_script_path(self) -> Optional[str]:",
+          "replace_all": false
+        },
+        {
+          "old_string": "                return str(script_path)\n        \n        return None",
+          "new_string": "                return str(script_path)\n\n        return None",
+          "replace_all": false
+        },
+        {
+          "old_string": "        return None\n    \n    def announce_completion(self) -> None:",
+          "new_string": "        return None\n\n    def announce_completion(self) -> None:",
+          "replace_all": false
+        },
+        {
+          "old_string": "            pass\n    \n    def log_event(self, input_data: Dict[str, Any]) -> None:",
+          "new_string": "            pass\n\n    def log_event(self, input_data: Dict[str, Any]) -> None:",
+          "replace_all": false
+        },
+        {
+          "old_string": "            json.dump(log_data, f, indent=2)\n    \n    def handle_chat_export(self, input_data: Dict[str, Any]) -> None:",
+          "new_string": "            json.dump(log_data, f, indent=2)\n\n    def handle_chat_export(self, input_data: Dict[str, Any]) -> None:",
+          "replace_all": false
+        },
+        {
+          "old_string": "            pass  # Fail silently\n    \n    def process(self, input_data: Dict[str, Any], export_chat: bool = False) -> None:",
+          "new_string": "            pass  # Fail silently\n\n    def process(self, input_data: Dict[str, Any], export_chat: bool = False) -> None:",
+          "replace_all": false
+        }
+      ]
+    },
+    "tool_response": {
+      "filePath": "/Users/val/Projects/cloudy/ansible-cloudy/.claude/hooks/dev/agent.py",
+      "edits": [
+        {
+          "old_string": "    \n    def __init__(self, log_dir: str = \"logs\"):",
+          "new_string": "\n    def __init__(self, log_dir: str = \"logs\"):",
+          "replace_all": false
+        },
+        {
+          "old_string": "        self.log_path = self.log_dir / \"agent.json\"\n        \n    def get_tts_script_path(self) -> Optional[str]:",
+          "new_string": "        self.log_path = self.log_dir / \"agent.json\"\n\n    def get_tts_script_path(self) -> Optional[str]:",
+          "replace_all": false
+        },
+        {
+          "old_string": "                return str(script_path)\n        \n        return None",
+          "new_string": "                return str(script_path)\n\n        return None",
+          "replace_all": false
+        },
+        {
+          "old_string": "        return None\n    \n    def announce_completion(self) -> None:",
+          "new_string": "        return None\n\n    def announce_completion(self) -> None:",
+          "replace_all": false
+        },
+        {
+          "old_string": "            pass\n    \n    def log_event(self, input_data: Dict[str, Any]) -> None:",
+          "new_string": "            pass\n\n    def log_event(self, input_data: Dict[str, Any]) -> None:",
+          "replace_all": false
+        },
+        {
+          "old_string": "            json.dump(log_data, f, indent=2)\n    \n    def handle_chat_export(self, input_data: Dict[str, Any]) -> None:",
+          "new_string": "            json.dump(log_data, f, indent=2)\n\n    def handle_chat_export(self, input_data: Dict[str, Any]) -> None:",
+          "replace_all": false
+        },
+        {
+          "old_string": "            pass  # Fail silently\n    \n    def process(self, input_data: Dict[str, Any], export_chat: bool = False) -> None:",
+          "new_string": "            pass  # Fail silently\n\n    def process(self, input_data: Dict[str, Any], export_chat: bool = False) -> None:",
+          "replace_all": false
+        }
+      ],
+      "originalFileContents": "#!/usr/bin/env python\n\"\"\"Agent hook for handling subagent completion events.\"\"\"\n\nimport argparse\nimport json\nimport os\nimport sys\nimport subprocess\nfrom pathlib import Path\nfrom typing import Optional, Dict, Any, List\n\ntry:\n    from dotenv import load_dotenv\nexcept ImportError:\n    def load_dotenv():\n        \"\"\"Dummy function when dotenv is not available.\"\"\"\n        pass\n\n\nclass AgentHook:\n    \"\"\"Handles subagent completion events including logging and TTS announcements.\"\"\"\n    \n    def __init__(self, log_dir: str = \"logs\"):\n        \"\"\"Initialize the agent hook with log directory.\"\"\"\n        self.log_dir = Path(os.getcwd()) / log_dir\n        self.log_dir.mkdir(exist_ok=True)\n        self.log_path = self.log_dir / \"agent.json\"\n        \n    def get_tts_script_path(self) -> Optional[str]:\n        \"\"\"\n        Determine which TTS script to use based on available API keys.\n        Priority order: ElevenLabs > OpenAI > pyttsx3\n        \"\"\"\n        script_dir = Path(__file__).parent\n        tts_dir = script_dir / \"utils\" / \"tts\"\n        \n        # Define TTS providers in priority order\n        tts_providers = [\n            {\"env_key\": \"ELEVENLABS_API_KEY\", \"script\": \"elevenlabs_tts.py\"},\n            {\"env_key\": \"OPENAI_API_KEY\", \"script\": \"openai_tts.py\"},\n            {\"env_key\": None, \"script\": \"pyttsx3_tts.py\"},  # No API key required\n        ]\n        \n        # Check each provider in order\n        for provider in tts_providers:\n            # Skip if API key is required but not present\n            if provider[\"env_key\"] and not os.getenv(provider[\"env_key\"]):\n                continue\n            \n            # Check if script exists\n            script_path = tts_dir / provider[\"script\"]\n            if script_path.exists():\n                return str(script_path)\n        \n        return None\n    \n    def announce_completion(self) -> None:\n        \"\"\"Announce subagent completion using the best available TTS service.\"\"\"\n        try:\n            tts_script = self.get_tts_script_path()\n            if not tts_script:\n                return  # No TTS scripts available\n            \n            # Use fixed message for subagent completion\n            completion_message = \"Subagent Complete\"\n            \n            # Call the TTS script with the completion message\n            subprocess.run(\n                [\"uv\", \"run\", tts_script, completion_message],\n                capture_output=True,  # Suppress output\n                timeout=10,  # 10-second timeout\n                check=False\n            )\n            \n        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):\n            # Fail silently if TTS encounters issues\n            pass\n        except Exception:\n            # Fail silently for any other errors\n            pass\n    \n    def log_event(self, input_data: Dict[str, Any]) -> None:\n        \"\"\"Log the subagent event to the log file.\"\"\"\n        # Read existing log data or initialize empty list\n        log_data: List[Dict[str, Any]] = []\n        if self.log_path.exists():\n            try:\n                with open(self.log_path, 'r', encoding='utf-8') as f:\n                    log_data = json.load(f)\n            except (json.JSONDecodeError, ValueError):\n                log_data = []\n        \n        # Append new data\n        log_data.append(input_data)\n        \n        # Write back to file with formatting\n        with open(self.log_path, 'w', encoding='utf-8') as f:\n            json.dump(log_data, f, indent=2)\n    \n    def handle_chat_export(self, input_data: Dict[str, Any]) -> None:\n        \"\"\"Export transcript to chat.json if requested.\"\"\"\n        transcript_path = input_data.get('transcript_path')\n        if not transcript_path or not os.path.exists(transcript_path):\n            return\n        \n        # Read .jsonl file and convert to JSON array\n        chat_data = []\n        try:\n            with open(transcript_path, 'r', encoding='utf-8') as f:\n                for line in f:\n                    line = line.strip()\n                    if line:\n                        try:\n                            chat_data.append(json.loads(line))\n                        except json.JSONDecodeError:\n                            pass  # Skip invalid lines\n            \n            # Write to logs/chat.json\n            chat_file = self.log_dir / 'chat.json'\n            with open(chat_file, 'w', encoding='utf-8') as f:\n                json.dump(chat_data, f, indent=2)\n        except Exception:\n            pass  # Fail silently\n    \n    def process(self, input_data: Dict[str, Any], export_chat: bool = False) -> None:\n        \"\"\"Process the subagent completion event.\"\"\"\n        # Log the event\n        self.log_event(input_data)\n        \n        # Handle chat export if requested\n        if export_chat:\n            self.handle_chat_export(input_data)\n        \n        # Announce completion\n        self.announce_completion()\n\n\ndef main():\n    \"\"\"Main entry point for the agent hook.\"\"\"\n    # Load environment variables\n    load_dotenv()\n    \n    try:\n        # Parse command line arguments\n        parser = argparse.ArgumentParser(description=\"Agent hook for subagent completion\")\n        parser.add_argument('--chat', action='store_true', help='Copy transcript to chat.json')\n        args = parser.parse_args()\n        \n        # Read JSON input from stdin\n        input_data = json.load(sys.stdin)\n        \n        # Create agent hook and process the event\n        agent = AgentHook()\n        agent.process(input_data, export_chat=args.chat)\n        \n        sys.exit(0)\n        \n    except json.JSONDecodeError:\n        # Handle JSON decode errors gracefully\n        sys.exit(0)\n    except Exception:\n        # Handle any other errors gracefully\n        sys.exit(0)\n\n\nif __name__ == \"__main__\":\n    main()",
+      "structuredPatch": [
+        {
+          "oldStart": 19,
+          "oldLines": 13,
+          "newStart": 19,
+          "newLines": 13,
+          "lines": [
+            " ",
+            " class AgentHook:",
+            "     \"\"\"Handles subagent completion events including logging and TTS announcements.\"\"\"",
+            "-    ",
+            "+",
+            "     def __init__(self, log_dir: str = \"logs\"):",
+            "         \"\"\"Initialize the agent hook with log directory.\"\"\"",
+            "         self.log_dir = Path(os.getcwd()) / log_dir",
+            "         self.log_dir.mkdir(exist_ok=True)",
+            "         self.log_path = self.log_dir / \"agent.json\"",
+            "-        ",
+            "+",
+            "     def get_tts_script_path(self) -> Optional[str]:",
+            "         \"\"\"",
+            "         Determine which TTS script to use based on available API keys."
+          ]
+        },
+        {
+          "oldStart": 51,
+          "oldLines": 9,
+          "newStart": 51,
+          "newLines": 9,
+          "lines": [
+            "             script_path = tts_dir / provider[\"script\"]",
+            "             if script_path.exists():",
+            "                 return str(script_path)",
+            "-        ",
+            "+",
+            "         return None",
+            "-    ",
+            "+",
+            "     def announce_completion(self) -> None:",
+            "         \"\"\"Announce subagent completion using the best available TTS service.\"\"\"",
+            "         try:"
+          ]
+        },
+        {
+          "oldStart": 78,
+          "oldLines": 7,
+          "newStart": 78,
+          "newLines": 7,
+          "lines": [
+            "         except Exception:",
+            "             # Fail silently for any other errors",
+            "             pass",
+            "-    ",
+            "+",
+            "     def log_event(self, input_data: Dict[str, Any]) -> None:",
+            "         \"\"\"Log the subagent event to the log file.\"\"\"",
+            "         # Read existing log data or initialize empty list"
+          ]
+        },
+        {
+          "oldStart": 96,
+          "oldLines": 7,
+          "newStart": 96,
+          "newLines": 7,
+          "lines": [
+            "         # Write back to file with formatting",
+            "         with open(self.log_path, 'w', encoding='utf-8') as f:",
+            "             json.dump(log_data, f, indent=2)",
+            "-    ",
+            "+",
+            "     def handle_chat_export(self, input_data: Dict[str, Any]) -> None:",
+            "         \"\"\"Export transcript to chat.json if requested.\"\"\"",
+            "         transcript_path = input_data.get('transcript_path')"
+          ]
+        },
+        {
+          "oldStart": 121,
+          "oldLines": 7,
+          "newStart": 121,
+          "newLines": 7,
+          "lines": [
+            "                 json.dump(chat_data, f, indent=2)",
+            "         except Exception:",
+            "             pass  # Fail silently",
+            "-    ",
+            "+",
+            "     def process(self, input_data: Dict[str, Any], export_chat: bool = False) -> None:",
+            "         \"\"\"Process the subagent completion event.\"\"\"",
+            "         # Log the event"
+          ]
+        }
+      ],
+      "userModified": false
+    }
+  }
+]
