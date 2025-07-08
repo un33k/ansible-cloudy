@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 
 
 VoiceGender = Literal["male", "female"]
-TTS_ProviderPriority = Literal["elevenlabs", "openai", "pyttsx3"]
 
-# Default TTS provider priority - change this to adjust the default order
-DEFAULT_TTS_PRIORITY: List[TTS_ProviderPriority] = ["elevenlabs", "openai", "pyttsx3"]
+# Default provider priority
+DEFAULT_TTS_PRIORITY = ['elevenlabs', 'openai', 'pyttsx3']
+
 
 class TTSProvider(ABC):
     """Abstract base class for TTS providers"""
@@ -44,7 +44,7 @@ class ElevenLabsProvider(TTSProvider):
     # Voice IDs for different genders
     VOICE_IDS = {
         "male": "ErXwobaYiN019PkySvjV",  # Antoni
-        "female": "WejK3H1m7MI9CHnIjW9K"  # Default female voice
+        "female": "21m00Tcm4TlvDq8ikWAM"  # Rachel - stable female voice
     }
     
     def is_available(self) -> bool:
@@ -180,7 +180,7 @@ class Pyttsx3Provider(TTSProvider):
 class TTSLoader:
     """Loads and manages TTS providers based on priority"""
     
-    def __init__(self, priority: Optional[List[TTS_ProviderPriority]] = None, voice_gender: VoiceGender = "female"):
+    def __init__(self, priority: Optional[List[str]] = None, voice_gender: VoiceGender = "female"):
         """
         Initialize the TTS loader
         
@@ -238,13 +238,18 @@ class TTSLoader:
                 return provider.speak(text)
             return False
             
-        provider = self.get_provider()
-        if provider:
-            return provider.speak(text)
+        # Try all providers in order until one succeeds
+        for provider_name in self.priority:
+            provider = self.providers.get(provider_name.lower())
+            if provider and provider.is_available():
+                if provider.speak(text):
+                    return True
+                # If it failed, continue to next provider
+        
         return False
 
 
-def load_tts(priority: Optional[List[TTS_ProviderPriority]] = None, voice_gender: VoiceGender = "female") -> TTSLoader:
+def load_tts(priority: Optional[List[str]] = None, voice_gender: VoiceGender = "female") -> TTSLoader:
     """
     Factory function to create a TTSLoader instance
     

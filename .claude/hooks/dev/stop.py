@@ -84,11 +84,15 @@ class StopHookProcessor:
             
             # Use the TTS loader to speak
             tts = load_tts()
-            if not tts.speak(completion_message):
+            available = tts.list_available()
+            speak_result = tts.speak(completion_message)
+            
+            if not speak_result:
                 # Debug: log the failure
                 with open(self.log_dir / "tts_debug.log", "a") as f:
                     f.write(f"TTS failed to speak: {completion_message}\n")
-                    f.write(f"Available providers: {tts.list_available()}\n")
+                    f.write(f"Available providers: {available}\n")
+                    f.write(f"Speak result: {speak_result}\n")
             
         except Exception as e:
             # Debug: log the exception

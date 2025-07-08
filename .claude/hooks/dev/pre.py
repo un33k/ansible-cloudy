@@ -8,6 +8,10 @@ from pathlib import Path
 from typing import Dict, Any, List
 from dataclasses import dataclass
 
+# Add path for local imports
+sys.path.insert(0, str(Path(__file__).parent))
+from announcer import EventType, announce_event
+
 
 @dataclass
 class ValidationResult:
@@ -183,6 +187,15 @@ class PreToolValidator:
         if validation.is_blocked:
             # Print error message to stderr
             print(validation.message, file=sys.stderr)
+            
+            # Announce the blocked action
+            if "dangerous rm command" in validation.message.lower():
+                announce_event(EventType.BLOCKED, "Dangerous command blocked")
+            elif ".env" in validation.message:
+                announce_event(EventType.UNAUTHORIZED, "Environment file access denied")
+            else:
+                announce_event(EventType.BLOCKED)
+            
             return validation.exit_code
         
         # Log the tool call
