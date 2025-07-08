@@ -1,21 +1,24 @@
 ---
-allowed-tools: Bash, Read
-description: Load context for a new agent session by analyzing codebase structure and README
+allowed-tools: Bash, Read  
+description: Analyze codebase structure and README to load context for a new agent session  
 ---
 
 # Prime
 
-This command loads essential context for a new agent session by examining the codebase structure and reading the project README.
+Load essential context for a new agent session by examining the codebase structure and README.
 
 ## Instructions
-- Run `git ls-files` to understand the codebase structure and file organization
-- Read the README.md to understand the project purpose, setup instructions, and key information
-- Provide a concise overview of the project based on the gathered context
 
-## Context
-- Codebase structure git accessible: !`git ls-files`
-- Codebase structure all: !`eza . --tree`
-- Project README: @README.md
-- Documentation: 
-  - @ai_docs/cc_hooks_docs.md
-  - @ai_docs/uv-single-file-scripts.md
+- Run `git ls-files` to map codebase structure and file organization  
+- Read `README.md` to capture project purpose, setup, and key details  
+- Output a concise project overview based on the above
+
+## Context Sources
+
+- **Codebase structure (git):** `!git ls-files`  
+- **Codebase structure (tree):** `!eza . --tree`  
+- **Primary README:** `@README.md`  
+- **Additional docs:**  
+  - `@CLAUD.md`  
+  - `@.vault/README.md`  
+  - `docs/**/*.md`
