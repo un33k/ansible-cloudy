@@ -162,12 +162,15 @@ class Pyttsx3Provider(TTSProvider):
             if voices:
                 # Look for male/female voice
                 for voice in voices:
-                    if self.voice_gender == "male" and "male" in voice.name.lower():
-                        engine.setProperty('voice', voice.id)
-                        break
-                    elif self.voice_gender == "female" and "female" in voice.name.lower():
-                        engine.setProperty('voice', voice.id)
-                        break
+                    # Check both voice.gender attribute and name
+                    if self.voice_gender == "male":
+                        if (hasattr(voice, 'gender') and voice.gender == 'VoiceGenderMale') or "male" in voice.name.lower():
+                            engine.setProperty('voice', voice.id)
+                            break
+                    elif self.voice_gender == "female":
+                        if (hasattr(voice, 'gender') and voice.gender == 'VoiceGenderFemale') or "female" in voice.name.lower():
+                            engine.setProperty('voice', voice.id)
+                            break
             
             engine.say(text)
             engine.runAndWait()
