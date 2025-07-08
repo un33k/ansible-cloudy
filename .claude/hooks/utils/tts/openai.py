@@ -15,8 +15,8 @@ async def main():
     Accepts optional text prompt as command-line argument.
 
     Usage:
-    - ./openai_tts.py                    # Uses default text
-    - ./openai_tts.py "Your custom text" # Uses provided text
+    - ./openai.py                    # Uses default text
+    - ./openai.py "Your custom text" # Uses provided text
 
     Features:
     - OpenAI gpt-4o-mini-tts model (latest)

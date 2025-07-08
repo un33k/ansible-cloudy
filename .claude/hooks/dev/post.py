@@ -18,7 +18,7 @@ class PostToolLogger:
             log_dir: Directory for storing logs
             log_filename: Name of the log file
         """
-        self.log_dir = Path.cwd() / log_dir
+        self.log_dir = Path(__file__).parent.parent / log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.log_path = self.log_dir / log_filename
     

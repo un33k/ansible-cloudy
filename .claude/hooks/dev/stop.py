@@ -39,18 +39,18 @@ def get_tts_script_path():
     
     # Check for ElevenLabs API key (highest priority)
     if os.getenv('ELEVENLABS_API_KEY'):
-        elevenlabs_script = tts_dir / "elevenlabs_tts.py"
+        elevenlabs_script = tts_dir / "elevenlabs.py"
         if elevenlabs_script.exists():
             return str(elevenlabs_script)
     
     # Check for OpenAI API key (second priority)
     if os.getenv('OPENAI_API_KEY'):
-        openai_script = tts_dir / "openai_tts.py"
+        openai_script = tts_dir / "openai.py"
         if openai_script.exists():
             return str(openai_script)
     
     # Fall back to pyttsx3 (no API key required)
-    pyttsx3_script = tts_dir / "pyttsx3_tts.py"
+    pyttsx3_script = tts_dir / "pyttsx3.py"
     if pyttsx3_script.exists():
         return str(pyttsx3_script)
     
@@ -148,9 +148,9 @@ def main():
         stop_hook_active = input_data.get("stop_hook_active", False)
 
         # Ensure log directory exists
-        log_dir = os.path.join(os.getcwd(), "logs")
-        os.makedirs(log_dir, exist_ok=True)
-        log_path = os.path.join(log_dir, "stop.json")
+        log_dir = Path(__file__).parent.parent / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / "stop.json"
 
         # Read existing log data or initialize empty list
         if os.path.exists(log_path):

@@ -22,7 +22,7 @@ class AgentHook:
 
     def __init__(self, log_dir: str = "logs"):
         """Initialize the agent hook with log directory."""
-        self.log_dir = Path(os.getcwd()) / log_dir
+        self.log_dir = Path(__file__).parent.parent / log_dir
         self.log_dir.mkdir(exist_ok=True)
         self.log_path = self.log_dir / "agent.json"
 
@@ -36,9 +36,9 @@ class AgentHook:
         
         # Define TTS providers in priority order
         tts_providers = [
-            {"env_key": "ELEVENLABS_API_KEY", "script": "elevenlabs_tts.py"},
-            {"env_key": "OPENAI_API_KEY", "script": "openai_tts.py"},
-            {"env_key": None, "script": "pyttsx3_tts.py"},  # No API key required
+            {"env_key": "ELEVENLABS_API_KEY", "script": "elevenlabs.py"},
+            {"env_key": "OPENAI_API_KEY", "script": "openai.py"},
+            {"env_key": None, "script": "pyttsx3.py"},  # No API key required
         ]
         
         # Check each provider in order

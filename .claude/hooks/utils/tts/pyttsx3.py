@@ -12,8 +12,8 @@ def main():
     Accepts optional text prompt as command-line argument.
     
     Usage:
-    - ./pyttsx3_tts.py                    # Uses default text
-    - ./pyttsx3_tts.py "Your custom text" # Uses provided text
+    - ./pyttsx3.py                    # Uses default text
+    - ./pyttsx3.py "Your custom text" # Uses provided text
     
     Features:
     - Offline TTS (no API key required)

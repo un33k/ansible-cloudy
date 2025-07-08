@@ -15,7 +15,7 @@ class PerformanceMonitor:
     
     def __init__(self, metrics_dir: str = "logs/metrics"):
         """Initialize the performance monitor."""
-        self.metrics_dir = Path.cwd() / metrics_dir
+        self.metrics_dir = Path(__file__).parent.parent / metrics_dir
         self.metrics_dir.mkdir(parents=True, exist_ok=True)
         self.metrics_path = self.metrics_dir / "performance.json"
         self.summary_path = self.metrics_dir / "performance_summary.json"

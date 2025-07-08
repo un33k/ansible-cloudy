@@ -54,7 +54,7 @@ class PreToolValidator:
     
     def __init__(self, log_dir: str = "logs"):
         """Initialize the validator with log directory."""
-        self.log_dir = Path.cwd() / log_dir
+        self.log_dir = Path(__file__).parent.parent / log_dir
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.log_path = self.log_dir / "pre_tool_use.json"
     

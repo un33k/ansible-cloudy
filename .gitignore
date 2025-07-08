@@ -92,3 +92,6 @@ cloudy-old/
 
 # Unencrypted secrets (if any)
 .secrets/**/unencrypted_*
+
+# Claude hook logs
+logs/
