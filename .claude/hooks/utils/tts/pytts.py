@@ -8,12 +8,12 @@ def main():
     """
     pyttsx3 TTS Script
     
-    Uses pyttsx3 for offline text-to-speech synthesis.
+    Uses pytts for offline text-to-speech synthesis.
     Accepts optional text prompt as command-line argument.
     
     Usage:
-    - ./pyttsx3.py                    # Uses default text
-    - ./pyttsx3.py "Your custom text" # Uses provided text
+    - ./pytts.py                    # Uses default text
+    - ./pytts.py "Your custom text" # Uses provided text
     
     Features:
     - Offline TTS (no API key required)

@@ -50,7 +50,7 @@ def get_tts_script_path():
             return str(openai_script)
     
     # Fall back to pyttsx3 (no API key required)
-    pyttsx3_script = tts_dir / "pyttsx3.py"
+    pyttsx3_script = tts_dir / "pytts.py"
     if pyttsx3_script.exists():
         return str(pyttsx3_script)
     

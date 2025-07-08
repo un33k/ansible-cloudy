@@ -29,7 +29,7 @@ class AgentHook:
     def get_tts_script_path(self) -> Optional[str]:
         """
         Determine which TTS script to use based on available API keys.
-        Priority order: ElevenLabs > OpenAI > pyttsx3
+        Priority order: ElevenLabs > OpenAI > pytts
         """
         script_dir = Path(__file__).parent
         tts_dir = script_dir / "utils" / "tts"
@@ -38,7 +38,7 @@ class AgentHook:
         tts_providers = [
             {"env_key": "ELEVENLABS_API_KEY", "script": "elevenlabs.py"},
             {"env_key": "OPENAI_API_KEY", "script": "openai.py"},
-            {"env_key": None, "script": "pyttsx3.py"},  # No API key required
+            {"env_key": None, "script": "pytts.py"},  # No API key required
         ]
         
         # Check each provider in order

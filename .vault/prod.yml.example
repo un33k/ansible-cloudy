@@ -60,7 +60,8 @@ vault_db_lc_ctype: "en_US.UTF-8"  # Optional - has default
 # Regularly rotate these credentials
 # Enable monitoring and security features
 
-vault_portainer_domain_name: "admin.neekware.com"
+# === DOCKER CONFIGURATION ===
+vault_portainer_domain_name: "admin.example.com"
 vault_portainer_docker_name: "portainer"
 vault_portainer_internal_port: 9000
 vault_portainer_client_max_body_size: "100M"  # Max body size for Docker client requests
