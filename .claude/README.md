@@ -215,33 +215,45 @@ claude code run .claude/commands/git.md
 
 ## 🛠️ Utility Libraries
 
-### TTS Providers (`hooks/utils/tts/`)
+### TTS Module (`hooks/dev/tts.py`)
 
-#### ElevenLabs (`elevenlabs.py`)
-- **Model:** Turbo v2.5
-- **Features:** Fastest, highest quality
-- **Requirements:** `ELEVENLABS_API_KEY`
+A consolidated TTS system with multiple provider support and automatic fallback:
 
-#### OpenAI (`openai.py`)
-- **Model:** TTS-1
-- **Features:** Good quality, reliable
-- **Requirements:** `OPENAI_API_KEY`
+#### Supported Providers:
+1. **ElevenLabs** (Priority 1)
+   - **Model:** Turbo v2.5
+   - **Features:** Fastest, highest quality
+   - **Requirements:** `ELEVENLABS_API_KEYS`
+   - **Voices:** Male (Antoni), Female (default)
 
-#### Pyttsx3 (`pytts.py`)
-- **Features:** Offline, cross-platform
-- **Requirements:** None (system TTS)
+2. **OpenAI** (Priority 2)
+   - **Model:** gpt-4o-mini-tts
+   - **Features:** Good quality, reliable streaming
+   - **Requirements:** `OPENAI_API_KEY`
+   - **Voices:** Male (onyx), Female (nova)
 
-### LLM Providers (`hooks/utils/llm/`)
+3. **Pyttsx3** (Priority 3)
+   - **Features:** Offline fallback, cross-platform
+   - **Requirements:** None (uses system TTS)
+   - **Voices:** System-dependent gender selection
 
-#### OpenAI (`oai.py`)
-- **Model:** GPT-4
-- **Use:** Dynamic message generation
-- **Requirements:** `OPENAI_API_KEY`
+#### Usage:
+```python
+from tts import load_tts
 
-#### Anthropic (`anth.py`)
-- **Model:** Claude
-- **Use:** Fallback LLM provider
-- **Requirements:** `ANTHROPIC_API_KEY`
+# Load TTS with default priority
+tts = load_tts()
+tts.speak("Hello world")
+
+# Custom provider priority
+tts = load_tts(priority=['openai', 'elevenlabs', 'pyttsx3'])
+
+# Male voice
+tts = load_tts(voice_gender="male")
+
+# Use specific provider
+tts.speak("Hello", provider_name="elevenlabs")
+```
 
 ## 📊 Logging Structure
 
@@ -289,7 +301,7 @@ jq '.summary' logs/metrics/perfs.json
    ```bash
    # Add to .env
    ENGINEER_NAME="Your Name"
-   ELEVENLABS_API_KEY="your-key"
+   ELEVENLABS_API_KEYS="your-key"
    OPENAI_API_KEY="your-key"
    ```
 
@@ -467,7 +479,7 @@ if __name__ == "__main__":
 
 ### Environment Variables
 - `ENGINEER_NAME` - Your name for personalized messages
-- `ELEVENLABS_API_KEY` - ElevenLabs API key
+- `ELEVENLABS_API_KEYS` - ElevenLabs API key
 - `OPENAI_API_KEY` - OpenAI API key
 - `ANTHROPIC_API_KEY` - Anthropic API key
 - `CLAUDE_DEBUG` - Enable debug logging

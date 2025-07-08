@@ -5,16 +5,10 @@ import argparse
 import json
 import os
 import sys
-import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any, List
+from dotenv import load_dotenv
 
-try:
-    from dotenv import load_dotenv
-except ImportError:
-    def load_dotenv():
-        """Dummy function when dotenv is not available."""
-        pass
 
 
 class AgentHook:
@@ -26,57 +20,22 @@ class AgentHook:
         self.log_dir.mkdir(exist_ok=True)
         self.log_path = self.log_dir / "agent.json"
 
-    def get_tts_script_path(self) -> Optional[str]:
-        """
-        Determine which TTS script to use based on available API keys.
-        Priority order: ElevenLabs > OpenAI > pytts
-        """
-        script_dir = Path(__file__).parent
-        tts_dir = script_dir.parent / "utils" / "tts"
-        
-        # Define TTS providers in priority order
-        tts_providers = [
-            {"env_key": "ELEVENLABS_API_KEY", "script": "elevenlabs.py"},
-            {"env_key": "OPENAI_API_KEY", "script": "openai.py"},
-            {"env_key": None, "script": "pytts.py"},  # No API key required
-        ]
-        
-        # Check each provider in order
-        for provider in tts_providers:
-            # Skip if API key is required but not present
-            if provider["env_key"] and not os.getenv(provider["env_key"]):
-                continue
-            
-            # Check if script exists
-            script_path = tts_dir / provider["script"]
-            if script_path.exists():
-                return str(script_path)
-
-        return None
-
     def announce_completion(self) -> None:
         """Announce subagent completion using the best available TTS service."""
         try:
-            tts_script = self.get_tts_script_path()
-            if not tts_script:
-                return  # No TTS scripts available
+            # Import the TTS module
+            sys.path.insert(0, str(Path(__file__).parent))
+            from tts import load_tts
             
             # Use fixed message for subagent completion
             completion_message = "Subagent Complete"
             
-            # Call the TTS script with the completion message
-            subprocess.run(
-                [sys.executable, tts_script, completion_message],
-                capture_output=True,  # Suppress output
-                timeout=10,  # 10-second timeout
-                check=False
-            )
+            # Use the TTS loader to speak
+            tts = load_tts()
+            tts.speak(completion_message)
             
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
-            # Fail silently if TTS encounters issues
-            pass
         except Exception:
-            # Fail silently for any other errors
+            # Fail silently for any errors
             pass
 
     def log_event(self, input_data: Dict[str, Any]) -> None:

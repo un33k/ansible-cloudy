@@ -6,17 +6,11 @@ import json
 import os
 import sys
 import random
-import subprocess
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # dotenv is optional
+from dotenv import load_dotenv
 
 
 @dataclass
@@ -57,8 +51,6 @@ class StopHookProcessor:
         
         # Setup paths for utility scripts
         self.script_dir = Path(__file__).parent
-        self.tts_dir = self.script_dir.parent / "utils" / "tts"
-        self.llm_dir = self.script_dir.parent / "utils" / "llm"
         
         # Configuration
         self.config = CompletionConfig(
@@ -67,89 +59,39 @@ class StopHookProcessor:
             llm_priority=self.LLM_PRIORITY
         )
     
-    def get_tts_script_path(self) -> Optional[str]:
-        """
-        Determine which TTS script to use based on available API keys.
-        
-        Returns:
-            Path to the TTS script or None if not available
-        """
-        script_mapping = {
-            'elevenlabs': ('ELEVENLABS_API_KEY', 'elevenlabs.py'),
-            'openai': ('OPENAI_API_KEY', 'openai.py'),
-            'pytts': (None, 'pytts.py')  # No API key required
-        }
-        
-        for service in self.config.tts_priority:
-            env_key, script_name = script_mapping.get(service, (None, None))
-            if script_name:
-                # Check if API key exists (if required)
-                if env_key is None or os.getenv(env_key):
-                    script_path = self.tts_dir / script_name
-                    if script_path.exists():
-                        return str(script_path)
-        
-        return None
     
     def get_llm_completion_message(self) -> str:
         """
-        Generate completion message using available LLM services.
+        Generate completion message.
         
         Returns:
-            Generated or fallback completion message
+            Fallback completion message (LLM integration removed)
         """
-        script_mapping = {
-            'openai': ('OPENAI_API_KEY', 'oai.py'),
-            'anthropic': ('ANTHROPIC_API_KEY', 'anth.py')
-        }
-        
-        for service in self.config.llm_priority:
-            env_key, script_name = script_mapping.get(service, (None, None))
-            if script_name and os.getenv(env_key):
-                script_path = self.llm_dir / script_name
-                if script_path.exists():
-                    try:
-                        result = subprocess.run(
-                            [sys.executable, str(script_path), "--completion"],
-                            capture_output=True,
-                            text=True,
-                            timeout=10
-                        )
-                        if result.returncode == 0 and result.stdout.strip():
-                            return result.stdout.strip()
-                    except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-                        continue
-        
-        # Fallback to random predefined message
+        # LLM integration has been removed - just use predefined messages
         return random.choice(self.config.messages)
     
     def announce_completion(self) -> None:
         """Announce completion using the best available TTS service."""
         try:
-            tts_script = self.get_tts_script_path()
-            if not tts_script:
-                return  # No TTS scripts available
+            # Import the TTS module
+            sys.path.insert(0, str(Path(__file__).parent))
+            from tts import load_tts
             
-            # Get completion message (LLM-generated or fallback)
+            # Get completion message
             completion_message = self.get_llm_completion_message()
             
-            # Call the TTS script with the completion message
-            result = subprocess.run(
-                [sys.executable, tts_script, completion_message],
-                capture_output=True,  # Suppress output
-                timeout=10  # 10-second timeout
-            )
-            # Debug: log the result
-            if result.returncode != 0:
+            # Use the TTS loader to speak
+            tts = load_tts()
+            if not tts.speak(completion_message):
+                # Debug: log the failure
                 with open(self.log_dir / "tts_debug.log", "a") as f:
-                    f.write(f"TTS failed: {tts_script}\n")
-                    f.write(f"stderr: {result.stderr}\n")
-                    f.write(f"stdout: {result.stdout}\n")
+                    f.write(f"TTS failed to speak: {completion_message}\n")
+                    f.write(f"Available providers: {tts.list_available()}\n")
             
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
-            pass  # Fail silently if TTS encounters issues
-        except Exception:
-            pass  # Fail silently for any other errors
+        except Exception as e:
+            # Debug: log the exception
+            with open(self.log_dir / "tts_debug.log", "a") as f:
+                f.write(f"TTS exception: {str(e)}\n")
     
     def log_session_data(self, input_data: Dict[str, Any]) -> None:
         """
