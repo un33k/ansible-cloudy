@@ -36,7 +36,7 @@
 
 #### Validate (0–2 points): [ ]
 
-- [ ] Checked backward compatibility  
+- [ ] Checked backward compatibility post version 1.1 ONLY
 - [ ] Identified affected components  
 - [ ] Planned testing approach  
 
