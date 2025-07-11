@@ -422,6 +422,7 @@ graph TB
     CR --> DS[<b>Discovery System</b>]
     DS --> SS[<b>Service Scanner</b>]
     SS --> RF[<b>Recipe Finder</b>]
+    DS --> CM[<b>Connection Manager</b>]
     
     %% Execution Flow - Purple Theme
     SO --> DM[<b>Dependency Manager</b>]
@@ -453,11 +454,13 @@ graph TB
     P22 -->|"⚡ Hardening"| PCustom
     
     %% Service Categories - Multi-color
-    PB --> Core[<b>Core Services</b><br/>security, base]
-    PB --> DB[<b>Database</b><br/>psql, pgvector]
+    PB --> Core[<b>Core Services</b><br/>security, base, finalize]
+    PB --> DB[<b>Database</b><br/>psql, postgis, pgvector]
     PB --> Web[<b>Web Services</b><br/>django, nodejs]
     PB --> Cache[<b>Cache</b><br/>redis]
     PB --> LB[<b>Load Balancer</b><br/>nginx, pgbouncer]
+    PB --> VPN[<b>VPN Services</b><br/>openvpn]
+    PB --> SA[<b>Standalone</b><br/>all-in-one]
     
     %% Entry Points - Blue
     style User fill:#1976D2,stroke:#0D47A1,stroke-width:3px,color:#fff
@@ -473,6 +476,7 @@ graph TB
     style DS fill:#00796B,stroke:#004D40,stroke-width:3px,color:#fff
     style SS fill:#00796B,stroke:#004D40,stroke-width:3px,color:#fff
     style RF fill:#00796B,stroke:#004D40,stroke-width:3px,color:#fff
+    style CM fill:#00796B,stroke:#004D40,stroke-width:3px,color:#fff
     
     %% Execution Management - Purple
     style DM fill:#7B1FA2,stroke:#4A148C,stroke-width:3px,color:#fff
@@ -508,6 +512,8 @@ graph TB
     style Web fill:#1976D2,stroke:#0D47A1,stroke-width:3px,color:#fff
     style Cache fill:#C62828,stroke:#8B0000,stroke-width:3px,color:#fff
     style LB fill:#388E3C,stroke:#1B5E20,stroke-width:3px,color:#fff
+    style VPN fill:#FF5722,stroke:#D84315,stroke-width:3px,color:#fff
+    style SA fill:#9C27B0,stroke:#6A1B9A,stroke-width:3px,color:#fff
 ```
 
 ## 🤝 Contributing
