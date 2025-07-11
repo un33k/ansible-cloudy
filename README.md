@@ -425,9 +425,9 @@ graph TB
     
     %% Execution Flow - Purple Theme
     SO --> DM[<b>Dependency Manager</b>]
-    DM -->|"[ Phase 1 ]"| SEC[<b>Security Recipe</b>]
-    DM -->|"[ Phase 2 ]"| BASE[<b>Base Recipe</b>]
-    DM -->|"[ Phase 3 ]"| SVC[<b>Service Recipe</b>]
+    DM -->|"🔐 Phase 1"| SEC[<b>Security Recipe</b>]
+    DM -->|"🏗️ Phase 2"| BASE[<b>Base Recipe</b>]
+    DM -->|"🚀 Phase 3"| SVC[<b>Service Recipe</b>]
     
     %% Ansible Execution - Orange Theme
     SEC --> AR[<b>Ansible Runner</b>]
