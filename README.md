@@ -418,6 +418,14 @@ graph TB
     AP --> CR[<b>Command Router</b>]
     CR --> SO[<b>Service Operations</b>]
     
+    %% Docker Template Flow - Cyan Theme
+    SO --> DD[<b>Docker Deployments</b>]
+    DD --> DT[<b>Docker Templates</b>]
+    DT --> TH[<b>Hydration</b>]
+    TH --> AR[<b>Ansible Runner</b>]
+    AR --> PC[<b>Portainer Container</b>]
+    AR --> NC[<b>Nginx Container</b>]
+    
     %% Service Discovery - Teal Theme
     CR --> DS[<b>Discovery System</b>]
     DS --> SS[<b>Service Scanner</b>]
@@ -471,6 +479,13 @@ graph TB
     style AP fill:#388E3C,stroke:#1B5E20,stroke-width:3px,color:#fff
     style CR fill:#388E3C,stroke:#1B5E20,stroke-width:3px,color:#fff
     style SO fill:#388E3C,stroke:#1B5E20,stroke-width:3px,color:#fff
+    
+    %% Docker Template Flow - Cyan
+    style DD fill:#00BCD4,stroke:#006064,stroke-width:3px,color:#fff
+    style DT fill:#00BCD4,stroke:#006064,stroke-width:3px,color:#fff
+    style TH fill:#00BCD4,stroke:#006064,stroke-width:3px,color:#fff
+    style PC fill:#00ACC1,stroke:#006064,stroke-width:3px,color:#fff
+    style NC fill:#00ACC1,stroke:#006064,stroke-width:3px,color:#fff
     
     %% Discovery - Teal
     style DS fill:#00796B,stroke:#004D40,stroke-width:3px,color:#fff
