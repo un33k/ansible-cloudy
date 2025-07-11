@@ -404,6 +404,112 @@ See the complete **[Documentation Index](docs/README.md)** for all available gui
 - **🎯 Deployment Flexibility**: Single server standalone or distributed multi-tier architectures
 - **🔒 Security First**: Kernel hardening, audit logging, DDoS protection built-in
 
+## 🏗️ Architecture Flow
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'fontFamily': 'Arial', 'primaryColor': '#fff', 'primaryTextColor': '#000', 'primaryBorderColor': '#7C0000', 'lineColor': '#555', 'secondaryColor': '#006100', 'tertiaryColor': '#fff', 'mainBkg': '#1f2020', 'secondBkg': '#ff0000', 'lineWidth': '3px'}}}%%
+graph TB
+    %% Entry Points - Blue Theme
+    User[<b>User</b>] --> CLI[<b>CLI Tool</b>]
+    Script[<b>Scripts</b>] --> CLI
+    
+    %% CLI Layer - Green Theme
+    CLI --> AP[<b>Argument Parser</b>]
+    AP --> CR[<b>Command Router</b>]
+    CR --> SO[<b>Service Operations</b>]
+    
+    %% Service Discovery - Teal Theme
+    CR --> DS[<b>Discovery System</b>]
+    DS --> SS[<b>Service Scanner</b>]
+    SS --> RF[<b>Recipe Finder</b>]
+    
+    %% Execution Flow - Purple Theme
+    SO --> DM[<b>Dependency Manager</b>]
+    DM -->|"[ Phase 1 ]"| SEC[<b>Security Recipe</b>]
+    DM -->|"[ Phase 2 ]"| BASE[<b>Base Recipe</b>]
+    DM -->|"[ Phase 3 ]"| SVC[<b>Service Recipe</b>]
+    
+    %% Ansible Execution - Orange Theme
+    SEC --> AR[<b>Ansible Runner</b>]
+    BASE --> AR
+    SVC --> AR
+    AR --> VL[<b>Vault Loader</b>]
+    AR --> PM[<b>Port Manager</b>]
+    AR --> SSM[<b>Smart Security</b>]
+    
+    %% Ansible Core - Brown Theme
+    AR --> PB[<b>Playbooks</b>]
+    PB --> Tasks[<b>Reusable Tasks</b>]
+    Tasks --> Templates[<b>Config Templates</b>]
+    
+    %% Configuration Management - Pink Theme
+    VL --> VC[<b>Vault Config</b>]
+    VC --> Inventory[<b>Inventory Files</b>]
+    Inventory --> GV[<b>Group Variables</b>]
+    
+    %% Security Flow - Red Theme
+    SSM -->|"🆕 Fresh Server"| P22[<b>Port 22<br/>+ Password</b>]
+    SSM -->|"🔒 Secured Server"| PCustom[<b>Custom Port<br/>+ SSH Keys</b>]
+    P22 -->|"⚡ Hardening"| PCustom
+    
+    %% Service Categories - Multi-color
+    PB --> Core[<b>Core Services</b><br/>security, base]
+    PB --> DB[<b>Database</b><br/>psql, pgvector]
+    PB --> Web[<b>Web Services</b><br/>django, nodejs]
+    PB --> Cache[<b>Cache</b><br/>redis]
+    PB --> LB[<b>Load Balancer</b><br/>nginx, pgbouncer]
+    
+    %% Entry Points - Blue
+    style User fill:#1976D2,stroke:#0D47A1,stroke-width:3px,color:#fff
+    style Script fill:#1976D2,stroke:#0D47A1,stroke-width:3px,color:#fff
+    
+    %% CLI Layer - Green
+    style CLI fill:#388E3C,stroke:#1B5E20,stroke-width:3px,color:#fff
+    style AP fill:#388E3C,stroke:#1B5E20,stroke-width:3px,color:#fff
+    style CR fill:#388E3C,stroke:#1B5E20,stroke-width:3px,color:#fff
+    style SO fill:#388E3C,stroke:#1B5E20,stroke-width:3px,color:#fff
+    
+    %% Discovery - Teal
+    style DS fill:#00796B,stroke:#004D40,stroke-width:3px,color:#fff
+    style SS fill:#00796B,stroke:#004D40,stroke-width:3px,color:#fff
+    style RF fill:#00796B,stroke:#004D40,stroke-width:3px,color:#fff
+    
+    %% Execution Management - Purple
+    style DM fill:#7B1FA2,stroke:#4A148C,stroke-width:3px,color:#fff
+    
+    %% Ansible Runner - Orange
+    style AR fill:#E65100,stroke:#BF360C,stroke-width:3px,color:#fff
+    style VL fill:#EF6C00,stroke:#BF360C,stroke-width:3px,color:#fff
+    style PM fill:#EF6C00,stroke:#BF360C,stroke-width:3px,color:#fff
+    
+    %% Security - Red
+    style SSM fill:#C62828,stroke:#8B0000,stroke-width:3px,color:#fff
+    style P22 fill:#D32F2F,stroke:#8B0000,stroke-width:3px,color:#fff
+    style PCustom fill:#C62828,stroke:#8B0000,stroke-width:3px,color:#fff
+    
+    %% Recipes - Pink
+    style SEC fill:#C2185B,stroke:#880E4F,stroke-width:3px,color:#fff
+    style BASE fill:#C2185B,stroke:#880E4F,stroke-width:3px,color:#fff
+    style SVC fill:#C2185B,stroke:#880E4F,stroke-width:3px,color:#fff
+    
+    %% Ansible Core - Brown
+    style PB fill:#5D4037,stroke:#3E2723,stroke-width:3px,color:#fff
+    style Tasks fill:#6D4C41,stroke:#3E2723,stroke-width:3px,color:#fff
+    style Templates fill:#6D4C41,stroke:#3E2723,stroke-width:3px,color:#fff
+    
+    %% Configuration - Indigo
+    style VC fill:#303F9F,stroke:#1A237E,stroke-width:3px,color:#fff
+    style Inventory fill:#303F9F,stroke:#1A237E,stroke-width:3px,color:#fff
+    style GV fill:#303F9F,stroke:#1A237E,stroke-width:3px,color:#fff
+    
+    %% Service Categories - Individual colors
+    style Core fill:#455A64,stroke:#263238,stroke-width:3px,color:#fff
+    style DB fill:#303F9F,stroke:#1A237E,stroke-width:3px,color:#fff
+    style Web fill:#1976D2,stroke:#0D47A1,stroke-width:3px,color:#fff
+    style Cache fill:#C62828,stroke:#8B0000,stroke-width:3px,color:#fff
+    style LB fill:#388E3C,stroke:#1B5E20,stroke-width:3px,color:#fff
+```
+
 ## 🤝 Contributing
 
 **Quick Start**: Fork the repo → run `./bootstrap.sh` → make changes → run `cli dev validate` → commit → PR
